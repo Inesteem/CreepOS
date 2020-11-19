@@ -12,6 +12,12 @@ Creep.prototype.harvestFrom = function (target){
     }
 }
 
+Creep.prototype.takeFrom = function(structure) {
+    if (this.withdraw(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+        this.moveTo((structure), {visualizePathStyle: {stroke: '#ff0000'}});
+    }
+}
+
 Creep.prototype.storeAt = function(structure) {
     if(this.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
         this.moveTo(structure, {visualizePathStyle: {stroke: '#ff00ff'}});
