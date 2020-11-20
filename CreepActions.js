@@ -36,3 +36,8 @@ Creep.prototype.buildStructure = function(structure) {
     }
 }
 
+Creep.prototype.repairStructure = function(structure) {
+    if(this.repair(structure) == ERR_NOT_IN_RANGE) {
+        this.moveTo(structure, {visualizePathStyle: {stroke: '#00ff00'}});
+    }
+}
