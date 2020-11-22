@@ -11,11 +11,29 @@ function State(func){
     this.func = func;
 }
  
-function Task(name, run){
+function Task(name, initial_state){
     this.name = name;
-    if (run)
-        this.run = run;
+    
+    if (initial_state)
+        this.initial_state = initial_state;
 }
+
+ 
+function createBuildTask(structure_id){
+    var task = new Task("build_structure_"+structure_id, null);
+
+    task.state_array = [
+        new State((creep)=>{
+            creep.memory.task.structure_id = structure_id;
+            return false;
+        }),
+        new State(takeFromStore),
+        new State(buildStructure),
+    ];
+    return task;
+}
+
+
 
 Task.prototype.run = function(creep) {
     if (!creep.memory.task.current_state) {
@@ -96,13 +114,23 @@ var takeFromStore = function(creep) {
                     return false;
                 }
             }
-            creep.harvestFrom(Game.getObjectById(creep.memory.task.source_id));
+            var source = Game.getObjectById(creep.memory.task.source_id)
+            if (!source) {
+                creep.memory.task.source_id = null;
+                return true;
+            }
+            
+            creep.harvestFrom(source);
         
             if (creep.store.getFreeCapacity() == 0) return false;
             return true;
         }
     } else {
         storage = Game.getObjectById(creep.memory.task.storage_id);
+    }
+    if (!storage) {
+        creep.memory.task.storage_id = null;
+        return true;
     }
     creep.takeFrom(storage);
     if (creep.store.getFreeCapacity() == 0 ||
@@ -137,6 +165,22 @@ var fillSpawn = function(creep) {
 var upgradeController = function (creep){
     creep.upgrade();
     if (creep.store[RESOURCE_ENERGY] == 0){
+        return false;
+    }
+    return true;
+}
+
+
+var buildStructure = function (creep){
+    structure = Game.getObjectById(creep.memory.task.structure_id);
+    
+    if(!structure){
+        return false;
+    }
+    
+    creep.buildStructure(structure);
+    
+    if (creep.store[RESOURCE_ENERGY] == 0) {
         return false;
     }
     return true;
@@ -227,6 +271,7 @@ build_closest_task.state_array = [
     new State(buildClosest),
 ];
 
+
 module.exports = {
     Task:Task,
     fill_spawn_task: fill_spawn_task,
@@ -234,4 +279,5 @@ module.exports = {
     build_closest_task: build_closest_task,
     fill_store_task: fill_store_task,
     repair_task: repair_task,
+    create_build_task: createBuildTask,
 };

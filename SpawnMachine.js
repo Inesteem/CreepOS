@@ -13,7 +13,7 @@ var spawnCreep = function(){
     var newName = "Kevin" + Game.time;
     
     var parts = [WORK, CARRY, MOVE];
-    var body = [WORK, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE];
+    var body = [WORK, CARRY, MOVE];
     var idx = 0;
     
     while(Game.spawns['Spawn1'].spawnCreep(body, newName , { dryRun: true }) == 0){
@@ -29,8 +29,8 @@ var spawnCreep = function(){
     }
     body.pop();
     //console.log("spawned kevin with body " + JSON.stringify(body));
-    if(body.length < 7) return;
-    Game.spawns['Spawn1'].spawnCreep(body, newName);
+    if(allowSpawn(body))
+        Game.spawns['Spawn1'].spawnCreep(body, newName);
 }
 
 var spawnMiner = function(){
@@ -45,9 +45,26 @@ var spawnMiner = function(){
         idx = (idx + 1) % parts.length;
     }
     body.pop();
-    if(body.length < 5) return;
+    if(!allowSpawn(body)) return;
     if (Game.spawns['Spawn1'].spawnCreep(body, newName) == 0)
         Game.creeps[newName].memory.miner = true;
+}
+
+function allowSpawn(body) {
+    var num_creeps = _.filter(Game.creeps, (creep) => true).length;
+    var body_cost = bodyCost(body);
+    var max_cost = Game.rooms['W18S6'].energyCapacityAvailable;
+    //console.log("Checking spawn")
+    //console.log(body_cost);
+    //console.log(Math.max(max_cost,num_creeps * num_creeps + 300));
+    return body_cost >= Math.min(max_cost - 50,num_creeps * num_creeps + 300);
+}
+
+function bodyCost(body) {
+    let sum = 0;
+    for (let i in body)
+        sum += BODYPART_COST[body[i]];
+    return sum;
 }
 
 

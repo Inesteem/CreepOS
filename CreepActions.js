@@ -31,6 +31,7 @@ Creep.prototype.upgrade = function() {
 }
 
 Creep.prototype.buildStructure = function(structure) {
+    this.say(structure.id);
     if(this.build(structure) == ERR_NOT_IN_RANGE) {
         this.moveTo(structure, {visualizePathStyle: {stroke: '#0000ff'}});
     }
