@@ -30,7 +30,7 @@ var spawnCreep = function(){
     body.pop();
     //console.log("spawned kevin with body " + JSON.stringify(body));
     if(allowSpawn(body))
-        Game.spawns['Spawn1'].spawnCreep(body, newName);
+        Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Worker"}});
 }
 
 var spawnMiner = function(){
@@ -46,18 +46,20 @@ var spawnMiner = function(){
     }
     body.pop();
     if(!allowSpawn(body)) return;
-    if (Game.spawns['Spawn1'].spawnCreep(body, newName) == 0)
-        Game.creeps[newName].memory.miner = true;
+    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Miner"}});
+}
+
+var spawnScout = function() {
+    let newName = "Scouty";
+    let body = [MOVE, CLAIM];
+    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Scout"}});
 }
 
 function allowSpawn(body) {
     var num_creeps = _.filter(Game.creeps, (creep) => true).length;
-    var body_cost = bodyCost(body);
-    var max_cost = Game.rooms['W18S6'].energyCapacityAvailable;
-    //console.log("Checking spawn")
-    //console.log(body_cost);
-    //console.log(Math.max(max_cost,num_creeps * num_creeps + 300));
-    return body_cost >= Math.min(max_cost - 50,num_creeps * num_creeps + 300);
+    var max_cost = Game.spawns['Spawn1'].room.energyCapacityAvailable;
+    var energy = Game.spawns['Spawn1'].room.energyAvailable;
+    return energy >= Math.min(max_cost, num_creeps * num_creeps + 300);
 }
 
 function bodyCost(body) {
@@ -70,5 +72,6 @@ function bodyCost(body) {
 
 module.exports = {
     spawnCreep : spawnCreep,
-    spawnMiner : spawnMiner
+    spawnMiner : spawnMiner,
+    spawnScout: spawnScout
 };
