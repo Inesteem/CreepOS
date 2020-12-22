@@ -55,6 +55,22 @@ var spawnScout = function() {
     Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Scout"}});
 }
 
+function spawnArcher() {
+    let newName = "Legolas" + Game.time;
+    let parts = [MOVE, RANGED_ATTACK];
+    let body = [MOVE, RANGED_ATTACK];
+    
+    let idx = 0;
+    while(Game.spawns['Spawn1'].spawnCreep(body, newName , { dryRun: true }) == 0){
+        body.push(parts[idx]);
+        idx = (idx + 1) % parts.length;
+    }
+    body.pop();
+    if (body.length > 1)
+        Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Archer"}});
+}
+
+
 function allowSpawn(body) {
     var num_creeps = _.filter(Game.creeps, (creep) => true).length;
     var max_cost = Game.spawns['Spawn1'].room.energyCapacityAvailable;
@@ -73,5 +89,6 @@ function bodyCost(body) {
 module.exports = {
     spawnCreep : spawnCreep,
     spawnMiner : spawnMiner,
-    spawnScout: spawnScout
+    spawnScout: spawnScout,
+    spawnArcher: spawnArcher
 };

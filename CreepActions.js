@@ -1,4 +1,4 @@
-let path = 5;
+let path = 1;
 
 Creep.prototype.harvestClosest = function (){
     const target = this.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
@@ -56,4 +56,21 @@ Creep.prototype.moveToRoom = function(flag) {
         return false;
     }
     return true;
+}
+
+Creep.prototype.fight = function(target) {
+    if(target) {
+        if(this.attack(target) == ERR_NOT_IN_RANGE) {
+            this.moveTo(target,  {visualizePathStyle: {stroke: '#ff0000'}, reusePath: path});
+        }
+    }
+}
+
+Creep.prototype.shoot = function(target) {
+    //const target = this.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+    if(target) {
+        if(this.rangedAttack(target) == ERR_NOT_IN_RANGE) {
+            this.moveTo(target, {visualizePathStyle: {stroke: '#ff0000'}, reusePath: path});
+        }
+    }
 }
