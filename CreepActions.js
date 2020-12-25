@@ -1,4 +1,4 @@
-let path = 1;
+let path = 20;
 
 Creep.prototype.harvestClosest = function (){
     const target = this.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
@@ -15,7 +15,7 @@ Creep.prototype.harvestFrom = function (target){
 
 Creep.prototype.takeFrom = function(structure) {
     if (this.withdraw(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-        this.moveTo((structure), {visualizePathStyle: {stroke: '#ff0000'}, reusePath: path});
+        this.moveTo((structure), {visualizePathStyle: {stroke: '#555500'}, reusePath: path});
     }
 }
 
@@ -73,4 +73,10 @@ Creep.prototype.shoot = function(target) {
             this.moveTo(target, {visualizePathStyle: {stroke: '#ff0000'}, reusePath: path});
         }
     }
+}
+
+Creep.prototype.moveAwayFrom = function(target, range) {
+    let result = PathFinder.search(this.pos, {pos: target.pos, range: range}, {flee: true});
+    let dir = result.path[0];
+    this.move(this.pos.getDirectionTo(dir));
 }

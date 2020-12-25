@@ -3,6 +3,7 @@ var task = require("Task");
 var spawn_machine = require("SpawnMachine");
 var task_machine = require("TaskMachine");
 var attack = require("Attack");
+var build_machine = require("BuildMachine");
 
 
 var harvest_id = "harvesting";
@@ -14,7 +15,6 @@ var build_id = "building";
 
 
 module.exports.loop = function () {
-    
     Memory.task_mapping = {
         'fill_spawn':     task.fill_spawn_task, //new task.Task('fill_spawn',fillSpawn),
         'upgrade':        task.upgrade_controller_task,
@@ -24,10 +24,10 @@ module.exports.loop = function () {
         'claim_room':     task.claim_room_task,
         'fill_structure': task.fill_structure_task,
     };
+    
+    build_machine.monitorBuildRoadTasks();
  
     if(Memory.tasks.length < 2) {
-        task_machine.createFillSpawnTasks();
-        task_machine.createFillSpawnTasks();
         task_machine.createFillSpawnTasks();
         task_machine.createFillExtensionTasks();
         
@@ -36,8 +36,8 @@ module.exports.loop = function () {
         task_machine.createBuildTasks();
         
         task_machine.createRepairTasks();
-         task_machine.createRepairTasks();
-          task_machine.createRepairTasks();
+        task_machine.createRepairTasks();
+        task_machine.createRepairTasks();
         
         task_machine.createUpgradeTasks();
     }
@@ -48,7 +48,7 @@ module.exports.loop = function () {
             
     }
 
-    if (_.filter(Game.creeps, (creep) => creep.memory.role == "Worker").length < 7) {
+    if (_.filter(Game.creeps, (creep) => creep.memory.role == "Worker").length < 6) {
         spawn_machine.spawnCreep();
     }
     if (_.filter(Game.creeps, (creep) => creep.memory.role == "Miner").length < 4) {
@@ -62,13 +62,21 @@ module.exports.loop = function () {
     // UNSAFE
     const targets = Game.spawns['Spawn1'].room.find(FIND_HOSTILE_CREEPS);
     if (targets.length) {
-        if (_.filter(Game.creeps, (creep) => creep.memory.role == "Archer").length < 0) {
+        if (_.filter(Game.creeps, (creep) => creep.memory.role == "Archer").length < 2) {
             spawn_machine.spawnArcher();
         }
     }
 
     
     _.forEach(Game.creeps, (creep) => {
+        if (creep.memory.role != "Archer") {
+            const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);
+            if(targets.length > 0) {
+                creep.moveAwayFrom(targets[0], 3);
+                return;
+            }
+        }
+        
         if (creep.memory.role == "Miner") {
             // Miners are special and can almost not move. Remove this once we
             // properly map tasks.
@@ -89,7 +97,7 @@ module.exports.loop = function () {
             if (!creep.memory.task) {
                 creep.memory.task = Memory.tasks.shift();
                 if (creep.memory.old_task)
-                    creep.say(creep.memory.ticks);
+                    creep.say(creep.memory.ticks + creep.memory.old_task.name);
                 creep.memory.ticks = 0;
             }
             if (creep.memory.task) {

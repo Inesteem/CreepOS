@@ -31,7 +31,7 @@ var createBuildTasks = function(){
     rooms.forEach(room => {
        structures = structures.concat(room.find(FIND_MY_CONSTRUCTION_SITES));
     });
-    structures.sort((a, b) => b.progress - a.progress);
+    //structures.sort((a, b) => b.progress - a.progress);
     
     if(structures.length){
         createEnergyReqTask({ name: "build",
@@ -91,11 +91,11 @@ createFillExtensionTasks = function() {
         }));
     });
     
-    if(structures.length){
+    structures.forEach(structure => {
         createEnergyReqTask({ name: "fill_structure",
-            structure_id: structures[0].id,
-        }, structures[0]);
-    }
+            structure_id: structure.id,
+        }, structure);
+    })
 }
 
 createUpgradeTasks = function() {

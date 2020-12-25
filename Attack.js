@@ -6,32 +6,29 @@
  * var mod = require('Attack');
  * mod.thing == 'a thing'; // true
  */
-
+var base = require("Base");
 
 
     //const target = this.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
     
 var kite = function(creep){
+    let enemies = [];
+    let rooms = base.getOurRooms();
+    rooms.push(creep.room);
     
-    const target = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+    rooms.forEach(room => {
+       enemies = enemies.concat(room.find(FIND_HOSTILE_CREEPS));
+    });
+    
+    const target = creep.pos.findClosestByRange(enemies);
     if (!target) return;
     if (creep.pos.inRangeTo(target.pos, 2)) {
-        let dir = (((creep.pos.getDirectionTo(target)-1) + 3 + Math.floor(Math.random() * 3) ) % 8) + 1;
-        
-        const look = creep.room.lookForAtArea(LOOK_TERRAIN,
-            creep.pos.x-1,
-            creep.pos.y-1,
-            creep.pos.x+1,
-            creep.pos.y+1);
-            
-        console.log(JSON.stringify(look));
-        
-        creep.move(dir);
+        creep.moveAwayFrom(target, 3);
     } else {
         creep.shoot(target);
     }
-    
 };
+
 module.exports = {
     kite : kite,
 };

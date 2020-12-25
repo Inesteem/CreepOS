@@ -57,7 +57,7 @@ var spawnScout = function() {
 
 function spawnArcher() {
     let newName = "Legolas" + Game.time;
-    let parts = [MOVE, RANGED_ATTACK];
+    let parts = [MOVE, MOVE, RANGED_ATTACK];
     let body = [MOVE, RANGED_ATTACK];
     
     let idx = 0;
