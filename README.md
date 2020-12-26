@@ -1,13 +1,8 @@
-# CreepOS
-
-A small OS like solution for commanding creeps in the MMO game Screeps : https://screeps.com/
-
-Features:
 # Task Management 
   - Modules
     - TaskMachine
     - Task
-    -Sc(h)eduler (SOON)
+    - Sc(h)eduler (SOON)
  
   - Task Types  
     - fill_structure (spawn, extension, tower, container, ...)
@@ -52,7 +47,9 @@ Features:
     
   - TODO: increase priority of extension/spawn filling
 
-# Basic Tower Management 
+# Basic Tower Management
+  - Modules
+    - Tower
   - unlimited Range (you may want to reduce the range if multiple towers are present due to efficiency degradation)
   - attack, heal, repair 
 
@@ -72,4 +69,5 @@ Features:
 - tweak parameters (TODO: which)
 - build all structure except for roads 
 - main: define max number of creeps to spawn
+- main: define relative quantity of tasks per type (SOON: removed)
 
