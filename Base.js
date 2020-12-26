@@ -20,6 +20,24 @@ var findNearestEnergyStored = function(object) {
     return store;
 }
 
+function getTowers(room, filter) {
+    let towers = room.find(FIND_MY_STRUCTURES, {
+            filter: (tower) => {
+                    return ( tower.structureType == STRUCTURE_TOWER) &&
+                        filter(tower);
+                }});
+    
+    return towers;
+}
+
+function findCreeps(filter) {
+    return _.filter(Game.creeps, (creep) => filter(creep));
+}
+
+function numCreeps(filter) {
+    return _.filter(Game.creeps, (creep) => filter(creep)).length;
+}
+
 var findNearestEnergySource = function(object) {
     return object.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
 }
@@ -38,4 +56,7 @@ module.exports = {
     getUnclaimedFlags: getUnclaimedFlags,
     findNearestEnergyStored: findNearestEnergyStored,
     findNearestEnergySource: findNearestEnergySource,
+    numCreeps: numCreeps,
+    getTowers: getTowers,
+    findCreeps: findCreeps,
 };

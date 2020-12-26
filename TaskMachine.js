@@ -31,11 +31,12 @@ var createBuildTasks = function(){
     rooms.forEach(room => {
        structures = structures.concat(room.find(FIND_MY_CONSTRUCTION_SITES));
     });
-    //structures.sort((a, b) => b.progress - a.progress);
+    structures.sort((a, b) => b.progress - a.progress);
     
     if(structures.length){
         createEnergyReqTask({ name: "build",
             structure_id: structures[0].id,
+            priority: 0,
         }, structures[0]);
     }
 }
@@ -54,11 +55,12 @@ var createRepairTasks = function() {
     if(structures.length){
         createEnergyReqTask({ name: "repair",
             structure_id: structures[0].id,
+            priority: 0,
         }, structures[0]);
     }
 }
 
-createFillSpawnTasks = function() {
+var createFillSpawnTasks = function() {
     let structures = [];
     let rooms = base.getOurRooms();
     
@@ -74,11 +76,12 @@ createFillSpawnTasks = function() {
     if(structures.length){
         createEnergyReqTask({ name: "fill_structure",
             structure_id: structures[0].id,
+            priority: 0,
         }, structures[0]);
     }
 }
 
-createFillExtensionTasks = function() {
+var createFillExtensionTasks = function() {
        let structures = [];
     let rooms = base.getOurRooms();
     
@@ -94,11 +97,12 @@ createFillExtensionTasks = function() {
     structures.forEach(structure => {
         createEnergyReqTask({ name: "fill_structure",
             structure_id: structure.id,
+            priority: 0,
         }, structure);
     })
 }
 
-createUpgradeTasks = function() {
+var createUpgradeTasks = function() {
     let controller = [];
     let rooms = base.getOurRooms();
     
@@ -109,8 +113,30 @@ createUpgradeTasks = function() {
     if (controller.length) {
         createEnergyReqTask({ name: "upgrade",
             controller_id: controller[0].id,
+            priority: 0,
         }, controller[0]);
     }
+}
+
+function createFillTowerTasks() {
+    let towers = [];
+    let rooms = base.getOurRooms();
+    
+    rooms.forEach(room => {
+        towers = towers.concat(room.find(FIND_MY_STRUCTURES, {
+            filter: (tower) => {
+                    return ( tower.structureType == STRUCTURE_TOWER) &&
+                        tower.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+                }
+        }));
+    });
+    
+    towers.forEach(tower => {
+        createEnergyReqTask({ name: "fill_structure",
+            structure_id: tower.id,
+            priority: 0,
+        }, tower);
+    })
 }
 
 module.exports = {
@@ -119,4 +145,5 @@ module.exports = {
     createFillSpawnTasks: createFillSpawnTasks,
     createUpgradeTasks: createUpgradeTasks,
     createFillExtensionTasks: createFillExtensionTasks,
+    createFillTowerTasks: createFillTowerTasks
 };

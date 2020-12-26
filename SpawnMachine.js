@@ -66,8 +66,14 @@ function spawnArcher() {
         idx = (idx + 1) % parts.length;
     }
     body.pop();
-    if (body.length > 1)
-        Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Archer"}});
+    if (body.length <= 1) return;
+    
+    while(Game.spawns['Spawn1'].spawnCreep(body, newName , { dryRun: true }) == 0){
+        body.unshift(TOUGH);
+        idx = (idx + 1) % parts.length;
+    }
+    body.shift();
+    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Archer"}});
 }
 
 

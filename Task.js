@@ -8,7 +8,7 @@
  */
 var base = require('Base');
  
-var giveup_time = 150;
+const giveup_time = 150;
  
 function State(func){
     this.func = func;
@@ -32,7 +32,7 @@ Task.prototype.run = function(creep) {
         return false;
     }
     
-    result = this.state_array[creep.memory.task.current_state].func(creep);
+    const result = this.state_array[creep.memory.task.current_state].func(creep);
     if (!result) {
         creep.memory.task.current_state++;
     }
@@ -54,7 +54,7 @@ function getTarget(targetFunc, creep, id_name) {
 
 var harvestClosest = function(creep) {
     if (!creep.memory.task.source_id){
-        source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+        let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
         if (source)
             creep.memory.task.source_id = source.id;
         else {
@@ -80,12 +80,12 @@ var fillStore = function(creep) {
 }
 
 var takeFromStore = function(creep) {
-    var storage = null;
+    let storage = null;
     if (!creep.memory.task.store_id) {
         if (!creep.memory.task.source_id){
             return false;
         }
-        var source = Game.getObjectById(creep.memory.task.source_id)
+        let source = Game.getObjectById(creep.memory.task.source_id)
         
         if (!source) {
             return false;
@@ -118,7 +118,7 @@ var upgradeController = function (creep){
         return false;
     }
     
-    controller = Game.getObjectById(creep.memory.task.controller_id);
+    let controller = Game.getObjectById(creep.memory.task.controller_id);
 
     if (!controller) return false;
 
@@ -133,7 +133,7 @@ var upgradeController = function (creep){
 
 
 var buildStructure = function (creep){
-    structure = Game.getObjectById(creep.memory.task.structure_id);
+    let structure = Game.getObjectById(creep.memory.task.structure_id);
     
     if(!structure){
         return false;
@@ -148,7 +148,7 @@ var buildStructure = function (creep){
 }
 
 var repairStructure = function (creep) {
-    structure = Game.getObjectById(creep.memory.task.structure_id);
+    let structure = Game.getObjectById(creep.memory.task.structure_id);
     
     if(!structure){
         return false;
@@ -164,7 +164,7 @@ var repairStructure = function (creep) {
 }
 
 var fillStructure = function (creep) {
-    structure = Game.getObjectById(creep.memory.task.structure_id);
+    const structure = Game.getObjectById(creep.memory.task.structure_id);
     
     if(!structure){
         return false;
@@ -180,7 +180,7 @@ var fillStructure = function (creep) {
 }
 
 function claimRoom(creep) {
-    flags = base.getUnclaimedFlags();
+    const flags = base.getUnclaimedFlags();
     if (flags.length > 0) {
         creep.moveToRoom(flags[0]);
     } else {
