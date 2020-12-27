@@ -7,7 +7,7 @@
  * mod.thing == 'a thing'; // true
  */
  
- 
+ var constants = require("Constants");
 
 var spawnCreep = function(){
     var newName = "Kevin" + Game.time;
@@ -29,8 +29,10 @@ var spawnCreep = function(){
     }
     body.pop();
     //console.log("spawned kevin with body " + JSON.stringify(body));
+    
     if(allowSpawn(body))
-        Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Worker"}});
+        return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.WORKER}});
+    return ERR_NOT_ENOUGH_ENERGY;
 }
 
 var spawnMiner = function(){
@@ -45,14 +47,16 @@ var spawnMiner = function(){
         idx = (idx + 1) % parts.length;
     }
     body.pop();
-    if(!allowSpawn(body)) return;
-    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Miner"}});
+    
+    if(allowSpawn(body)) 
+        return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.MINER}});
+    return ERR_NOT_ENOUGH_ENERGY;
 }
 
 var spawnScout = function() {
     let newName = "Scouty";
     let body = [MOVE, CLAIM];
-    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Scout"}});
+    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.SCOUT}});
 }
 
 function spawnArcher() {
@@ -73,7 +77,8 @@ function spawnArcher() {
         idx = (idx + 1) % parts.length;
     }
     body.shift();
-    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: "Archer"}});
+    
+    return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.ARCHER}});
 }
 
 

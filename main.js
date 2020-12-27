@@ -6,6 +6,7 @@ var attack = require("Attack");
 var build_machine = require("BuildMachine");
 var tower = require("Tower");
 var base = require("Base");
+var constants = require("Constants");
 
 
 var harvest_id = "harvesting";
@@ -15,69 +16,75 @@ var build_id = "building";
 
 
 
-
 module.exports.loop = function () {
+    var mom_worker_num = base.numCreeps((creep) => creep.memory.role == constants.Role.WORKER);
+    var mom_miner_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.MINER);
+    var mom_archer_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.ARCHER);
+    //needs to be repeated every loop since the task mapping contains functions
+    task_machine.redefineTaskMapping();
+    
     increasePriorities();
-    
-    Memory.task_mapping = {
-        'fill_spawn':     task.fill_spawn_task, //new task.Task('fill_spawn',fillSpawn),
-        'upgrade':        task.upgrade_controller_task,
-        'build':          task.build_closest_task,
-        'fill_store':     task.fill_store_task,
-        'repair':         task.repair_task,
-        'claim_room':     task.claim_room_task,
-        'fill_structure': task.fill_structure_task,
-    };
-    
     build_machine.monitorBuildRoadTasks();
-    
     tower.operateTowers();
- 
-    if(Memory.tasks.length < 2) {
-        task_machine.createFillSpawnTasks();
+    //console.log(JSON.stringify(Memory.tasks));
+    //if(Memory.tasks.length < mom_worker_num + mom_miner_num) {
+     if (Memory.tasks.length < 10){
+        //create fill spawn tasks depending on how many creeps are needed
         task_machine.createFillExtensionTasks();
+        for (let i = 0; i < ((constants.MAX_MINER_NUM + constants.MAX_WORKER_NUM) -  
+                                (mom_miner_num + mom_worker_num)); ++i){
+            task_machine.createFillSpawnTasks();
+        }
         
         task_machine.createBuildTasks();
-        task_machine.createBuildTasks();
-        task_machine.createBuildTasks();
         
         task_machine.createRepairTasks();
-        task_machine.createRepairTasks();
-        task_machine.createRepairTasks();
+        //task_machine.createRepairTasks();
+        //task_machine.createRepairTasks();
         
         task_machine.createUpgradeTasks();
         
         task_machine.createFillTowerTasks();
-    }
-    for(var name in Memory.creeps) {
-        if(!Game.creeps[name]) {
-            delete Memory.creeps[name];
-        } 
+      //  task_machine.createCollectDroppedEnergyTasks();
+    
             
     }
-
-    if (base.numCreeps((creep) => creep.memory.role == "Worker") < 7) {
+    
+    if (mom_worker_num < constants.MAX_WORKER_NUM) {
+         console.log(mom_worker_num +" vs " + constants.MAX_WORKER_NUM);
         spawn_machine.spawnCreep();
     }
-    if (_.filter(Game.creeps, (creep) => creep.memory.role == "Miner").length < 4) {
+console.log(base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length);
+    if (base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length > 0 && mom_miner_num < constants.MAX_MINER_NUM) {
         spawn_machine.spawnMiner();
+         console.log(mom_miner_num +" vs " + constants.MAX_MINER_NUM);
     }
-    if (_.filter(Game.creeps, (creep) => creep.memory.role == "Scout").length < 0) {
-        spawn_machine.spawnScout();
-    }
+    //if (_.filter(Game.creeps, (creep) => creep.memory.role == "Scout").length < 0) {
+    //    spawn_machine.spawnScout();
+    //}
     
-    //console.log(JSON. stringify(Memory.tasks));
-    // UNSAFE
+    // UNSAFE: NOT MULTIY ROOM COMPATIBLE
     const targets = Game.spawns['Spawn1'].room.find(FIND_HOSTILE_CREEPS);
     if (targets.length) {
-        if (_.filter(Game.creeps, (creep) => creep.memory.role == "Archer").length < 2) {
+        if (_.filter(Game.creeps, (creep) => creep.memory.role == constants.Role.ARCHER).length < 2) {
             spawn_machine.spawnArcher();
         }
     }
 
     
     _.forEach(Game.creeps, (creep) => {
-        if (creep.memory.role != "Archer") {
+        /*
+        switch(creep.memory.role){
+            case "Worker" :
+            creep.memory.role = constants.Role.WORKER; 
+                break; 
+            case "Miner" : 
+            creep.memory.role = constants.Role.MINER;
+                break;
+            
+        }*/
+        
+        if (creep.memory.role != constants.Role.ARCHER) {
             const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);
             if(targets.length > 0) {
                 creep.moveAwayFrom(targets[0], 3);
@@ -85,7 +92,7 @@ module.exports.loop = function () {
             }
         }
         
-        if (creep.memory.role == "Miner") {
+        if (creep.memory.role == constants.Role.MINER) {
             // Miners are special and can almost not move. Remove this once we
             // properly map tasks.
              if (!creep.memory.task || !creep.memory.task.name) {
@@ -93,14 +100,17 @@ module.exports.loop = function () {
             } else {
                 Memory.task_mapping[creep.memory.task.name].run(creep);
             }
-        } else if (creep.memory.role == "Scout") {
+        } else if (creep.memory.role == constants.Role.SCOUT) {
                if (!creep.memory.task || !creep.memory.task.name) {
                 creep.memory.task = {name: 'claim_room'};
             } else {
                 Memory.task_mapping[creep.memory.task.name].run(creep);
             }
-        } else if (creep.memory.role == "Archer") {
-            attack.kite(creep);
+        } else if (creep.memory.role == constants.Role.ARCHER) {
+            //UNSAFE
+            if (!attack.kite(creep)) {
+                creep.moveTo(Game.flags["Flag1"].pos);
+            }
         } else {
             if (!creep.memory.task) {
                 creep.memory.task = getNextTask(creep);
@@ -114,6 +124,14 @@ module.exports.loop = function () {
             }
         }
     });
+    //FREE MEMORY
+    for(var name in Memory.creeps) {
+        if(!Game.creeps[name]) {
+            delete Memory.creeps[name];
+       //     task_machine.createCollectDroppedEnergyTasks();
+        } 
+            
+    }
 
 }
 
@@ -151,7 +169,7 @@ function getPath(creep, task){
 }
 
 function getNextTask(creep) {
-    console.log("Finding task");
+    //console.log("Finding task");
     let task_idx = -1;
     let max_priority = -1;
     let path = 0;
@@ -160,7 +178,7 @@ function getNextTask(creep) {
         
         //console.log("task name: " + Memory.tasks[i].name);
         //console.log("path cost: " + path_cost);
-        console.log("priority: " + Memory.tasks[i].priority);
+        //console.log("priority: " + Memory.tasks[i].priority);
         //console.log("calc priority: " + Memory.tasks[i].priority / path_cost);
         
         //console.log("current best priority: "+ max_priority);
@@ -173,8 +191,8 @@ function getNextTask(creep) {
     }
     
     if (task_idx == -1) return null;
-    //console.log("Deleting: " + task_idx);
-    //console.log("priority: " + max_priority);
+   // console.log("Deleting: " + task_idx);
+//    console.log("priority: " + max_priority);
     
     return Memory.tasks.splice(task_idx, 1)[0];
 }

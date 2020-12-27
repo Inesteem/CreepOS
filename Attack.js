@@ -21,12 +21,14 @@ var kite = function(creep){
     });
     
     const target = creep.pos.findClosestByRange(enemies);
-    if (!target) return;
+    if (!target) return false;
     if (creep.pos.inRangeTo(target.pos, 2)) {
         creep.moveAwayFrom(target, 3);
     } else {
         creep.shoot(target);
     }
+    
+    return true;
 };
 
 module.exports = {

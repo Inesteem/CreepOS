@@ -8,6 +8,21 @@
  */
 var task = require("Task");
 var base = require("Base");
+var constants = require("Constants");
+ 
+var redefineTaskMapping = function() {
+    
+    Memory.task_mapping = {
+        'upgrade':                task.upgrade_controller_task,
+        'build':                  task.build_closest_task,
+        'fill_store':             task.fill_store_task,
+        'repair':                 task.repair_task,
+        'claim_room':             task.claim_room_task,
+        'fill_structure':         task.fill_structure_task,
+        'collect_dropped_energy': task.collect_dropped_energy_task, 
+    };
+    
+}
  
 var createEnergyReqTask = function(task, target) {
     let store = base.findNearestEnergyStored(target);
@@ -33,12 +48,31 @@ var createBuildTasks = function(){
     });
     structures.sort((a, b) => b.progress - a.progress);
     
-    if(structures.length){
-        createEnergyReqTask({ name: "build",
-            structure_id: structures[0].id,
-            priority: 0,
-        }, structures[0]);
-    }
+    
+    let roads = [structures.filter(s => s.structureType == STRUCTURE_ROAD),
+                    constants.PARALLEL_ROAD_BUILD_NUM];
+    let extensions = [structures.filter(s => s.structureType == STRUCTURE_EXTENSION),
+                    constants.PARALLEL_EXTENSION_BUILD_NUM];
+    let container = [structures.filter(s => s.structureType == STRUCTURE_CONTAINER),
+                    constants.PARALLEL_CONTAINER_BUILD_NUM];
+    let others =  [structures.filter(s => s.structureType != STRUCTURE_EXTENSION && 
+                                         s.structureType != STRUCTURE_CONTAINER && 
+                                         s.structureType != STRUCTURE_ROAD
+                                         ),
+                    constants.PARALLEL_CONSTRUCTION_SITE_BUILD_NUM];
+    let c_sites = 0;
+    [roads,extensions,container,others].forEach(builds => {
+        //console.log(JSON.stringify(builds));
+        
+        for (let i = 0; i < Math.min(builds[0].length, builds[1]); i++){
+            if(c_sites >= constants.PARALLEL_CONSTRUCTION_SITE_BUILD_NUM){break;}
+            createEnergyReqTask({ name: "build",
+                structure_id: builds[0][i].id,
+                priority: 0,
+            }, builds[0][i]);
+            c_sites += 1;
+        }
+    });
 }
 
 var createRepairTasks = function() {
@@ -139,11 +173,36 @@ function createFillTowerTasks() {
     })
 }
 
+function createCollectDroppedEnergyTasks() {
+    let rooms = base.getOurRooms();
+    let dropped_energy = [];
+    
+    rooms.forEach(room => {
+        dropped_energy = dropped_energy.concat(room.find(FIND_DROPPED_RESOURCES, {
+                filter: (d) => d.amount >= 1 && d.resourceType == RESOURCE_ENERGY
+            }));
+    });
+    
+    for(let i = 0; i < dropped_energy.length; ++i){ 
+        console.log("energy: "+JSON.stringify(dropped_energy[i]));
+        
+            Memory.tasks.push({
+               name: "collect_dropped_energy",
+               priority: 100,
+               resource: dropped_energy[i].id, 
+            });
+
+    }
+}
+
+
 module.exports = {
+    redefineTaskMapping : redefineTaskMapping,
     createBuildTasks: createBuildTasks,
     createRepairTasks: createRepairTasks,
     createFillSpawnTasks: createFillSpawnTasks,
     createUpgradeTasks: createUpgradeTasks,
     createFillExtensionTasks: createFillExtensionTasks,
-    createFillTowerTasks: createFillTowerTasks
+    createFillTowerTasks: createFillTowerTasks,
+    createCollectDroppedEnergyTasks : createCollectDroppedEnergyTasks,
 };

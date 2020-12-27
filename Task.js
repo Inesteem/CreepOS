@@ -7,8 +7,8 @@
  * mod.thing == 'a thing'; // true
  */
 var base = require('Base');
- 
-const giveup_time = 150;
+var constants = require('Constants');
+const giveup_time = 150;//TODO : move to constants
  
 function State(func){
     this.func = func;
@@ -190,6 +190,17 @@ function claimRoom(creep) {
     return true;
 }
 
+function collectDroppedEnergy(creep) {
+    return true;
+    let resource = Game.getObjectById(creep.memory.task.resource);
+    if(resource && creep.store.getFreeCapacity() == 0){
+        creep.collectDroppedResource(resource);
+        return true;
+    }
+    
+    return true;
+}
+
 var claim_room_task = new Task("claim_room", null);
 
 claim_room_task.state_array = [
@@ -231,6 +242,13 @@ fill_structure_task.state_array = [
     new State(fillStructure)
 ];
 
+
+var collect_dropped_energy_task = new Task("collect_dropped_energy", null);
+
+collect_dropped_energy_task.state_array = [
+    new State(collectDroppedEnergy),
+];
+
 module.exports = {
     Task:Task,
     upgrade_controller_task: upgrade_controller_task,
@@ -239,4 +257,5 @@ module.exports = {
     claim_room_task: claim_room_task,
     repair_task: repair_task,
     fill_structure_task: fill_structure_task,
+    collect_dropped_energy_task : collect_dropped_energy_task,
 };

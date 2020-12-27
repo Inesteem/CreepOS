@@ -20,6 +20,15 @@ var findNearestEnergyStored = function(object) {
     return store;
 }
 
+function getNoOwnerStructures(room, structure_type) {
+    let str = room.find(FIND_STRUCTURES, {
+            filter: (s) => {
+                    return ( s.structureType == structure_type)
+                }});
+    
+    return str;
+}
+
 function getTowers(room, filter) {
     let towers = room.find(FIND_MY_STRUCTURES, {
             filter: (tower) => {
@@ -58,5 +67,6 @@ module.exports = {
     findNearestEnergySource: findNearestEnergySource,
     numCreeps: numCreeps,
     getTowers: getTowers,
+    getNoOwnerStructures: getNoOwnerStructures,
     findCreeps: findCreeps,
 };
