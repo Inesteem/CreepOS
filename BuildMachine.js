@@ -9,33 +9,46 @@
 var task_machine = require("TaskMachine");
 var base = require("Base");
 var constants = require("Constants");
- 
 
-function calc_max_road_number(room) {
-    let ret = 0.8 * 
+// CONTAINER BUILDING
+
+function monitorBuildContainerTasks() {
+    
+}
+
+function findSourceForNewContainer() {
+    
+}
+
+function findPositionForContainer(source) {
+    
+}
+
+// ROAD BUILDING
+
+function max_road_number(room) {
+    return 0.8 * 
         room.controller.level * room.controller.level * 
         base.numCreeps((creep) => true) *
         (base.getTowers(room, (tower) => true).length + 1);
-    return ret;
 }
 
 function road_build_ratio(room) {
     let num_roads = room.find(FIND_STRUCTURES, {
             filter: (structure) => structure.structureType == STRUCTURE_ROAD
     }).length;
-    let x = ((num_roads+1)/calc_max_road_number(room));
-    let y = x*x;
-    return y*y*y; 
+    let x = ((num_roads+1)/max_road_number(room));
+    let y = x*x*x*x*x*x;
+    return y;
 }
 
-//UNSAFE
 function monitorBuildRoadTasks() {
     if (!Memory.road_build_counter) {
         road_build_counter = 0;
     }
     if (Memory.road_build_counter%10 == 0)
-        console.log("road_ticks: " + Memory.road_build_counter + " " + constants.AUTOMATIC_ROAD_BUILD_TICKS 
-        + " " + road_build_ratio(Game.spawns['Spawn1'].room) );
+        console.log("road_ticks: " + Memory.road_build_counter + " of " + constants.AUTOMATIC_ROAD_BUILD_TICKS 
+        + " ratio: " + road_build_ratio(Game.spawns['Spawn1'].room) );
     Memory.road_build_counter++;
     snapshot();
     if (Memory.road_build_counter > constants.AUTOMATIC_ROAD_BUILD_TICKS) {

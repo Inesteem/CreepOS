@@ -7,6 +7,7 @@ var build_machine = require("BuildMachine");
 var tower = require("Tower");
 var base = require("Base");
 var constants = require("Constants");
+var algorithm = require("Algorithm");
 
 
 var harvest_id = "harvesting";
@@ -17,6 +18,11 @@ var build_id = "building";
 
 
 module.exports.loop = function () {
+    base.handlePossibleRespawn();
+    
+    //if (Game.time%10 == 0)
+    //    console.log(JSON.stringify(algorithm.findInBetween({x: 16, y:17}, {x:28, y:7}, Game.spawns['Spawn1'].room, (pos) => true)));
+
     var mom_worker_num = base.numCreeps((creep) => creep.memory.role == constants.Role.WORKER);
     var mom_miner_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.MINER);
     var mom_archer_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.ARCHER);
@@ -31,16 +37,14 @@ module.exports.loop = function () {
      if (Memory.tasks.length < 10){
         //create fill spawn tasks depending on how many creeps are needed
         task_machine.createFillExtensionTasks();
-        for (let i = 0; i < ((constants.MAX_MINER_NUM + constants.MAX_WORKER_NUM) -  
-                                (mom_miner_num + mom_worker_num)); ++i){
+        for (let i = 0; i < Math.max(3,((constants.MAX_MINER_NUM + constants.MAX_WORKER_NUM) -  
+                                (mom_miner_num + mom_worker_num))); ++i){
             task_machine.createFillSpawnTasks();
         }
         
         task_machine.createBuildTasks();
         
         task_machine.createRepairTasks();
-        //task_machine.createRepairTasks();
-        //task_machine.createRepairTasks();
         
         task_machine.createUpgradeTasks();
         
@@ -51,13 +55,13 @@ module.exports.loop = function () {
     }
     
     if (mom_worker_num < constants.MAX_WORKER_NUM) {
-         console.log(mom_worker_num +" vs " + constants.MAX_WORKER_NUM);
+        //console.log(mom_worker_num +" vs " + constants.MAX_WORKER_NUM);
         spawn_machine.spawnCreep();
     }
-console.log(base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length);
+//console.log(base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length);
     if (base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length > 0 && mom_miner_num < constants.MAX_MINER_NUM) {
         spawn_machine.spawnMiner();
-         console.log(mom_miner_num +" vs " + constants.MAX_MINER_NUM);
+        //console.log(mom_miner_num +" vs " + constants.MAX_MINER_NUM);
     }
     //if (_.filter(Game.creeps, (creep) => creep.memory.role == "Scout").length < 0) {
     //    spawn_machine.spawnScout();
@@ -73,16 +77,6 @@ console.log(base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONT
 
     
     _.forEach(Game.creeps, (creep) => {
-        /*
-        switch(creep.memory.role){
-            case "Worker" :
-            creep.memory.role = constants.Role.WORKER; 
-                break; 
-            case "Miner" : 
-            creep.memory.role = constants.Role.MINER;
-                break;
-            
-        }*/
         
         if (creep.memory.role != constants.Role.ARCHER) {
             const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);

@@ -8,7 +8,7 @@
  */
 var base = require('Base');
 var constants = require('Constants');
-const giveup_time = 150;//TODO : move to constants
+const giveup_time = 250;//TODO : move to constants
  
 function State(func){
     this.func = func;

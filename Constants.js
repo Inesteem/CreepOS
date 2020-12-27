@@ -1,9 +1,9 @@
-const MAX_WORKER_NUM = 10;
+const MAX_WORKER_NUM = 7;
 const MAX_MINER_NUM = 4;
 
 
 //ticks after which a specific path is recalculated
-const PATH_REUSE_TICKS = 1;
+const PATH_REUSE_TICKS = 20;
 
 //TODO:give up time
 
@@ -14,7 +14,7 @@ const PATH_REUSE_TICKS = 1;
 //overall construction sites that can be scheduled at the
 //same time 
 const PARALLEL_CONSTRUCTION_SITE_BUILD_NUM = 5;
-const PARALLEL_ROAD_BUILD_NUM = 5;
+const PARALLEL_ROAD_BUILD_NUM = 1;
 const PARALLEL_EXTENSION_BUILD_NUM = 1;
 const PARALLEL_CONTAINER_BUILD_NUM = 1;
 
@@ -23,10 +23,10 @@ const PARALLEL_CONTAINER_BUILD_NUM = 1;
 
 //number of ticks required to determine the next road 
 //construction sites
-const AUTOMATIC_ROAD_BUILD_TICKS = 500;
+const AUTOMATIC_ROAD_BUILD_TICKS = 1000;
 //number of road construction sites that are defined
 //at the same time
-const AUTOMATIC_ROAD_BUILD_NUM = 3;
+const AUTOMATIC_ROAD_BUILD_NUM = 1;
 
 const Role = {
   MINER: 1,

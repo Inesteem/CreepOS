@@ -1,3 +1,12 @@
+function handlePossibleRespawn() {
+    if (Memory.main_spawn && Memory.main_spawn != Game.spawns['Spawn1'].pos &&
+        Game.creeps.length == 0) {
+        Memory = {};
+        Memory.tasks = [];
+    }
+    Memory.main_spawn = Game.spawns['Spawn1'].pos;
+}
+
 var getFreeStore = function(creep) {
     let storage  = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -52,7 +61,11 @@ var findNearestEnergySource = function(object) {
 }
 
 var getOurRooms = function() {
-    return _.filter(Game.flags, (flag) => flag.room).map((flag) => flag.room);
+    let rooms = _.filter(Game.flags, (flag) => flag.room).map((flag) => flag.room);
+    if (!rooms.length) {
+        console.log("No rooms found. Did you forget to set the flag?");
+    }
+    return rooms;
 }
 
 var getUnclaimedFlags = function() {
@@ -69,4 +82,5 @@ module.exports = {
     getTowers: getTowers,
     getNoOwnerStructures: getNoOwnerStructures,
     findCreeps: findCreeps,
+    handlePossibleRespawn: handlePossibleRespawn,
 };
