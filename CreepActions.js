@@ -67,13 +67,17 @@ Creep.prototype.moveToRoom = function(flag) {
     return true;
 }
 
-
+Creep.prototype.activateSafeMode = function(room) {
+    if(this.generateSafeMode(room.controller) == ERR_NOT_IN_RANGE) {
+        this.moveTo(room.controller, {reusePath: constants.PATH_REUSE_TICKS});
+    }
+}
 
 
 Creep.prototype.fight = function(target) {
     if(target) {
         if(this.attack(target) == ERR_NOT_IN_RANGE) {
-            this.moveTo(target,  {visualizePathStyle: {stroke: '#ff0000'}, reusePath: path});
+            this.moveTo(target,  {visualizePathStyle: {stroke: '#ff0000'}, reusePath: constants.PATH_REUSE_TICKS});
         }
     }
 }
@@ -82,7 +86,7 @@ Creep.prototype.shoot = function(target) {
     //const target = this.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
     if(target) {
         if(this.rangedAttack(target) == ERR_NOT_IN_RANGE) {
-            this.moveTo(target, {visualizePathStyle: {stroke: '#ff0000'}, reusePath: path});
+            this.moveTo(target, {visualizePathStyle: {stroke: '#ff0000'}, reusePath: constants.PATH_REUSE_TICKS});
         }
     }
 }

@@ -56,6 +56,27 @@ function findCreeps(filter) {
     return _.filter(Game.creeps, (creep) => filter(creep));
 }
 
+/**
+ * @param {Array<Room>} rooms The rooms to search.
+ * @param {Creep -> bool} filter The filter to apply when searching for enemy creeps.
+ * @return {Array<Creep>} All enemies in the given rooms matching filter.
+ */
+function findEnemyCreeps(rooms, filter) {
+    let enemies = [];
+    
+    rooms.forEach(room => {
+        const room_enemies =
+       enemies = enemies.concat(room.find(FIND_HOSTILE_CREEPS, {
+            filter: function(object) {
+                return object.getActiveBodyparts(ATTACK) || filter(object) ||
+                    object.getActiveBodyparts(RANGED_ATTACK);
+            }
+       }));
+    });
+    
+    return enemies;
+}
+
 function numCreeps(filter) {
     return _.filter(Game.creeps, (creep) => filter(creep)).length;
 }
@@ -87,4 +108,5 @@ module.exports = {
     getNoOwnerStructures: getNoOwnerStructures,
     findCreeps: findCreeps,
     handlePossibleRespawn: handlePossibleRespawn,
+    findEnemyCreeps: findEnemyCreeps,
 };

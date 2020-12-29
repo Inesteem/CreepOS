@@ -196,7 +196,6 @@ function createCollectDroppedEnergyTasks() {
     }
 }
 
-
 module.exports = {
     redefineTaskMapping : redefineTaskMapping,
     createBuildTasks: createBuildTasks,

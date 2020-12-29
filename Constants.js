@@ -1,4 +1,4 @@
-const MAX_WORKER_NUM = 6;
+const MAX_WORKER_NUM = 3;
 const MAX_MINER_NUM = 4;
 
 
@@ -13,7 +13,7 @@ const PATH_REUSE_TICKS = 20;
 
 //overall construction sites that can be scheduled at the
 //same time 
-const PARALLEL_CONSTRUCTION_SITE_BUILD_NUM = 5;
+const PARALLEL_CONSTRUCTION_SITE_BUILD_NUM = 1;
 const PARALLEL_ROAD_BUILD_NUM = 1;
 const PARALLEL_EXTENSION_BUILD_NUM = 1;
 const PARALLEL_CONTAINER_BUILD_NUM = 1;

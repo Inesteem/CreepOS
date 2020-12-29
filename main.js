@@ -2,7 +2,7 @@ var creep_actions = require("CreepActions");
 var task = require("Task");
 var spawn_machine = require("SpawnMachine");
 var task_machine = require("TaskMachine");
-var attack = require("Attack");
+var defense = require("Defense");
 var build_machine = require("BuildMachine");
 var tower = require("Tower");
 var base = require("Base");
@@ -67,14 +67,8 @@ module.exports.loop = function () {
     //    spawn_machine.spawnScout();
     //}
     
-    // UNSAFE: NOT MULTIY ROOM COMPATIBLE
-    const targets = Game.spawns['Spawn1'].room.find(FIND_HOSTILE_CREEPS);
-    if (targets.length) {
-        if (_.filter(Game.creeps, (creep) => creep.memory.role == constants.Role.ARCHER).length < 2) {
-            spawn_machine.spawnArcher();
-        }
-    }
-
+    defense.monitor();
+    
     
     _.forEach(Game.creeps, (creep) => {
         
@@ -102,7 +96,7 @@ module.exports.loop = function () {
             }
         } else if (creep.memory.role == constants.Role.ARCHER) {
             //UNSAFE
-            if (!attack.kite(creep)) {
+            if (!defense.kite(creep)) {
                 creep.moveTo(Game.flags["Flag1"].pos);
             }
         } else {
