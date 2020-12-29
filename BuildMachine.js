@@ -38,7 +38,7 @@ function road_build_ratio(room) {
             filter: (structure) => structure.structureType == STRUCTURE_ROAD
     }).length;
     let x = ((num_roads+1)/max_road_number(room));
-    let y = x*x*x*x*x*x;
+    let y = x*x*x;
     return y;
 }
 

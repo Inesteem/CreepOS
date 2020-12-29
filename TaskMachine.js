@@ -25,7 +25,8 @@ var redefineTaskMapping = function() {
 }
  
 var createEnergyReqTask = function(task, target) {
-    let store = base.findNearestEnergyStored(target);
+    Memory.tasks.push(task);
+    /*let store = base.findNearestEnergyStored(target);
         
     if (store) {
         task.store_id = store.id;
@@ -36,7 +37,7 @@ var createEnergyReqTask = function(task, target) {
             task.source_id = source.id;
             Memory.tasks.push(task);
         }
-    }
+    }*/
 }
  
 var createBuildTasks = function(){

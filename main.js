@@ -108,8 +108,8 @@ module.exports.loop = function () {
         } else {
             if (!creep.memory.task) {
                 creep.memory.task = getNextTask(creep);
-                if (creep.memory.old_task)
-                    creep.say(creep.memory.ticks + creep.memory.old_task.name);
+                //if (creep.memory.old_task)
+                    //creep.say(creep.memory.ticks + creep.memory.old_task.name);
                 creep.memory.ticks = 0;
             }
             if (creep.memory.task) {
@@ -135,6 +135,27 @@ function increasePriorities() {
     });
 }
 
+// Finds the closest energy source for the task if one is needed at all.
+// Returns null if no energy is required.
+// Returns the energy target object in the form {source_id: id} or {target_id: id}
+function getEnergyForTask(creep, task) {
+    let result = {task: {}, object: null};
+    if (creep.store[RESOURCE_ENERGY] < creep.store.getCapacity()/2) {
+        let store = base.findNearestEnergyStored(creep.pos);
+        if (store) {
+            result = {task: {store_id: store.id}, object: store};
+        } else {
+            
+        console.log(JSON.stringify(creep.pos));
+            let source = base.findNearestEnergySource(creep.pos);
+            if (source) {
+                result = {task: {source_id: source.id}, object: source};
+            }
+        }
+    }
+    return result;
+}
+
 function getPath(creep, task){
     let first_target = null;
     let second_target = null;
@@ -150,25 +171,26 @@ function getPath(creep, task){
             if (task.controller_id) {
                 second_target = Game.getObjectById(task.controller_id);
             }
-            
-            if (task.store_id) {
-                first_target = Game.getObjectById(task.store_id);
-            } else if (task.source_id) { // source_id
-                first_target = Game.getObjectById(task.source_id);
-            }
     }
-    if (!first_target || !second_target) return 0;
-    return creep.pos.findPathTo(first_target.pos).length +
-        first_target.pos.findPathTo(second_target.pos).length;
+    if (!second_target) return 0;
+    
+    first_target = getEnergyForTask(creep, task).object;
+    
+    if (first_target)
+        return creep.pos.findPathTo(first_target.pos).length +
+            first_target.pos.findPathTo(second_target.pos).length;
+
+    return creep.pos.findPathTo(second_target.pos).length;
 }
 
 function getNextTask(creep) {
     //console.log("Finding task");
-    let task_idx = -1;
+    let task_idx = -1
     let max_priority = -1;
     let path = 0;
     for (let i = 0; i < Memory.tasks.length; i++) {
-        let path_cost = getPath(creep, Memory.tasks[i]) + 1;
+        let task = Memory.tasks[i];
+        let path_cost = getPath(creep, task) + 1;
         
         //console.log("task name: " + Memory.tasks[i].name);
         //console.log("path cost: " + path_cost);
@@ -176,7 +198,7 @@ function getNextTask(creep) {
         //console.log("calc priority: " + Memory.tasks[i].priority / path_cost);
         
         //console.log("current best priority: "+ max_priority);
-        let current_priority = Memory.tasks[i].priority / path_cost;
+        let current_priority = task.priority / path_cost;
         if (current_priority > max_priority) {
            task_idx = i;
            max_priority = current_priority;
@@ -188,7 +210,11 @@ function getNextTask(creep) {
    // console.log("Deleting: " + task_idx);
 //    console.log("priority: " + max_priority);
     
-    return Memory.tasks.splice(task_idx, 1)[0];
+    let task = Memory.tasks.splice(task_idx, 1)[0];
+    
+    task = Object.assign(task, getEnergyForTask(creep, task).task);
+    
+    return task;
 }
 
 

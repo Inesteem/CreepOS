@@ -4,6 +4,7 @@ function handlePossibleRespawn() {
         Memory = {};
         Memory.tasks = [];
     }
+    if (!Memory.tasks) Memory.tasks = [];
     Memory.main_spawn = Game.spawns['Spawn1'].pos;
 }
 
@@ -18,8 +19,11 @@ var getFreeStore = function(creep) {
     return storage;
 }
 
-var findNearestEnergyStored = function(object) {
-    let store = object.pos.findClosestByPath(FIND_STRUCTURES, {
+var findNearestEnergyStored = function(position) {
+    if (!position) {
+        console.log("Called findNearestEnergyStored with underfined position.");
+    }
+    let store = position.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
                 return (structure.structureType == STRUCTURE_STORAGE ||
                     structure.structureType == STRUCTURE_CONTAINER) &&
@@ -56,8 +60,8 @@ function numCreeps(filter) {
     return _.filter(Game.creeps, (creep) => filter(creep)).length;
 }
 
-var findNearestEnergySource = function(object) {
-    return object.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+var findNearestEnergySource = function(position) {
+    return position.findClosestByPath(FIND_SOURCES_ACTIVE);
 }
 
 var getOurRooms = function() {
