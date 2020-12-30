@@ -24,22 +24,6 @@ var redefineTaskMapping = function() {
     
 }
  
-var createEnergyReqTask = function(task, target) {
-    Memory.tasks.push(task);
-    /*let store = base.findNearestEnergyStored(target);
-        
-    if (store) {
-        task.store_id = store.id;
-        Memory.tasks.push(task);
-    } else {
-        let source = base.findNearestEnergySource(target);
-        if (source) {
-            task.source_id = source.id;
-            Memory.tasks.push(task);
-        }
-    }*/
-}
- 
 var createBuildTasks = function(){
     let structures = [];
     let rooms = base.getOurRooms();
@@ -49,7 +33,24 @@ var createBuildTasks = function(){
     });
     structures.sort((a, b) => b.progress - a.progress);
     
+    // Update the new task map.
+    Memory.new_tasks = Memory.new_tasks || {};
+    Memory.new_tasks.build = Memory.new_tasks.build || [];
+    for (let structure of structures) {
+        if (!Memory.new_tasks.build.find(build_task => build_task.id == structure.id)) {
+            Memory.new_tasks.build.push({id: structure.id});
+        }
+    }
+    for (let i = 0; i < Memory.new_tasks.build.length; i++) {
+        let build_task = Memory.new_tasks.build[i];
+        let structure = Game.getObjectById(build_task.id);
+        if (!structure) {
+            Memory.new_tasks.build.splice(i, 1);
+            i--;
+        }
+    }
     
+    // Fill the old task array
     let roads = [structures.filter(s => s.structureType == STRUCTURE_ROAD),
                     constants.PARALLEL_ROAD_BUILD_NUM];
     let extensions = [structures.filter(s => s.structureType == STRUCTURE_EXTENSION),
@@ -67,10 +68,11 @@ var createBuildTasks = function(){
         
         for (let i = 0; i < Math.min(builds[0].length, builds[1]); i++){
             if(c_sites >= constants.PARALLEL_CONSTRUCTION_SITE_BUILD_NUM){break;}
-            createEnergyReqTask({ name: "build",
+            Memory.tasks.push({ 
+                name: "build",
                 structure_id: builds[0][i].id,
                 priority: 0,
-            }, builds[0][i]);
+            });
             c_sites += 1;
         }
     });
@@ -88,10 +90,11 @@ var createRepairTasks = function() {
     structures.sort((a, b) => a.hits - b.hits);
         
     if(structures.length){
-        createEnergyReqTask({ name: "repair",
+        Memory.tasks.push({ 
+            name: "repair",
             structure_id: structures[0].id,
             priority: 0,
-        }, structures[0]);
+        });
     }
 }
 
@@ -109,10 +112,10 @@ var createFillSpawnTasks = function() {
     });
     
     if(structures.length){
-        createEnergyReqTask({ name: "fill_structure",
+        Memory.tasks.push({ name: "fill_structure",
             structure_id: structures[0].id,
             priority: 0,
-        }, structures[0]);
+        });
     }
 }
 
@@ -130,10 +133,10 @@ var createFillExtensionTasks = function() {
     });
     
     structures.forEach(structure => {
-        createEnergyReqTask({ name: "fill_structure",
+        Memory.tasks.push({ name: "fill_structure",
             structure_id: structure.id,
             priority: 0,
-        }, structure);
+        });
     })
 }
 
@@ -146,10 +149,10 @@ var createUpgradeTasks = function() {
     });
     
     if (controller.length) {
-        createEnergyReqTask({ name: "upgrade",
+        Memory.tasks.push({ name: "upgrade",
             controller_id: controller[0].id,
             priority: 0,
-        }, controller[0]);
+        });
     }
 }
 
@@ -167,10 +170,10 @@ function createFillTowerTasks() {
     });
     
     towers.forEach(tower => {
-        createEnergyReqTask({ name: "fill_structure",
+        Memory.tasks.push({ name: "fill_structure",
             structure_id: tower.id,
             priority: 0,
-        }, tower);
+        });
     })
 }
 

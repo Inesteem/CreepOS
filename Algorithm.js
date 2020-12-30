@@ -39,8 +39,10 @@ function findInBetween(posA, posC, room, cond) {
     return null;
 }
 
-// Only call this on walkable positions.
 function getCosts(pos, room) {
+    if (!walkable(pos, room)) {
+        return Infinity;
+    }
     pos = new RoomPosition(pos.x, pos.y, room.name);
     let costs = 2;
     let terrain = pos.lookFor(LOOK_TERRAIN);

@@ -1,4 +1,4 @@
-const MAX_WORKER_NUM = 3;
+const MAX_WORKER_NUM = 12;
 const MAX_MINER_NUM = 4;
 
 
@@ -34,6 +34,7 @@ const Role = {
   ARCHER: 4,
   SCOUT: 5,
 };
+
 
 module.exports = {
     MAX_WORKER_NUM : MAX_WORKER_NUM,
