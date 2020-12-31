@@ -9,6 +9,7 @@
 var task = require("Task");
 var base = require("Base");
 var constants = require("Constants");
+var log = require("Logging");
  
 var redefineTaskMapping = function() {
     
@@ -34,11 +35,10 @@ var createBuildTasks = function(){
     structures.sort((a, b) => b.progress - a.progress);
     
     // Update the new task map.
-    Memory.new_tasks = Memory.new_tasks || {};
     Memory.new_tasks.build = Memory.new_tasks.build || [];
     for (let structure of structures) {
         if (!Memory.new_tasks.build.find(build_task => build_task.id == structure.id)) {
-            Memory.new_tasks.build.push({id: structure.id});
+            Memory.new_tasks.build.push({id: structure.id, priority: 10, name: "build", base_priority: 20});
         }
     }
     for (let i = 0; i < Memory.new_tasks.build.length; i++) {
@@ -49,6 +49,8 @@ var createBuildTasks = function(){
             i--;
         }
     }
+    log.info("Build tasks: ", Memory.new_tasks.build);
+    
     
     // Fill the old task array
     let roads = [structures.filter(s => s.structureType == STRUCTURE_ROAD),
@@ -89,6 +91,24 @@ var createRepairTasks = function() {
     });
     structures.sort((a, b) => a.hits - b.hits);
         
+    // Update the new task map
+     Memory.new_tasks.repair = Memory.new_tasks.repair || [];
+    for (let structure of structures) {
+        if (!Memory.new_tasks.repair.find(repair_task => repair_task.id == structure.id)) {
+            Memory.new_tasks.repair.push({id: structure.id, priority: 0, name:"repair", basePriority: 0});
+        }
+    }
+    for (let i = 0; i < Memory.new_tasks.repair.length; i++) {
+        let repair_task = Memory.new_tasks.repair[i];
+        let structure = Game.getObjectById(repair_task.id);
+        if (!structure || structure.hits == structure.hitsMax) {
+            Memory.new_tasks.repair.splice(i, 1);
+            i--;
+        }
+    }
+    log.info("Repair tasks: ", Memory.new_tasks.repair);
+        
+    // Fill the old tasks
     if(structures.length){
         Memory.tasks.push({ 
             name: "repair",
@@ -111,6 +131,24 @@ var createFillSpawnTasks = function() {
         }));
     });
     
+    // Update the new task map
+    Memory.new_tasks.fill = Memory.new_tasks.fill || [];
+    for (let structure of structures) {
+        if (!Memory.new_tasks.fill.find(fill_task => fill_task.id == structure.id)) {
+            Memory.new_tasks.fill.push({id: structure.id, priority: 100, name:"fill_structure", base_priority: 100});
+        }
+    }
+    for (let i = 0; i < Memory.new_tasks.fill.length; i++) {
+        let fill_task = Memory.new_tasks.fill[i];
+        let structure = Game.getObjectById(fill_task.id);
+        if (!structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+            Memory.new_tasks.fill.splice(i, 1);
+            i--;
+        }
+    }
+    log.info("Fill tasks: ", Memory.new_tasks.fill);
+    
+    // Fill the old tasks
     if(structures.length){
         Memory.tasks.push({ name: "fill_structure",
             structure_id: structures[0].id,
@@ -132,6 +170,25 @@ var createFillExtensionTasks = function() {
         }));
     });
     
+    // Update the new task map
+    Memory.new_tasks.fill = Memory.new_tasks.fill || [];
+    for (let structure of structures) {
+        if (!Memory.new_tasks.fill.find(fill_task => fill_task.id == structure.id)) {
+            Memory.new_tasks.fill.push({id: structure.id, priority: 90, name:"fill_structure", base_priority: 0});
+        }
+    }
+    for (let i = 0; i < Memory.new_tasks.fill.length; i++) {
+        let fill_task = Memory.new_tasks.fill[i];
+        let structure = Game.getObjectById(fill_task.id);
+        if (!structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+            Memory.new_tasks.fill.splice(i, 1);
+            i--;
+        }
+    }
+    log.info("Fill tasks: ", Memory.new_tasks.fill);
+    
+    // Fill the old tasks
+    
     structures.forEach(structure => {
         Memory.tasks.push({ name: "fill_structure",
             structure_id: structure.id,
@@ -148,6 +205,17 @@ var createUpgradeTasks = function() {
         controller.push(room.controller);
     });
     
+    // Update the new task map
+    Memory.new_tasks.upgrade = Memory.new_tasks.upgrade || [];
+    for (let structure of controller) {
+        if (!Memory.new_tasks.upgrade.find(controller_task => controller_task.id == structure.id)) {
+            Memory.new_tasks.upgrade.push({id: structure.id, priority: 0, name:"upgrade", base_priority: 0});
+        }
+    }
+    // TODO when to delete those tasks?
+    log.info("Upgrade tasks: ", Memory.new_tasks.upgrade);
+    
+    // Fill the old tasks
     if (controller.length) {
         Memory.tasks.push({ name: "upgrade",
             controller_id: controller[0].id,
@@ -168,7 +236,24 @@ function createFillTowerTasks() {
                 }
         }));
     });
+    // Update the new task map
+    Memory.new_tasks.fill = Memory.new_tasks.fill || [];
+    for (let structure of towers) {
+        if (!Memory.new_tasks.fill.find(fill_task => fill_task.id == structure.id)) {
+            Memory.new_tasks.fill.push({id: structure.id, priority: 50, name: "fill_structure", base_priority: 50});
+        }
+    }
+    for (let i = 0; i < Memory.new_tasks.fill.length; i++) {
+        let fill_task = Memory.new_tasks.fill[i];
+        let structure = Game.getObjectById(fill_task.id);
+        if (!structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+            Memory.new_tasks.fill.splice(i, 1);
+            i--;
+        }
+    }
+    log.info("Fill tasks: ", Memory.new_tasks.fill);
     
+    // Fill the old tasks
     towers.forEach(tower => {
         Memory.tasks.push({ name: "fill_structure",
             structure_id: tower.id,
@@ -177,6 +262,7 @@ function createFillTowerTasks() {
     })
 }
 
+// TODO change to new task format
 function createCollectDroppedEnergyTasks() {
     let rooms = base.getOurRooms();
     let dropped_energy = [];

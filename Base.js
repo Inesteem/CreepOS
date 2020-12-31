@@ -56,6 +56,10 @@ function getTowers(room, filter) {
 }
 
 function findCreeps(filter) {
+    if (typeof filter !== 'function') {
+        log.error("base.findCreeps: filter is not a function.");
+        return 0;
+    }
     return _.filter(Game.creeps, (creep) => filter(creep));
 }
 

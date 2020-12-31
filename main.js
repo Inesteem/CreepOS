@@ -31,8 +31,9 @@ module.exports.loop = function () {
     increasePriorities();
     build_machine.monitorBuildRoadTasks();
     tower.operateTowers();
+    Memory.new_tasks = Memory.new_tasks || {};
     //if(Memory.tasks.length < mom_worker_num + mom_miner_num) {
-     if (Memory.tasks.length < 10){
+     if (Game.time % 100 === 0){
         log.info("Refilling task queue.");
         //create fill spawn tasks depending on how many creeps are needed
         task_machine.createFillExtensionTasks();
@@ -122,6 +123,15 @@ function increasePriorities() {
     Memory.tasks.forEach((task) => {
         task.priority++;
     });
+    
+    for (let task_list_name in Memory.new_tasks) {
+        let task_list = Memory.new_tasks[task_list_name];
+        for (let task of task_list) {
+            if (task.hasOwnProperty('priority')) {
+                task.priority++;
+            }
+        }
+    }
 }
 
 // Finds the closest energy source for the task if one is needed at all.
@@ -171,10 +181,39 @@ function getPath(creep, task){
 }
 
 function getNextTask(creep) {
-    //console.log("Finding task");
-    let task_idx = -1
+    log.info("Finding task for creep ", creep);
+    
     let max_priority = -1;
+    let best_task = null;
+    
+    for (let task_type in Memory.new_tasks) {
+        let task_queue = Memory.new_tasks[task_type];
+        for (let task of task_queue) {
+            let path_cost = getPath(creep, task) + 1;
+            let current_priority = task.priority / path_cost;
+            if (current_priority > max_priority) {
+                max_priority = current_priority;
+                best_task = task;
+            }
+        }
+    }
+    
+    if (!best_task) return null;
+    
+    log.info("Taking task: ", best_task);
+    best_task.priority = best_task.base_priority;
+    
+    let task = {};
+    Object.assign(task, best_task);
+    Object.assign(task, getEnergyForTask(creep, task).task);
+    
+    return task;
+    
+    /*
+    let task_idx = -1
+    max_priority = -1;
     let path = 0;
+    
     for (let i = 0; i < Memory.tasks.length; i++) {
         let task = Memory.tasks[i];
         let path_cost = getPath(creep, task) + 1;
@@ -201,7 +240,7 @@ function getNextTask(creep) {
     
     task = Object.assign(task, getEnergyForTask(creep, task).task);
     
-    return task;
+    return task;*/
 }
 
 

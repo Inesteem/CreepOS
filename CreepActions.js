@@ -1,4 +1,5 @@
 var constants = require("Constants");
+var log = require("Logging");
 
 Creep.prototype.harvestClosest = function (){
     const target = this.pos.findClosestByPath(FIND_SOURCES_ACTIVE);

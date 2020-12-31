@@ -118,7 +118,7 @@ var upgradeController = function (creep){
         return false;
     }
     
-    let controller = Game.getObjectById(creep.memory.task.controller_id);
+    let controller = Game.getObjectById(creep.memory.task.id);
 
     if (!controller) return false;
 
@@ -133,7 +133,7 @@ var upgradeController = function (creep){
 
 
 var buildStructure = function (creep){
-    let structure = Game.getObjectById(creep.memory.task.structure_id);
+    let structure = Game.getObjectById(creep.memory.task.id);
     
     if(!structure){
         return false;
@@ -148,7 +148,7 @@ var buildStructure = function (creep){
 }
 
 var repairStructure = function (creep) {
-    let structure = Game.getObjectById(creep.memory.task.structure_id);
+    let structure = Game.getObjectById(creep.memory.task.id);
     
     if(!structure){
         return false;
@@ -164,7 +164,7 @@ var repairStructure = function (creep) {
 }
 
 var fillStructure = function (creep) {
-    const structure = Game.getObjectById(creep.memory.task.structure_id);
+    const structure = Game.getObjectById(creep.memory.task.id);
     
     if(!structure){
         return false;

@@ -8,6 +8,7 @@
  */
  
  var constants = require("Constants");
+ var log = require("Logging");
 
 var spawnCreep = function(){
     var newName = "Kevin" + Game.time;
@@ -86,6 +87,7 @@ function allowSpawn(body) {
     var num_creeps = _.filter(Game.creeps, (creep) => true).length;
     var max_cost = Game.spawns['Spawn1'].room.energyCapacityAvailable;
     var energy = Game.spawns['Spawn1'].room.energyAvailable;
+    log.info("spawn requires energy: ", Math.min(max_cost, num_creeps * num_creeps + 300), " we have ", energy);
     return energy >= Math.min(max_cost, num_creeps * num_creeps + 300);
 }
 
