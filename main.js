@@ -139,7 +139,7 @@ function increasePriorities() {
 // Returns the energy target object in the form {source_id: id} or {target_id: id}
 function getEnergyForTask(creep, task) {
     let result = {task: {}, object: null};
-    if (creep.store[RESOURCE_ENERGY] < creep.store.getCapacity()/2) {
+    if (creep.store[RESOURCE_ENERGY] == 0) {
         let store = base.findNearestEnergyStored(creep.pos);
         if (store) {
             result = {task: {store_id: store.id}, object: store};

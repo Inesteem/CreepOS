@@ -114,10 +114,6 @@ var takeFromStore = function(creep) {
 }
 
 var upgradeController = function (creep){
-    if (!creep.memory.task.controller_id) {
-        return false;
-    }
-    
     let controller = Game.getObjectById(creep.memory.task.id);
 
     if (!controller) return false;
