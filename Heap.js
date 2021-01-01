@@ -1,37 +1,45 @@
+function getMinHeap(){
+	return  new Heap((a,b) => {
+		if ((a-b) < 0) return -1;
+		else if ((a-b) === 0) return 0;
+		else return 1;
+	});
+}
 
 function swapElements(array, i1, i2) {
 	[ array[i1], array[i2] ] = [ array[i2], array[i1] ];
 }
 function leftHasHigherPriority(a,b,compare) {
 	let p = compare(a,b);
-	return p == -1;
+	return p === -1;
+}
+
+function isHeap(heap, idx) {
+	if (!heap.isValidIdx(idx)) return true;
+
+	let left_idx = heap.leftChildIdx(idx);
+	let right_idx = heap.rightChildIdx(idx);
+
+//	console.log(heap.elemAt(idx) + " " + heap.elemAt(left_idx) + " " + heap.elemAt(right_idx));
+	if (heap.isValidIdx(left_idx)) {
+		if (leftHasHigherPriority(heap.elemAt(left_idx), heap.elemAt(idx), heap.compare))
+			return false;
+		if (!isHeap(heap,left_idx)) return false;
+	}
+
+	if (heap.isValidIdx(right_idx)) {
+		if (leftHasHigherPriority(heap.elemAt(right_idx), heap.elemAt(idx), heap.compare))
+			return false;
+		return isHeap(heap,right_idx);
+	}
+
+	return true;
 }
 
 function Heap(compare) {
     this.array = [];
     this.compare = compare;
     
-}
-
-function isHeap(heap, idx) {
-	if (!heap.isValidIdx(idx)) return true;
-	
-	let left_idx = heap.leftChildIdx(idx);
-	let right_idx = heap.rightChildIdx(idx);
-	
-	if (heap.isValidIdx(left_idx)) {
-		if (leftHasHigherPriority(heap.elemAt(left_idx), heap.elemAt(idx), heap.compare)) 
-			return false;
-		if (!isHeap(heap,left_idx)) return false;
-	}
-	
-	if (heap.isValidIdx(right_idx)) {
-		if (leftHasHigherPriority(heap.elemAt(right_idx), heap.elemAt(idx), heap.compare)) 
-			return false;
-		return isHeap(heap,right_idx);
-	}
-	
-	return true;
 }
 
 Heap.prototype.elemAt = function(idx) {
@@ -75,15 +83,17 @@ Heap.prototype.isValidIdx = function(idx) {
 
 
 Heap.prototype.isEmpty = function() {
-	return this.array.length == 0;
+	return this.array.length === 0;
 }
 	
 Heap.prototype.pop = function() {
     if (this.isEmpty()) return -1;//TODO
     
     let ret = this.array[0];
-    this.array[0] = this.array.pop();
-    let n_idx = 0;
+    let new_top = this.array.pop();
+    if(this.isEmpty()) return ret;
+	this.array[0] = new_top;
+	let n_idx = 0;
     
     while (this.isValidIdx(n_idx)) {
         let left_idx = this.leftChildIdx(n_idx);
@@ -131,36 +141,12 @@ Heap.prototype.pop = function() {
 }
 
 Heap.prototype.peek = function() {
+	if (this.isEmpty()) return -1;
     return this.array[0];
-}
-
-//TODO: use console.assert
-function test() {
-	//min heap
-	let heap = new Heap((a,b) => {
-		if ((a-b) < 0) return -1; 
-		else if ((a-b) == 0) return 0; 
-		else return 1;
-		});
-		
-	let elements = [1,78,4,2,6,9,734,32,6,13,3,7,86,334,2,1,798];
-	
-	for (e in elements) {
-		heap.insert(e);
-	}
-	
-	console.log(JSON.stringify(heap.array));
-	heap.pop();
-	console.log(JSON.stringify(heap.array));
-	heap.pop();
-	console.log(JSON.stringify(heap.array));            
-
-	console.log(isHeap(heap, 0));
-	heap.array[5] = 143;
-  	console.log(isHeap(heap, 0));
-
 }
 
 module.exports = {
 	Heap : Heap,
+	isHeap : isHeap,
+	getMinHeap : getMinHeap,
 };
