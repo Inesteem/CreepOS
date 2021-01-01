@@ -14,7 +14,7 @@ StructureTower.prototype.repairClosest = function() {
             filter: object => object.hits && object.hits < object.hitsMax
     });
     
-    if (structure) {
+    if (structure && structure.structureType != STRUCTURE_WALL) {
         this.repair(structure);
     }
 }
