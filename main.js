@@ -19,14 +19,22 @@ var build_id = "building";
 
 
 module.exports.loop = function () {
+    /*
     let room = Game.spawns['Spawn1'].room;
     let posC = room.controller.pos;
     let posA = Game.spawns['Spawn1'].pos;
     let cond = function(pos) {
         return true;
     };
-    if (Game.time%10 == 0)
-    log.info(algorithm.findInBetween(posA, posC, room, cond));
+    if (Game.time%1 == 0) {
+        //let energyFunction = getHasEnergyFunction(room);
+        
+        //let cond = energyFunction.func;
+        //let type = energyFunction.type;
+        //log.warning(cond({x:14, y:41}));
+    }
+    */
+    //log.warning(algorithm.findInBetween(posA, posC, room, cond));}
     
     base.handlePossibleRespawn();
 
@@ -42,7 +50,7 @@ module.exports.loop = function () {
     tower.operateTowers();
     Memory.new_tasks = Memory.new_tasks || {};
     //if(Memory.tasks.length < mom_worker_num + mom_miner_num) {
-     if (Game.time % 100 === 0){
+     if (Game.time % 10 === 0){
          Memory.tasks = [];
         log.info("Refilling task queue.");
         //create fill spawn tasks depending on how many creeps are needed
@@ -144,20 +152,75 @@ function increasePriorities() {
     }
 }
 
+function getHasEnergyFunction(room) {
+    let stores = base.getStoresWithEnergy(room);
+    if (true) {
+        return {func: function(pos) {
+            let structures = room.lookForAtArea(LOOK_STRUCTURES,Math.max(0, pos.y -1), Math.max(0, pos.x -1), Math.min(49, pos.y + 1), Math.min(49, pos.x +1), true);
+            let result = false;
+            for (let structure of structures) {
+                if (structure.structure.structureType == STRUCTURE_CONTAINER) {
+                    result = result || structure.structure.store[RESOURCE_ENERGY] > 0;
+                }
+            }
+            return result;
+        }, type: 'store_id'};
+    } else {
+        return {func: function(pos) {
+            let sources = room.lookForAtArea( LOOK_SOURCES, Math.max(0, pos.y -1), Math.max(0, pos.x -1), Math.min(49, pos.y + 1), Math.min(49, pos.x +1), true);
+            for (let source of sources) {
+                if (source.energy > 0) {
+                    return true;
+                }
+            }
+            return false;
+        }, type: 'source_id'};
+    }
+}
+
 // Finds the closest energy source for the task if one is needed at all.
 // Returns null if no energy is required.
 // Returns the energy target object in the form {source_id: id} or {target_id: id}
 function getEnergyForTask(creep, task) {
-    let result = {task: {}, object: null};
-    if (creep.store[RESOURCE_ENERGY] == 0) {
-        let store = base.findNearestEnergyStored(creep.pos);
-        if (store) {
-            result = {task: {store_id: store.id}, object: store};
-        } else {
-            let source = base.findNearestEnergySource(creep.pos);
-            if (source) {
-                result = {task: {source_id: source.id}, object: source};
+    if (creep.store[RESOURCE_ENERGY]) return {};
+    let target = null;
+    switch (task.name) {
+        case "repair":
+        case "build":
+        case "fill_structure":
+            if (task.id) {
+                target = Game.getObjectById(task.id);
             }
+        case "upgrade":
+            if (task.id) {
+                target = Game.getObjectById(task.id);
+            }
+    }
+    
+    if (!target) return {};
+    
+    let energy_function = getHasEnergyFunction(creep.room);
+    let cond = energy_function.func;
+    let type = energy_function.type;
+    
+    //log.info(creep.pos, target.pos, creep.room, cond);
+    let energy_coords = algorithm.findInBetween(creep.pos, target.pos, creep.room, cond);
+    
+    if (!energy_coords) return {};
+    
+    let energy_position = new RoomPosition(energy_coords.x, energy_coords.y, creep.room.name);
+    log.error(energy_position);
+    
+    let energy_container = base.getAdjacentContainer(energy_position, (container) => container.store[RESOURCE_ENERGY] > 0);
+    log.error(energy_container);
+    
+    let result = {};
+    if (energy_container) {
+        result = {task: {store_id: energy_container.id}, object: energy_container};
+    } else {
+        let source = base.getAdjacentSource(energy_position, (source) => source.energy > 0);
+        if (source) {
+            result = {task: {source_id: source.id}, object: source};
         }
     }
     return result;
@@ -166,16 +229,15 @@ function getEnergyForTask(creep, task) {
 function getPath(creep, task){
     let first_target = null;
     let second_target = null;
-    //console.log(JSON.stringify(task));
     switch (task.name) {
         case "repair":
         case "build":
         case "fill_structure":
-            if (task.structure_id) {
+            if (task.id) {
                 second_target = Game.getObjectById(task.structure_id);
             }
         case "upgrade":
-            if (task.controller_id) {
+            if (task.id) {
                 second_target = Game.getObjectById(task.controller_id);
             }
     }

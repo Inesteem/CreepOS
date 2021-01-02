@@ -20,22 +20,25 @@ function findInBetween(posA, posC, room, cond) {
             vis[i][j] = {'visA': 1e18, 'visC': 1e18};
         }
     }
-    let todo = new heap.Heap((a, b) => a.path - b.path);
-    todo.insert({path: 0, pos: posA, type: 'visA'});
-    todo.insert({path: 0, pos: posC, type: 'visC'});
+    let todo = new heap.Heap((a, b) => a.path + a.estimate - (b.path + b.estimate));
+    todo.insert({path: 0, pos: posA, type: 'visA', estimate: estimateRemainingPath(posA, posC, room, posA, 'visA')});
+    todo.insert({path: 0, pos: posC, type: 'visC', estimate: estimateRemainingPath(posA, posC, room, posC, 'visC')});
+    let k = 0;
     while (!todo.isEmpty()) {
+        ++k;
         let current = todo.pop();
-        if (current.path >= best_path) {
+        new RoomVisual(room.name).rect(current.pos.x, current.pos.y, 1, 1, {fill: (current.type === 'visA' ? '#0f0' : '#f00')});
+        if (current.path + current.estimate >= best_path) {
+            if (best_path >= 1e18) {
+                log.warning("No path found!")
+                return null;
+            }
             return best_pos;
         }
         
-        if (vis[current.pos.y][current.pos.x][current.type] <= current.path) {
+        if (vis[current.pos.y][current.pos.x][current.type] < current.path) {
             continue;
         }
-        if (current.path == 0) {
-            log.info(current);
-        }
-        vis[current.pos.y][current.pos.x][current.type] = current.path;
         if (cond(current.pos)) {
             let new_result = vis[current.pos.y][current.pos.x]['visA'] +
                         vis[current.pos.y][current.pos.x]['visC'];
@@ -47,13 +50,28 @@ function findInBetween(posA, posC, room, cond) {
         let next_pos = getNextPositions(current, room);
         next_pos.forEach(pos => {
             let path = current.path + getCosts(pos, room);
-            if (path < vis[pos.y][pos.x][current.type]) {
-                todo.insert({path: current.path + getCosts(pos, room), pos: pos, type: current.type});
+            let estimate = estimateRemainingPath(posA, posC, room, pos, current.type);
+            if (path + estimate < best_path && path < vis[pos.y][pos.x][current.type]) {
+                vis[pos.y][pos.x][current.type] = path;
+                todo.insert({path: current.path + getCosts(pos, room), pos: pos, type: current.type,
+                    estimate: estimate});
             }
         });
     }
-    console.log("no path found!");
+    log.warning("No path found!");
     return null;
+}
+
+function estimateRemainingPath(posA, posC, room, currentPos, type) {
+    if (type === 'visA') {
+        let dx = Math.abs(currentPos.x - posC.x);
+        let dy = Math.abs(currentPos.y - posC.y);
+        return Math.max(dx, dy);
+    } else {
+        let dx = Math.abs(currentPos.x - posA.x);
+        let dy = Math.abs(currentPos.y - posA.y);
+        return Math.max(dx, dy);
+    }
 }
 
 function getCosts(pos, room) {
