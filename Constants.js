@@ -1,4 +1,4 @@
-const MAX_WORKER_NUM = 12;
+const MAX_WORKER_NUM = 8;
 const MAX_MINER_NUM = 4;
 
 

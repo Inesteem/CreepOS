@@ -53,7 +53,7 @@ function operateTowers() {
     });
     
     towers.forEach(tower => {
-        if (!tower.attackClosest()) {
+        if (tower.room.controller.safeMode || !tower.attackClosest()) {
             if (!tower.healClosest()) {
                 tower.repairClosest();
             }

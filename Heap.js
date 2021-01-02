@@ -11,7 +11,7 @@ function swapElements(array, i1, i2) {
 }
 function leftHasHigherPriority(a,b,compare) {
 	let p = compare(a,b);
-	return p === -1;
+	return p < 0;
 }
 
 function isHeap(heap, idx) {

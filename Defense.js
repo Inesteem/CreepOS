@@ -7,6 +7,8 @@
  * mod.thing == 'a thing'; // true
  */
 var base = require("Base");
+var constants = require("Constants");
+var spawn_machine = require("SpawnMachine");
 
 // Detects whether safe mode needs to be activated in any of our rooms and activates it.
 // If a room has enemies but no safe mode, spawns defenders.
@@ -18,7 +20,8 @@ function monitor() {
         if (!room.controller.safeMode && room.controller.safeModeAvailable) {
             room.controller.activateSafeMode();
         }
-        else if (_.filter(Game.creeps, (creep) => creep.memory.role == constants.Role.ARCHER).length < 2) {
+        else if (!room.controller.safeMode &&
+            _.filter(Game.creeps, (creep) => creep.memory.role == constants.Role.ARCHER).length < 2) {
             spawn_machine.spawnArcher();
         }
     }

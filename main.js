@@ -19,6 +19,15 @@ var build_id = "building";
 
 
 module.exports.loop = function () {
+    let room = Game.spawns['Spawn1'].room;
+    let posC = room.controller.pos;
+    let posA = Game.spawns['Spawn1'].pos;
+    let cond = function(pos) {
+        return true;
+    };
+    if (Game.time%10 == 0)
+    log.info(algorithm.findInBetween(posA, posC, room, cond));
+    
     base.handlePossibleRespawn();
 
     var mom_worker_num = base.numCreeps((creep) => creep.memory.role == constants.Role.WORKER);
@@ -34,6 +43,7 @@ module.exports.loop = function () {
     Memory.new_tasks = Memory.new_tasks || {};
     //if(Memory.tasks.length < mom_worker_num + mom_miner_num) {
      if (Game.time % 100 === 0){
+         Memory.tasks = [];
         log.info("Refilling task queue.");
         //create fill spawn tasks depending on how many creeps are needed
         task_machine.createFillExtensionTasks();
@@ -69,7 +79,7 @@ module.exports.loop = function () {
     
     _.forEach(Game.creeps, (creep) => {
         
-        if (creep.memory.role != constants.Role.ARCHER) {
+        if (!creep.room.controller.safeMode && creep.memory.role != constants.Role.ARCHER) {
             const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);
             if(targets.length > 0) {
                 creep.moveAwayFrom(targets[0], 3);
