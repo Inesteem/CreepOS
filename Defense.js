@@ -17,7 +17,9 @@ function monitor() {
     const enemies = base.findEnemyCreeps(rooms, (creep) => true);
     for (let enemy of enemies) {
         let room = enemy.room;
-        if (!room.controller.safeMode && room.controller.safeModeAvailable) {
+        if (!room.controller.safeMode
+                && !room.controller.safeModeCooldown
+                && room.controller.safeModeAvailable) {
             room.controller.activateSafeMode();
         }
         else if (!room.controller.safeMode &&

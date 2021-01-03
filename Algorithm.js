@@ -27,7 +27,7 @@ function findInBetween(posA, posC, room, cond) {
     while (!todo.isEmpty()) {
         ++k;
         let current = todo.pop();
-        new RoomVisual(room.name).rect(current.pos.x, current.pos.y, 1, 1, {fill: (current.type === 'visA' ? '#0f0' : '#f00')});
+        //new RoomVisual(room.name).rect(current.pos.x, current.pos.y, 1, 1, {fill: (current.type === 'visA' ? '#0f0' : '#f00')});
         if (current.path + current.estimate >= best_path) {
             if (best_path >= 1e18) {
                 log.warning("No path found!")
@@ -104,7 +104,9 @@ function walkable(pos, room){
     let result = true;
     let structures = room_position.lookFor(LOOK_STRUCTURES);
     structures.forEach(structure => {
-        if (structure.structureType !== "road" && structure.structureType !== "rampart") {
+        if (structure.structureType !== STRUCTURE_ROAD 
+            && structure.structureType !== STRUCTURE_RAMPART
+            && structure.structureType !== STRUCTURE_CONTAINER) {
             result = false;
             return;
         }

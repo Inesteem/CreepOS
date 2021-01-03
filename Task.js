@@ -8,6 +8,7 @@
  */
 var base = require('Base');
 var constants = require('Constants');
+var log = require("Logging");
 const giveup_time = 250;//TODO : move to constants
  
 function State(func){
@@ -245,6 +246,16 @@ collect_dropped_energy_task.state_array = [
     new State(collectDroppedEnergy),
 ];
 
+var task_mapping = {
+        'upgrade':                upgrade_controller_task,
+        'build':                  build_closest_task,
+        'fill_store':             fill_store_task,
+        'repair':                 repair_task,
+        'claim_room':             claim_room_task,
+        'fill_structure':         fill_structure_task,
+        'collect_dropped_energy': collect_dropped_energy_task, 
+    };
+
 module.exports = {
     Task:Task,
     upgrade_controller_task: upgrade_controller_task,
@@ -254,4 +265,5 @@ module.exports = {
     repair_task: repair_task,
     fill_structure_task: fill_structure_task,
     collect_dropped_energy_task : collect_dropped_energy_task,
+    task_mapping: task_mapping,
 };

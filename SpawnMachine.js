@@ -9,6 +9,24 @@
  
  var constants = require("Constants");
  var log = require("Logging");
+ var base = require("Base");
+ 
+function monitor() {
+    var mom_worker_num = base.numCreeps((creep) => creep.memory.role == constants.Role.WORKER);
+    var mom_miner_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.MINER);
+    // TODO archers are spawned by Defense module, is that a good idea?
+    var mom_archer_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.ARCHER);
+    
+    if (mom_worker_num < constants.MAX_WORKER_NUM) {
+        log.info("Attempting to spawn worker: " +mom_worker_num +" vs " + constants.MAX_WORKER_NUM);
+        spawnCreep();
+    }
+    else if (base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length > 0
+            && mom_miner_num < constants.MAX_MINER_NUM) {
+        spawnMiner();
+        log.info("Attempting to spawn miner: " + mom_miner_num +" vs " + constants.MAX_MINER_NUM);
+    }
+}
 
 var spawnCreep = function(){
     var newName = "Kevin" + Game.time;
@@ -103,5 +121,6 @@ module.exports = {
     spawnCreep : spawnCreep,
     spawnMiner : spawnMiner,
     spawnScout: spawnScout,
-    spawnArcher: spawnArcher
+    spawnArcher: spawnArcher,
+    monitor: monitor,
 };

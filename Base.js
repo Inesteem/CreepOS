@@ -1,38 +1,5 @@
 var log = require("Logging");
 
-function getAdjacentContainer(position, filter) {
-    let structures = getAdjacentStructures(position);
-    for (let structure of structures) {
-        if (structure.structure.structureType == STRUCTURE_CONTAINER && filter(structure.structure)) {
-            return structure.structure;
-        }
-    }
-    return null;
-}
-
-function getAdjacentSource(position, filter) {
-    let sources = Game.rooms[position.roomName]
-                    .lookForAtArea(LOOK_STRUCTURES,
-                        Math.max(0, position.y - 1), 
-                        Math.max(0, position.x - 1), 
-                        Math.min(49, position.y + 1), 
-                        Math.min(49, position.x + 1), true);
-    for (let source of sources) {
-        if (filter(source.source)) return source.source;
-    }
-    return null;
-}
-
-function getAdjacentStructures(position) {
-    return Game.rooms[position.roomName]
-                .lookForAtArea(LOOK_STRUCTURES,
-                    Math.max(0, position.y - 1), 
-                    Math.max(0, position.x - 1), 
-                    Math.min(49, position.y + 1), 
-                    Math.min(49, position.x + 1), true);
-}
-
-
 function getStoresWithEnergy(room) {
     let stores = room.find(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -165,7 +132,5 @@ module.exports = {
     findCreeps: findCreeps,
     handlePossibleRespawn: handlePossibleRespawn,
     findEnemyCreeps: findEnemyCreeps,
-    getStoresWithEnergy: getStoresWithEnergy,
-    getAdjacentContainer: getAdjacentContainer,
-    getAdjacentSource: getAdjacentSource,
+    getStoresWithEnergy,
 };
