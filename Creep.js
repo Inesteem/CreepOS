@@ -1,15 +1,5 @@
 var constants = require("Constants");
 var log = require("Logging");
-var task = require("Task");
-
-Creep.prototype.runTask = function(){
-    if (this.memory.task) {
-        ++this.memory.ticks;
-        task.task_mapping[this.memory.task.name].run(this);
-        return true;
-    }
-    return false;
-}
 
 Creep.prototype.harvestClosest = function (){
     const target = this.pos.findClosestByPath(FIND_SOURCES_ACTIVE);

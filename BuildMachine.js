@@ -28,8 +28,7 @@ function findPositionForContainer(source) {
 // ROAD BUILDING
 
 function max_road_number(room) {
-    return 0.8 * 
-        room.controller.level * room.controller.level * 
+    return 0.8 * room.controller.level * room.controller.level *
         base.numCreeps((creep) => true) *
         (base.getTowers(room, (tower) => true).length + 1);
 }

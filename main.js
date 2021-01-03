@@ -32,12 +32,12 @@ module.exports.loop = function () {
     
     Memory.new_tasks = Memory.new_tasks || {};
     if (Game.time % 10 === 0){
-        task_machine.refreshTasks();   
+        scheduler.updateTaskQueue();
     }
     
-    defense.monitor();
-    
     spawn_machine.monitor();
+    
+    defense.monitor();
     
     _.forEach(Game.creeps, (creep) => {
         
@@ -48,9 +48,7 @@ module.exports.loop = function () {
                 return;
             }
         }
-            if (!creep.runTask()) {
-                scheduler.assignTask(creep);
-            }
+        scheduler.runTask(creep);
     });
     //FREE MEMORY
     for(var name in Memory.creeps) {

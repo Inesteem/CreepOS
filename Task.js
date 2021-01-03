@@ -1,17 +1,15 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('Task');
- * mod.thing == 'a thing'; // true
- */
 var base = require('Base');
 var constants = require('Constants');
 var log = require("Logging");
+var algorithm = require("Algorithm");
+
 const giveup_time = 250;//TODO : move to constants
  
 function State(func){
+    if (typeof func !== 'function') {
+        log.error("Creating state without function!");
+        return;
+    }
     this.func = func;
 }
  
@@ -28,11 +26,8 @@ Task.prototype.run = function(creep) {
     }
     if (creep.memory.task.current_state >= this.state_array.length ||
             creep.memory.ticks > giveup_time) {
-        creep.memory.old_task = creep.memory.task;
-        creep.memory.task = null;
         return false;
     }
-    
     const result = this.state_array[creep.memory.task.current_state].func(creep);
     if (!result) {
         creep.memory.task.current_state++;
@@ -128,38 +123,6 @@ var upgradeController = function (creep){
     return true;
 }
 
-
-var buildStructure = function (creep){
-    let structure = Game.getObjectById(creep.memory.task.id);
-    
-    if(!structure){
-        return false;
-    }
-    
-    creep.buildStructure(structure);
-    
-    if (creep.store[RESOURCE_ENERGY] == 0) {
-        return false;
-    }
-    return true;
-}
-
-var repairStructure = function (creep) {
-    let structure = Game.getObjectById(creep.memory.task.id);
-    
-    if(!structure){
-        return false;
-    }
-    
-    creep.repairStructure(structure);
-    
-    if (creep.store[RESOURCE_ENERGY] == 0 ||
-            structure.hits == structure.hitsMax) {
-        return false;
-    }
-    return true;
-}
-
 var fillStructure = function (creep) {
     const structure = Game.getObjectById(creep.memory.task.id);
     
@@ -198,72 +161,97 @@ function collectDroppedEnergy(creep) {
     return true;
 }
 
-var claim_room_task = new Task("claim_room", null);
-
-claim_room_task.state_array = [
-    new State(claimRoom),    
-]
-
-var repair_task = new Task("repair", null);
-
-repair_task.state_array = [
-    new State(takeFromStore),
-    new State(repairStructure),
-]
-
-var fill_store_task = new Task("fill_store", null);
-
-fill_store_task.state_array = [
-    new State(harvestClosest),
-    new State(fillStore),
-]
-
-var upgrade_controller_task = new Task("upgrade", null);
-
-upgrade_controller_task.state_array = [
-    new State(takeFromStore),
-    new State(upgradeController),
-];
-
-var build_closest_task = new Task("build", null);
-
-build_closest_task.state_array = [
-    new State(takeFromStore),
-    new State(buildStructure),
-];
-
-var fill_structure_task = new Task("fill_structure", null);
-
-fill_structure_task.state_array = [
-    new State(takeFromStore),
-    new State(fillStructure)
-];
-
-
 var collect_dropped_energy_task = new Task("collect_dropped_energy", null);
 
 collect_dropped_energy_task.state_array = [
     new State(collectDroppedEnergy),
 ];
 
-var task_mapping = {
-        'upgrade':                upgrade_controller_task,
-        'build':                  build_closest_task,
-        'fill_store':             fill_store_task,
-        'repair':                 repair_task,
-        'claim_room':             claim_room_task,
-        'fill_structure':         fill_structure_task,
-        'collect_dropped_energy': collect_dropped_energy_task, 
-    };
+
+function getHasEnergyFunction(room) {
+    let stores = base.getStoresWithEnergy(room);
+    if (stores.length) {
+        return {func: function(pos) {
+            let structures = room.lookForAtArea(LOOK_STRUCTURES,Math.max(0, pos.y -1), Math.max(0, pos.x -1), Math.min(49, pos.y + 1), Math.min(49, pos.x +1), true);
+            let result = false;
+            for (let structure of structures) {
+                if (structure.structure.structureType == STRUCTURE_CONTAINER) {
+                    result = result || structure.structure.store[RESOURCE_ENERGY] > 0;
+                }
+            }
+            return result;
+        }, type: 'store_id'};
+    } else {
+        return {func: function(pos) {
+            let sources = room.lookForAtArea( LOOK_SOURCES, Math.max(0, pos.y -1), Math.max(0, pos.x -1), Math.min(49, pos.y + 1), Math.min(49, pos.x +1), true);
+            for (let source of sources) {
+                if (source.source.energy > 0) {
+                    return true;
+                }
+            }
+            return false;
+        }, type: 'source_id'};
+    }
+}
+
+// Finds the closest energy source for the task if one is needed at all.
+// Returns {} if no energy is required.
+// Returns the energy target object in the form {task: {source_id: id} or {store_id: id}, object: ... }
+function getEnergyForTask(creep, queue_task) {
+    if (creep.store[RESOURCE_ENERGY]) return {};
+    
+    let target = queue_task.id && Game.getObjectById(queue_task.id);
+    
+    if (!target) return {};
+    
+    let stores = base.getStoresWithEnergy(creep.room);
+    if (stores.length) {
+        let store = creep.pos.findClosestByPath(FIND_STRUCTURES,{
+            filter: (structure) => {
+                structure.structureType === STRUCTURE_CONTAINER && structure.store[RESOURCE_ENERGY] > 0
+            }
+        });
+        return {task: {store_id: strore.id}, object: store};
+    } else {
+        let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+        if (source)
+            return {task: {source_id: source.id}, obejct: source};
+    }
+    return {};
+    
+    /*
+    let energy_function = getHasEnergyFunction(creep.room);
+    let cond = energy_function.func;
+    let type = energy_function.type;
+    
+    let energy_coords = algorithm.findInBetween(creep.pos, target.pos, creep.room, cond);
+    if (!energy_coords) return {};
+    
+    let energy_position = new RoomPosition(energy_coords.x, energy_coords.y, creep.room.name);
+    
+    let energy_container = energy_position.getAdjacentContainer((container) => container.store[RESOURCE_ENERGY] > 0);
+    
+    let result = {};
+    if (energy_container) {
+        result = {task: {store_id: energy_container.id}, object: energy_container};
+    } else {
+        let source = energy_position.getAdjacentSource((source) => source.energy > 0);
+        if (source) {
+            result = {task: {source_id: source.id}, object: source};
+        }
+    }
+    return result; */
+}
 
 module.exports = {
     Task:Task,
-    upgrade_controller_task: upgrade_controller_task,
-    build_closest_task: build_closest_task,
-    fill_store_task: fill_store_task,
-    claim_room_task: claim_room_task,
-    repair_task: repair_task,
-    fill_structure_task: fill_structure_task,
+    State: State,
     collect_dropped_energy_task : collect_dropped_energy_task,
-    task_mapping: task_mapping,
+    takeFromStore: takeFromStore,
+    harvestClosest: harvestClosest,
+    fillStore: fillStore,
+    upgradeController: upgradeController,
+    fillStructure: fillStructure,
+    claimRoom: claimRoom,
+    getEnergyForTask: getEnergyForTask,
 };
