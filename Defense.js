@@ -14,8 +14,9 @@ var spawn_machine = require("SpawnMachine");
 // If a room has enemies but no safe mode, spawns defenders.
 function monitor() {
     const rooms = base.getOurRooms();
-    const enemies = base.findEnemyCreeps(rooms, (creep) => true);
-    for (let enemy of enemies) {
+    const enemies = Game.findAllHostileCreeps();
+    //const enemies = base.findEnemyCreeps(rooms, (creep) => true);
+    for (let enemy of enemies.all) {
         let room = enemy.room;
         if (!room.controller.safeMode
                 && !room.controller.safeModeCooldown
@@ -35,7 +36,7 @@ var kite = function(creep){
     
     const target = creep.pos.findClosestByRange(enemies);
     if (!target) return false;
-    if (creep.pos.inRangeTo(target.pos, 2)) {
+    if (!target.room.controller.safeMode && creep.pos.inRangeTo(target.pos, 2) && target.getActiveBodyparts(ATTACK)) {
         creep.moveAwayFrom(target, 3);
     } else {
         creep.shoot(target);
