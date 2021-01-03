@@ -28,7 +28,7 @@ Task.prototype.run = function(creep) {
             creep.memory.ticks > giveup_time) {
         return false;
     }
-    const result = this.state_array[creep.memory.task.current_state].func(creep);
+    let result = this.state_array[creep.memory.task.current_state].func(creep);
     if (!result) {
         creep.memory.task.current_state++;
     }

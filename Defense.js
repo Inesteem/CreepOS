@@ -9,13 +9,13 @@
 var base = require("Base");
 var constants = require("Constants");
 var spawn_machine = require("SpawnMachine");
+var game = require("Game");
 
 // Detects whether safe mode needs to be activated in any of our rooms and activates it.
 // If a room has enemies but no safe mode, spawns defenders.
 function monitor() {
     const rooms = base.getOurRooms();
-    const enemies = Game.findAllHostileCreeps();
-    //const enemies = base.findEnemyCreeps(rooms, (creep) => true);
+    const enemies = game.findEnemyCreeps(rooms, (creep) => true);
     for (let enemy of enemies.all) {
         let room = enemy.room;
         if (!room.controller.safeMode

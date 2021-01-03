@@ -11,7 +11,6 @@ var base = require("Base");
 var constants = require("Constants");
 var log = require("Logging");
 
-var build_tasks = require("TaskMachine.BuildTasks");
 
 // TODO change to new task format and all that.
 function createCollectDroppedEnergyTasks() {
