@@ -190,7 +190,7 @@ function getEnergyForTask(creep, queue_task) {
         let store = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (structure) => 
                 structure.structureType == STRUCTURE_CONTAINER 
-                    && structure.store[RESOURCE_ENERGY] > 0
+                    && structure.store[RESOURCE_ENERGY] > creep.store.getFreeCapacity(RESOURCE_ENERGY)
         });
         if (!store) {
             let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);

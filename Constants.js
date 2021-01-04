@@ -1,9 +1,9 @@
-const MAX_WORKER_NUM = 5;
+const MAX_WORKER_NUM = 7;
 const MAX_MINER_NUM = 5;
 
 
 //ticks after which a specific path is recalculated
-const PATH_REUSE_TICKS = 20;
+const PATH_REUSE_TICKS = 2;
 
 //TODO:give up time
 

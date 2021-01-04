@@ -5,6 +5,7 @@ var log = require("Logging");
 
 task.state_array = [
     new tasks.State(collectDroppedEnergy),
+    new tasks.State(tasks.fillStore),
 ];
 
 function updateQueue() {
@@ -55,6 +56,7 @@ function take(creep, queue_task) {
     var F = function() {};
     F.prototype = queue_task;
     let creep_task = new F();
+    queue_task.priority = 0;
     
     log.error("TCDE 48", creep_task.name);
     
