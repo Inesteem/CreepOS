@@ -13,24 +13,3 @@ var log = require("Logging");
 
 
 // TODO change to new task format and all that.
-function createCollectDroppedEnergyTasks() {
-    let rooms = base.getOurRooms();
-    let dropped_energy = [];
-    
-    rooms.forEach(room => {
-        dropped_energy = dropped_energy.concat(room.find(FIND_DROPPED_RESOURCES, {
-                filter: (d) => d.amount >= 1 && d.resourceType == RESOURCE_ENERGY
-            }));
-    });
-    
-    for(let i = 0; i < dropped_energy.length; ++i){ 
-        console.log("energy: "+JSON.stringify(dropped_energy[i]));
-        
-            Memory.tasks.push({
-               name: "collect_dropped_energy",
-               priority: 100,
-               resource: dropped_energy[i].id, 
-            });
-
-    }
-}

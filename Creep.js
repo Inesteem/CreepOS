@@ -41,9 +41,10 @@ Creep.prototype.buildStructure = function(structure) {
 Creep.prototype.collectDroppedResource = function(resource) {
     let res = this.pickup(resource) 
     if(res == ERR_NOT_IN_RANGE) {
-        this.moveTo(resource.pos, {visualizePathStyle: {stroke: '#00ff00'}, reusePath: constants.PATH_REUSE_TICKS});
+        this.moveTo(resource, {visualizePathStyle: {stroke: '#00ff00'}, reusePath: constants.PATH_REUSE_TICKS});
     }
-    this.say(this.pickup(resource) + " " + this.memory.task.pos.x + "," + this.memory.task.pos.y);
+    this.say("collecting");
+    //this.say(this.pickup(resource) + " " + this.memory.task.pos.x + "," + this.memory.task.pos.y);
     return res;
     
 }

@@ -1,8 +1,9 @@
 var tasks = require("Task");
 var log = require("Logging");
 var constants = require("Constants");
+var base = require("Base");
 
-function UpdateQueue() {
+function updateQueue() {
     let structures = [];
     let rooms = base.getOurRooms();
     
@@ -56,18 +57,11 @@ function prioritize(queue_task) {
 function take(creep, queue_task) {
     let structure = Game.getObjectById(queue_task.id);
     
-    if (!structure) return;
+    if (!structure) return null;
     
     let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity();
     
-    let projected_completion = add_energy / structure.progressTotal;
-    
-    if (!queue_task.projected_completion) {
-        queue_task.projected_completion = projected_completion;
-    } else {
-        queue_task.projected_completion =
-            projected_completion + queue_task.projected_completion;
-    }
+    queue_task.expected_progress = (queue_task.expected_progress || 0) + add_energy;
     
     reprioritize(queue_task);
     
@@ -76,17 +70,37 @@ function take(creep, queue_task) {
     F.prototype = queue_task;
     creep_task = new F();
     
+    creep_task.creep_exp_progress = add_energy;
+    
+    Object.assign(creep_task, queue_task);
     Object.assign(creep_task, tasks.getEnergyForTask(creep, creep_task).task);
+    
+    return creep_task;
 }
 
-function reprioritize(task_proxy) {
-    let completion = task_proxy.projected_completion;
-    if (completion >= 1) {
-        task_proxy.priority = 0;
-    } else {
-        prioritize(task_proxy);
-        task_proxy.priority += completion * constants.PRIORITY_LEVEL_STEP;
+function reprioritize(queue_task) {
+    let structure = Game.getObjectById(queue_task.id);
+    if (!structure) {
+        queue_task.priority = 0;
+        return;
     }
+    
+    let expected_progress_total = structure.progress + (queue_task.expected_progress || 0);
+    
+    let completion = expected_progress_total / structure.progressTotal;
+    if (completion >= 1) {
+        queue_task.priority = 0;
+    } else {
+        prioritize(queue_task);
+        queue_task.priority += completion * constants.PRIORITY_LEVEL_STEP;
+    }
+}
+
+function finish(creep, creep_task) {
+    if (!creep_task.prototype) return;
+    
+    creep_task.prototype.expected_progress -= creep_task.creep_exp_progress;
+    reprioritize(creep_task.protottype);
 }
 
 function BuildTask(){
@@ -119,4 +133,6 @@ module.exports = {
     task: task,
     prioritize: prioritize,
     take: take,
+    finish: finish,
+    updateQueue: updateQueue,
 };
