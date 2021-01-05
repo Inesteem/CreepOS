@@ -65,8 +65,8 @@ function assignTask(creep) {
         creep.memory.task = {name: 'claim_room'};
     } else if (creep.memory.role == constants.Role.ARCHER) {
         // TODO this does not belong here
-        if (!defense.kite(creep)) {
-            creep.moveTo(Game.flags["Flag1"].pos);
+        if (!defense.kite(creep) && !creep.pos.inRangeTo(Game.flags["Flag1"], 5)) {
+            creep.(Game.flags["Flag1"].pos);
         }
     } else {
         creep.memory.task = getNextTask(creep);
