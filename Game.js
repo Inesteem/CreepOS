@@ -1,5 +1,8 @@
-Game.prototype.findEnemyCreeps = function(rooms, filter) {
-    let enemies = {'enemies' : [], 'remote_fighters' : [], 'close_fighters' : [], 'healers' : []};
+var log = require("Logging");
+require("Room");
+
+var findEnemyCreeps = function(rooms, filter) {
+    let enemies = {'all' : [], 'remote_fighters' : [], 'close_fighters' : [], 'healers' : []};
     for (room of rooms ) {
         let room_enemies = room.findAllHostileCreeps();
         enemies.all             = enemies.all.concat(room_enemies.all);
@@ -10,10 +13,15 @@ Game.prototype.findEnemyCreeps = function(rooms, filter) {
     return enemies;
 }
 
-Game.prototype.numCreeps = function(filter) {
+var numCreeps = function(filter) {
     if (typeof filter !== 'function') {
         log.error("base.numCreeps: filter is not a function.");
         return 0;
     }
-    return _.filter(this.creeps, (creep) => filter(creep)).length;
+    return _.filter(Game.creeps, (creep) => filter(creep)).length;
+}
+
+module.exports = {
+    numCreeps: numCreeps,
+    findEnemyCreeps: findEnemyCreeps,
 }

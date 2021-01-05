@@ -9,22 +9,26 @@
 var base = require("Base");
 var constants = require("Constants");
 var spawn_machine = require("SpawnMachine");
+var game = require("Game");
+require("Room");
 
 // Detects whether safe mode needs to be activated in any of our rooms and activates it.
 // If a room has enemies but no safe mode, spawns defenders.
 function monitor() {
     const rooms = base.getOurRooms();
-    const enemies = Game.findAllHostileCreeps();
-    //const enemies = base.findEnemyCreeps(rooms, (creep) => true);
+    const enemies = game.findEnemyCreeps(rooms, (creep) => true);
     for (let enemy of enemies.all) {
         let room = enemy.room;
+        let num_archers = room.numCreeps( (creep) => creep.memory.role == constants.Role.ARCHER);
         if (!room.controller.safeMode
                 && !room.controller.safeModeCooldown
                 && room.controller.safeModeAvailable) {
             room.controller.activateSafeMode();
+            if (num_archers < 2) {
+                spawn_machine.spawnArcher();
+            }
         }
-        else if (!room.controller.safeMode &&
-            _.filter(Game.creeps, (creep) => creep.memory.role == constants.Role.ARCHER).length < 2) {
+        else if (!room.controller.safeMode && num_archers < 5) {
             spawn_machine.spawnArcher();
         }
     }
@@ -36,7 +40,8 @@ var kite = function(creep){
     
     const target = creep.pos.findClosestByRange(enemies);
     if (!target) return false;
-    if (!target.room.controller.safeMode && creep.pos.inRangeTo(target.pos, 2) && target.getActiveBodyparts(ATTACK)) {
+    if (!target.room.controller.safeMode && creep.pos.inRangeTo(target.pos, 2) 
+                    && target.getActiveBodyparts(ATTACK)) {
         creep.moveAwayFrom(target, 3);
     } else {
         creep.shoot(target);

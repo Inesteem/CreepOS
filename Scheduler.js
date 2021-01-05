@@ -11,6 +11,7 @@ var task_fill_structure = require("Task.FillStructure");
 var task_claim_room = require("Task.ClaimRoom");
 var task_upgrade = require("Task.Upgrade");
 var task_fill_store = require("Task.FillStore");
+var task_collect_dropped_energy = require("Task.CollectDroppedEnergy");
 
 /**
  * TODO what is required of these Task modules
@@ -20,7 +21,7 @@ var task_fill_store = require("Task.FillStore");
  * Optional (will fallback to default or do nothing if not present):
  * - updateQueue -> called to fill new_tasks with queue_tasks
  * - take(creep, queue_task) -> called everytime a creep takes the task, returns
- *  the creep_task object to be stored in creep memory
+ *  the creep_task object to be stored in creep memory, returns null if the task is obsolete.
  * - finish(creep, creep_task) -> called when the creep finishes the task
  */
 var task_mapping = {
@@ -30,7 +31,7 @@ var task_mapping = {
         'repair':                 task_repair,
         'claim_room':             task_claim_room,
         'fill_structure':         task_fill_structure,
-        //'collect_dropped_energy': task.collect_dropped_energy_task, 
+        'collect_dropped_energy': task_collect_dropped_energy, 
 };
     
 function updateTaskQueue() {
@@ -44,8 +45,9 @@ function updateTaskQueue() {
     }
 }
 
-function runTask(creep) {
-    if (creep.memory.task) {
+function runTask(creep, depth) {
+    if (creep.memory.task && creep.memory.task.name) {
+        //creep.say(creep.memory.task.name);
         ++creep.memory.ticks;
         let still_running = task_mapping[creep.memory.task.name].task.run(creep);
         if (!still_running) {
@@ -53,12 +55,14 @@ function runTask(creep) {
         }
     }
     
-    if (!creep.memory.task) {
+    if (!creep.memory.task || !creep.memory.task.name) {
         assignTask(creep);
+        if(depth > 0) runTask(creep, depth -1);
     }
 }
 
 function assignTask(creep) {
+    //creep.say("assignTask");
     if (creep.memory.role == constants.Role.MINER) {
         creep.memory.task = {name: 'fill_store'};
     } else if (creep.memory.role == constants.Role.SCOUT) {
@@ -69,16 +73,22 @@ function assignTask(creep) {
             creep.(Game.flags["Flag1"].pos);
         }
     } else {
-        creep.memory.task = getNextTask(creep);
+        let next_task = getNextTask(creep);
+        creep.memory.task = next_task;
+        
+        
     }
     creep.memory.ticks = 0;
 }
 
 function completeTask(creep) {
+    //creep.say("completeTask");
+    log.info(creep.id, " is completing task ", creep.memory.task.name);
     let creep_task = creep.memory.task;
     if (task_mapping[creep_task.name].finish && 
-        task_mapping[creep_task.name].hasOwnProperty(finish)) {
-        task_mapping[creep_task.name].finish(creep_task);
+        task_mapping[creep_task.name].hasOwnProperty('finish')) {
+        log.info(creep.id, " is calling finish for ", creep.memory.task.name);
+        task_mapping[creep_task.name].finish(creep, creep_task);
     }
     creep.memory.old_task = creep.memory.task;
     creep.memory.task = null;
@@ -111,7 +121,7 @@ function getPath(creep, queue_task){
 
 // Fetches the next task for creep from the task queue. Returns a creep_task.
 function getNextTask(creep) {
-    log.info("Finding task for creep ", creep);
+    log.info("Finding task for creep ", creep.id);
     
     let max_priority = -1;
     let queue_task = null;
@@ -132,16 +142,16 @@ function getNextTask(creep) {
     
     log.info("Taking task: ", queue_task);
     
-    if (task_mapping[queue_task.name].take &&
-        task_mapping[queue_task.name].hasOwnProperty(take)) {
-        return task_mapping[queue_task.name].take(creep, queue_task);
+    if (typeof task_mapping[queue_task.name].take === 'function' &&
+        task_mapping[queue_task.name].hasOwnProperty('take')) {
+        let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
+        return creep_task;
     } else {
         log.warning("take function not implemented for ", queue_task.name);
         queue_task.priority = 0;
         let creep_task = {}
         Object.assign(creep_task, queue_task);
         Object.assign(creep_task, task.getEnergyForTask(creep, creep_task).task);
-    
         return creep_task;
     }
 }

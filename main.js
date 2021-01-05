@@ -48,7 +48,7 @@ module.exports.loop = function () {
                 return;
             }
         }
-        scheduler.runTask(creep);
+        scheduler.runTask(creep,1);
     });
     //FREE MEMORY
     for(var name in Memory.creeps) {
