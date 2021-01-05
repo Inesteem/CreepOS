@@ -14,7 +14,7 @@ function updateQueue() {
     
     rooms.forEach(room => {
         dropped_energy = dropped_energy.concat(room.find(FIND_DROPPED_RESOURCES, {
-                filter: (d) => d.amount >= 20 && d.resourceType == RESOURCE_ENERGY
+                filter: (d) => d.amount >= 50 && d.resourceType == RESOURCE_ENERGY
             }));
     });
     
@@ -22,6 +22,7 @@ function updateQueue() {
     for (let drop of dropped_energy) {
         if (!Memory.new_tasks.dropped_energy.find(drop_task => drop_task.id == drop.id)) {
             let queue_task = {id: drop.id, priority: 2500, name:"collect_dropped_energy"};
+            log.error("TCDE 25", drop.pos, drop.amount);
             Memory.new_tasks.dropped_energy.push(queue_task);
         }
     }
@@ -30,7 +31,6 @@ function updateQueue() {
         let queue_task = Memory.new_tasks.dropped_energy[i];
         let resource = Game.getObjectById(queue_task.id);
         if (!resource) {
-            log.info("Finished resource task", queue_task);
             Memory.new_tasks.dropped_energy.splice(i, 1);
             i--;
         }
@@ -51,21 +51,50 @@ function collectDroppedEnergy(creep) {
     }
 }
 
+function reprioritize(queue_task) {
+    let resource = Game.getObjectById(queue_task.id);
+    let left = resource.amount - queue_task.expected_take;
+    if (left > 50) {
+        queue_task.priority = 2500;
+    } else {
+        queue_task.priority = 0;
+    }
+}
+
 function take(creep, queue_task) {
     if (!queue_task) return null;
-    var F = function() {};
-    F.prototype = queue_task;
-    let creep_task = new F();
-    queue_task.priority = 0;
     
-    log.error("TCDE 48", creep_task.name);
+    let resource = Game.getObjectById(queue_task.id);
+    
+    let expected_take = Math.min(resource.amount, creep.store.getFreeCapacity(RESOURCE_ENERGY));
+    
+    queue_task.expected_take = (queue_task.expected_take || 0) + expected_take;
+    
+    reprioritize(queue_task);
+    
+    let creep_task = {};
+    
+    creep_task.creep_expected_take = expected_take;
+    Object.assign(creep_task, queue_task);
+    //log.error("TCDE 48", creep_task.name, resource.pos);
     
     return creep_task;
 }
 
+function finish(creep, creep_task) {
+    let queue_task = tasks.findQueueTask("dropped_energy", creep_task.id);
+    
+    if (!queue_task) return;
+
+    if (queue_task.expected_take)
+        queue_task.expected_take -= creep_task.creep_expected_take;
+    
+    reprioritize(queue_task);
+}
 
 module.exports = {
     task: task,
     updateQueue: updateQueue,
     take: take,
+    finish: finish,
 };

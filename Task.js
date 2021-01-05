@@ -197,7 +197,8 @@ function getEnergyForTask(creep, queue_task) {
             if (source)
                 return {task: {source_id: source.id}, obejct: source};    
         } else {
-            return {task: {store_id: store.id}, object: store};
+            let result = {task: {store_id: store.id}, object: store};
+            return result;
         }
     } else {
         let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
@@ -205,6 +206,10 @@ function getEnergyForTask(creep, queue_task) {
             return {task: {source_id: source.id}, obejct: source};
     }
     return result;
+}
+
+function findQueueTask(task_name, id) {
+    return Memory.new_tasks[task_name].find(queue_task => queue_task.id === id);
 }
 
 module.exports = {
@@ -217,4 +222,5 @@ module.exports = {
     fillStructure: fillStructure,
     claimRoom: claimRoom,
     getEnergyForTask: getEnergyForTask,
+    findQueueTask: findQueueTask,
 };

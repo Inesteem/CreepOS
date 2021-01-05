@@ -16,7 +16,7 @@ var updateQueue = function() {
      Memory.new_tasks.repair = Memory.new_tasks.repair || [];
     for (let structure of structures) {
         if (!Memory.new_tasks.repair.find(repair_task => repair_task.id == structure.id)) {
-            Memory.new_tasks.repair.push({id: structure.id, priority: 0, name:"repair"});
+            Memory.new_tasks.repair.push({id: structure.id, priority: 500, name:"repair"});
         }
     }
     for (let i = 0; i < Memory.new_tasks.repair.length; i++) {

@@ -13,7 +13,7 @@ function updateQueue() {
     Memory.new_tasks.upgrade = Memory.new_tasks.upgrade || [];
     for (let structure of controller) {
         if (!Memory.new_tasks.upgrade.find(controller_task => controller_task.id == structure.id)) {
-            Memory.new_tasks.upgrade.push({id: structure.id, priority: 0, name:"upgrade"});
+            Memory.new_tasks.upgrade.push({id: structure.id, priority: 1000, name:"upgrade"});
         }
     }
     

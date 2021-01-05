@@ -1,6 +1,7 @@
 var tasks = require("Task");
 var base = require("Base");;
 var constants = require("Constants");
+var log = require("Logging");
 
 function updateQueue() {
     let structures = [];
@@ -20,21 +21,22 @@ function updateQueue() {
     });
     
     // Update the new task map
-    Memory.new_tasks.fill = Memory.new_tasks.fill || [];
+    Memory.new_tasks.fill_structure = Memory.new_tasks.fill_structure || [];
     for (let structure of structures) {
-        if (!Memory.new_tasks.fill.find(fill_task => fill_task.id == structure.id)) {
+        if (!Memory.new_tasks.fill_structure.find
+                (fill_task => fill_task.id == structure.id)) {
             let queue_task = {id: structure.id, name:"fill_structure"};
             prioritize(queue_task, structure.structureType);
-            Memory.new_tasks.fill.push(queue_task);
+            Memory.new_tasks.fill_structure.push(queue_task);
         }
     }
     
     // DELETION
-    for (let i = 0; i < Memory.new_tasks.fill.length; i++) {
-        let fill_task = Memory.new_tasks.fill[i];
+    for (let i = 0; i < Memory.new_tasks.fill_structure.length; i++) {
+        let fill_task = Memory.new_tasks.fill_structure[i];
         let structure = Game.getObjectById(fill_task.id);
         if (!structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-            Memory.new_tasks.fill.splice(i, 1);
+            Memory.new_tasks.fill_structure.splice(i, 1);
             i--;
         }
     }
@@ -73,14 +75,13 @@ function take(creep, queue_task) {
     
     reprioritize(queue_task);
     
-    // Creates a new object that has queue_task as prototype.
-    var F = function() {};
-    F.prototype = queue_task;
-    creep_task = new F();
+    let creep_task = {};
     
     creep_task.creep_exp_fill = add_energy;
     
-    Object.assign(creep_task, tasks.getEnergyForTask(creep, creep_task).task);
+    Object.assign(creep_task, tasks.getEnergyForTask(creep, queue_task).task);
+    
+    Object.assign(creep_task, queue_task);
     
     return creep_task;
 }
@@ -89,17 +90,18 @@ function reprioritize(queue_task) {
     if (!queue_task.expected_fillup) queue_task.expected_fillup =0;
     let fillup = queue_task.expected_fillup;
     let structure = Game.getObjectById(queue_task.id);
-    if (!structure || fillup >= structure.store.getFreeCapacity[RESOURCE_ENERGY]) {
-        task_proxy.priority = 0;
+    if (!structure || fillup >= structure.store.getFreeCapacity(RESOURCE_ENERGY)) {
+        queue_task.priority = 0;
     } else {
         prioritize(queue_task, structure.structureType);
     }
 }
 
 function finish(creep, creep_task){
-    if (creep_task.prototype && creep_task.prototype.expected_fillup) {
-        creep_task.prototype.expected_fillup -= creep_task.creep_exp_fillup;
-        reprioritize(creep_task.prototype);
+    let queue_task = tasks.findQueueTask(creep_task.name, creep_task.id);
+    if (queue_task && queue_task.expected_fillup) {
+        queue_task.expected_fillup -= creep_task.creep_exp_fillup;
+        reprioritize(queue_task);
     }
 }
 

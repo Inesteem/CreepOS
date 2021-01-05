@@ -47,6 +47,7 @@ function updateTaskQueue() {
 
 function runTask(creep, depth) {
     if (creep.memory.task && creep.memory.task.name) {
+        //creep.say(creep.memory.task.name);
         ++creep.memory.ticks;
         let still_running = task_mapping[creep.memory.task.name].task.run(creep);
         if (!still_running) {
@@ -61,6 +62,7 @@ function runTask(creep, depth) {
 }
 
 function assignTask(creep) {
+    //creep.say("assignTask");
     if (creep.memory.role == constants.Role.MINER) {
         creep.memory.task = {name: 'fill_store'};
     } else if (creep.memory.role == constants.Role.SCOUT) {
@@ -80,9 +82,12 @@ function assignTask(creep) {
 }
 
 function completeTask(creep) {
+    //creep.say("completeTask");
+    log.info(creep.id, " is completing task ", creep.memory.task.name);
     let creep_task = creep.memory.task;
     if (task_mapping[creep_task.name].finish && 
         task_mapping[creep_task.name].hasOwnProperty('finish')) {
+        log.info(creep.id, " is calling finish for ", creep.memory.task.name);
         task_mapping[creep_task.name].finish(creep, creep_task);
     }
     creep.memory.old_task = creep.memory.task;
@@ -116,7 +121,7 @@ function getPath(creep, queue_task){
 
 // Fetches the next task for creep from the task queue. Returns a creep_task.
 function getNextTask(creep) {
-    log.info("Finding task for creep ", creep);
+    log.info("Finding task for creep ", creep.id);
     
     let max_priority = -1;
     let queue_task = null;
