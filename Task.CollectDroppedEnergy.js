@@ -53,6 +53,8 @@ function collectDroppedEnergy(creep) {
 
 function reprioritize(queue_task) {
     let resource = Game.getObjectById(queue_task.id);
+    if (!resource) return null;
+
     let left = resource.amount - queue_task.expected_take;
     if (left > 50) {
         queue_task.priority = 2500;
@@ -65,7 +67,8 @@ function take(creep, queue_task) {
     if (!queue_task) return null;
     
     let resource = Game.getObjectById(queue_task.id);
-    
+    if (!resource) return null;
+
     let expected_take = Math.min(resource.amount, creep.store.getFreeCapacity(RESOURCE_ENERGY));
     
     queue_task.expected_take = (queue_task.expected_take || 0) + expected_take;

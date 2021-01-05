@@ -70,7 +70,7 @@ function assignTask(creep) {
     } else if (creep.memory.role == constants.Role.ARCHER) {
         // TODO this does not belong here
         if (!defense.kite(creep) && !creep.pos.inRangeTo(Game.flags["Flag1"], 5)) {
-            creep.(Game.flags["Flag1"].pos);
+            creep.moveTo(Game.flags["Flag1"].pos);
         }
     } else {
         let next_task = getNextTask(creep);

@@ -25,7 +25,7 @@ StructureTower.prototype.attackClosest = function() {
                       creep.pos.y < 49 && creep.pos.x < 49});
     
     if (enemy) {
-        this.attack(eynemy);
+        this.attack(enemy);
         return true;
     }
     return false;
