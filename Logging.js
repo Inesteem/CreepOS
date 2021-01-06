@@ -31,8 +31,4 @@ var error = log(LOG_LEVEL.ERROR);
 var warning = log(LOG_LEVEL.WARNING);
 var info = log(LOG_LEVEL.INFO);
 
-module.exports = {
-    error: error,
-    warning: warning,
-    info: info,
-};
+export { error, warning, info };

@@ -1,13 +1,11 @@
-var base = require('Base');
-var constants = require('Constants');
-var log = require("Logging");
-var algorithm = require("Algorithm");
+import { getFreeStore, getUnclaimedFlags, getStoresWithEnergy } from './Base';
+import { error } from "./Logging";
 
 const giveup_time = 250;//TODO : move to constants
  
 function State(func){
     if (typeof func !== 'function') {
-        log.error("Creating state without function!");
+        error("Creating state without function!");
         return;
     }
     this.func = func;
@@ -65,7 +63,7 @@ var harvestClosest = function(creep) {
 };
 
 var fillStore = function(creep) {
-    let target = getTarget(base.getFreeStore, creep, 'target_id');
+    let target = getTarget(getFreeStore, creep, 'target_id');
     
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
         return false;
@@ -138,7 +136,7 @@ var fillStructure = function (creep) {
 }
 
 function claimRoom(creep) {
-    const flags = base.getUnclaimedFlags();
+    const flags = getUnclaimedFlags();
     if (flags.length > 0) {
         creep.moveToRoom(flags[0]);
     } else {
@@ -149,7 +147,7 @@ function claimRoom(creep) {
 }
 
 function getHasEnergyFunction(room) {
-    let stores = base.getStoresWithEnergy(room);
+    let stores = getStoresWithEnergy(room);
     if (stores.length) {
         return {func: function(pos) {
             let structures = room.lookForAtArea(LOOK_STRUCTURES,Math.max(0, pos.y -1), Math.max(0, pos.x -1), Math.min(49, pos.y + 1), Math.min(49, pos.x +1), true);
@@ -185,7 +183,7 @@ function getEnergyForTask(creep, queue_task) {
     
     if (!target) return result;
     
-    let stores = base.getStoresWithEnergy(creep.room);
+    let stores = getStoresWithEnergy(creep.room);
     if (stores.length) {
         let store = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (structure) => 
@@ -211,16 +209,15 @@ function getEnergyForTask(creep, queue_task) {
 function findQueueTask(task_name, id) {
     return Memory.new_tasks[task_name].find(queue_task => queue_task.id === id);
 }
-
-module.exports = {
-    Task:Task,
-    State: State,
-    takeFromStore: takeFromStore,
-    harvestClosest: harvestClosest,
-    fillStore: fillStore,
-    upgradeController: upgradeController,
-    fillStructure: fillStructure,
-    claimRoom: claimRoom,
-    getEnergyForTask: getEnergyForTask,
-    findQueueTask: findQueueTask,
-};
+export {
+    Task,
+    State,
+    takeFromStore,
+    harvestClosest,
+    fillStore,
+    upgradeController,
+    fillStructure,
+    claimRoom,
+    getEnergyForTask,
+    findQueueTask,
+}

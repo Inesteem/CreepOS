@@ -1,15 +1,6 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('BuildMachine');
- * mod.thing == 'a thing'; // true
- */
-var task_machine = require("TaskMachine");
-var base = require("Base");
-var constants = require("Constants");
-var log = require("Logging");
+import { numCreeps, getTowers } from "./Base";
+import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constants";
+import { info } from "./Logging";
 
 // CONTAINER BUILDING
 
@@ -29,8 +20,8 @@ function findPositionForContainer(source) {
 
 function max_road_number(room) {
     return 0.8 * room.controller.level * room.controller.level *
-        base.numCreeps((creep) => true) *
-        (base.getTowers(room, (tower) => true).length + 1);
+        numCreeps((creep) => true) *
+        (getTowers(room, (tower) => true).length + 1);
 }
 
 //function road_build_ratio(room) {
@@ -44,14 +35,14 @@ function max_road_number(room) {
 
 function monitorBuildRoadTasks() {
     if (typeof Memory.road_build_counter !== 'number') {
-        road_build_counter = 0;
+        Memory.road_build_counter = 0;
     }
     //if (Memory.road_build_counter%10 == 0)
     //    console.log("road_ticks: " + Memory.road_build_counter + " of " + constants.AUTOMATIC_ROAD_BUILD_TICKS 
     //    + " ratio: " + road_build_ratio(Game.spawns['Spawn1'].room) );
     Memory.road_build_counter++;
     snapshot();
-    if (Memory.road_build_counter > constants.AUTOMATIC_ROAD_BUILD_TICKS) {
+    if (Memory.road_build_counter > AUTOMATIC_ROAD_BUILD_TICKS) {
         createBuildRoadTasks(Game.spawns['Spawn1'].room);
         Memory.road_build_counter = 0;
     }
@@ -61,20 +52,20 @@ function snapshot() {
     if (!Memory.roads) {
         Memory.roads = new Map();
     }
-    _.forEach(Game.creeps, creep => {
+    for (let creep of Game.creeps.values()) {
         const room = creep.room;
         if (!Memory.roads[room.name]) {
             Memory.roads[room.name] = new Array(50).fill(new Array(50).fill(0));
         }
         //TODO don't count roads.
         let objects = room.lookForAt(LOOK_STRUCTURES, creep.pos);
-        if (objects.length) return;
+        if (objects.length) continue;
         objects = room.lookForAt(LOOK_CONSTRUCTION_SITES, creep.pos);
-        if (objects.length) return;
+        if (objects.length) continue;
         if (creep.fatigue) {
             Memory.roads[room.name][creep.pos.y][creep.pos.x]++;
         }
-    });
+    }
 }
 
 function createBuildRoadTasks(room) {
@@ -82,7 +73,7 @@ function createBuildRoadTasks(room) {
             filter: (structure) => structure.structureType == STRUCTURE_ROAD
     }).length;
     if (num_roads >= max_road_number(room)){
-        log.info("Not building any roads because we already have " + num_roads);
+        info("Not building any roads because we already have " + num_roads);
         return;
     }
 
@@ -106,13 +97,11 @@ function createBuildRoadTasks(room) {
     
     positions.sort((a, b) => b.val - a.val);
     
-    for (let i = 0; i < Math.min(constants.AUTOMATIC_ROAD_BUILD_NUM, positions.length); i++) {
+    for (let i = 0; i < Math.min(AUTOMATIC_ROAD_BUILD_NUM, positions.length); i++) {
         let pos = new RoomPosition(positions[i].x, positions[i].y, room.name);
         pos.createConstructionSite(STRUCTURE_ROAD);
-        log.info("Spawning road construction site at ", pos);
+        info("Spawning road construction site at ", pos);
     }
 }
 
-module.exports = {
-    monitorBuildRoadTasks: monitorBuildRoadTasks
-};
+export { monitorBuildRoadTasks };

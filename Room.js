@@ -1,4 +1,4 @@
-
+import { error } from "./Logging";
 
 Room.prototype.findAllHostileCreeps = function (){
 
@@ -13,8 +13,8 @@ Room.prototype.findAllHostileCreeps = function (){
 
 Room.prototype.numCreeps = function(filter) {
     if (typeof filter !== 'function') {
-        log.error("base.numCreeps: filter is not a function.");
+        error("base.numCreeps: filter is not a function.");
         return 0;
     }
-    return _.filter(Game.creeps, (creep) => filter(creep) && creep.room === this ).length;
+    return Game.creeps.values().filter((creep) => filter(creep) && creep.room === this ).length;
 }

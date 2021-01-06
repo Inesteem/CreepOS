@@ -1,11 +1,12 @@
-var tasks = require("Task");
-var base = require("Base");;
-var constants = require("Constants");
-var log = require("Logging");
+import { getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
+import { getOurRooms } from "./Base";;
+import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "./Constants";
 
-function updateQueue() {
+var task = new Task("fill_structure", null);
+
+task.updateQueue = () => {
     let structures = [];
-    let rooms = base.getOurRooms();
+    let rooms = getOurRooms();
     
     // SPAWN
     
@@ -47,20 +48,20 @@ function prioritize(queue_task, structure_type) {
     
     switch (structure_type) {
         case (STRUCTURE_SPAWN):
-            queue_task.priority = constants.FILL_SPAWN_PRIORITY;
+            queue_task.priority = FILL_SPAWN_PRIORITY;
             break;
         case (STRUCTURE_EXTENSION):
-            queue_task.priority = constants.FILL_EXTENSION_PRIORITY;
+            queue_task.priority = FILL_EXTENSION_PRIORITY;
             break;
         case (STRUCTURE_TOWER):
-            queue_task.priority = constants.FILL_TOWER_PRIORITY;
+            queue_task.priority = FILL_TOWER_PRIORITY;
             break;
         default:
-            queue_task.priority = constants.FILL_DEFAULT_PRIORITY;
+            queue_task.priority = FILL_DEFAULT_PRIORITY;
     };
 }
 
-function take(creep, queue_task) {
+task.take = (creep, queue_task) => {
     let structure = Game.getObjectById(queue_task.id);
     
     if (!structure) return null;
@@ -79,7 +80,7 @@ function take(creep, queue_task) {
     
     creep_task.creep_exp_fill = add_energy;
     
-    Object.assign(creep_task, tasks.getEnergyForTask(creep, queue_task).task);
+    Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     
     Object.assign(creep_task, queue_task);
     
@@ -97,8 +98,8 @@ function reprioritize(queue_task) {
     }
 }
 
-function finish(creep, creep_task){
-    let queue_task = tasks.findQueueTask(creep_task.name, creep_task.id);
+task.finish = (creep, creep_task) => {
+    let queue_task = findQueueTask(creep_task.name, creep_task.id);
     if (queue_task && queue_task.expected_fillup) {
         queue_task.expected_fillup -= creep_task.creep_exp_fillup;
         reprioritize(queue_task);
@@ -106,17 +107,11 @@ function finish(creep, creep_task){
 }
 
 
-var task = new tasks.Task("fill_structure", null);
 
 task.state_array = [
-    new tasks.State(tasks.takeFromStore),
-    new tasks.State(tasks.fillStructure)
+    new State(takeFromStore),
+    new State(fillStructure)
 ];
 
-module.exports = {
-    updateQueue: updateQueue,
-    task: task,
-    take: take,
-    finish: finish,
-};
+export { task };
 

@@ -1,4 +1,4 @@
-var log = require("Logging");
+import { info, error } from "./Logging";
 
 function getStoresWithEnergy(room) {
     let stores = room.find(FIND_STRUCTURES, {
@@ -14,7 +14,7 @@ function getStoresWithEnergy(room) {
 function handlePossibleRespawn() {
     if (Memory.main_spawn && Memory.main_spawn != Game.spawns['Spawn1'].pos &&
         Game.creeps.length == 0) {
-        log.info("Detected respawn!");
+        info("Detected respawn!");
         Memory = {};
         Memory.tasks = [];
     }
@@ -35,7 +35,7 @@ var getFreeStore = function(creep) {
 
 var findNearestEnergyStored = function(position) {
     if (!position) {
-        log.error("Called findNearestEnergyStored with underfined position.");
+        error("Called findNearestEnergyStored with underfined position.");
     }
     let store = position.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -68,17 +68,12 @@ function getTowers(room, filter) {
 
 function findCreeps(filter) {
     if (typeof filter !== 'function') {
-        log.error("base.findCreeps: filter is not a function.");
+        error("base.findCreeps: filter is not a function.");
         return 0;
     }
-    return _.filter(Game.creeps, (creep) => filter(creep));
+    return Game.creep.values().filter((creep) => filter(creep));
 }
 
-/**
- * @param {Array<Room>} rooms The rooms to search.
- * @param {Creep -> bool} filter The filter to apply when searching for enemy creeps.
- * @return {Array<Creep>} All enemies in the given rooms matching filter.
- */
 function findEnemyCreeps(rooms, filter) {
     let enemies = [];
     
@@ -97,10 +92,10 @@ function findEnemyCreeps(rooms, filter) {
 
 function numCreeps(filter) {
     if (typeof filter !== 'function') {
-        log.error("base.numCreeps: filter is not a function.");
+        error("base.numCreeps: filter is not a function.");
         return 0;
     }
-    return _.filter(Game.creeps, (creep) => filter(creep)).length;
+    return Game.creeps.values().filter((creep) => filter(creep)).length;
 }
 
 var findNearestEnergySource = function(position) {
@@ -108,29 +103,29 @@ var findNearestEnergySource = function(position) {
 }
 
 var getOurRooms = function() {
-    let rooms = _.filter(Game.flags, (flag) => flag.room).map((flag) => flag.room);
+    let rooms = Game.flags.values().filter((flag) => flag.room).map((flag) => flag.room);
     if (!rooms.length) {
-        log.error("No rooms found. Did you forget to set the flag?");
+        error("No rooms found. Did you forget to set the flag?");
     }
     return rooms;
 }
 
 var getUnclaimedFlags = function() {
-    return _.filter(Game.flags, (flag) => !flag.room);
+    return Game.flags.values().filter((flag) => !flag.room);
 }
 
 
-module.exports = {
-    getFreeStore: getFreeStore,
-    getOurRooms: getOurRooms,
-    getUnclaimedFlags: getUnclaimedFlags,
-    findNearestEnergyStored: findNearestEnergyStored,
-    findNearestEnergySource: findNearestEnergySource,
-    numCreeps: numCreeps,
-    getTowers: getTowers,
-    getNoOwnerStructures: getNoOwnerStructures,
-    findCreeps: findCreeps,
-    handlePossibleRespawn: handlePossibleRespawn,
-    findEnemyCreeps: findEnemyCreeps,
+export {
+    getFreeStore,
+    getOurRooms,
+    getUnclaimedFlags,
+    findNearestEnergyStored,
+    findNearestEnergySource,
+    numCreeps,
+    getTowers,
+    getNoOwnerStructures,
+    findCreeps,
+    handlePossibleRespawn,
+    findEnemyCreeps,
     getStoresWithEnergy,
 };

@@ -1,10 +1,16 @@
-var tasks = require("Task");
-var base = require("Base");
-var log = require("Logging");
+import { Task, State, takeFromStore, upgradeController } from "./Task";
+import { getOurRooms } from "./Base";
 
-function updateQueue() {
+var task = new Task("upgrade", null);
+
+task.state_array = [
+    new State(takeFromStore),
+    new State(upgradeController),
+];
+
+task.updateQueue = () => {
     let controller = [];
-    let rooms = base.getOurRooms();
+    let rooms = getOurRooms();
     
     rooms.forEach(room => {
         controller.push(room.controller);
@@ -20,8 +26,7 @@ function updateQueue() {
     // TODO when to delete?
 }
 
-
-function take(creep, queue_task) {
+task.take = function(creep, queue_task) {
 //    let structure = Game.getObjectById(queue_task.id);
     
 //    if (!structure) return null;
@@ -44,8 +49,4 @@ task.state_array = [
     new tasks.State(tasks.upgradeController),
 ];
 
-module.exports = {
-    task: task,
-    take : take,
-    updateQueue: updateQueue,
-};
+export {task};

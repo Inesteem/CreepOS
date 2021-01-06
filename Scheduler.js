@@ -1,17 +1,15 @@
-var log = require("Logging");
-var base = require("Base");
-var algorithm = require("Algorithm");
-var constants = require("Constants");
-var defense = require("Defense");
+import { info, warning } from "./Logging";
+import { Role } from "./Constants";
+import { kite } from "./Defense";
 
-var task = require("Task");
-var task_build = require("Task.Build");
-var task_repair = require("Task.Repair");
-var task_fill_structure = require("Task.FillStructure");
-var task_claim_room = require("Task.ClaimRoom");
-var task_upgrade = require("Task.Upgrade");
-var task_fill_store = require("Task.FillStore");
-var task_collect_dropped_energy = require("Task.CollectDroppedEnergy");
+import { getEnergyForTask } from "./Task";
+import { task as task_build} from "./Task_Build";
+import { task as task_repair} from "./Task_Repair";
+import { task as task_fill_structure} from "./Task_FillStructure";
+import { task as task_claim_room} from "./Task_ClaimRoom";
+import { task as task_upgrade} from "./Task_Upgrade";
+import { task as task_fill_store} from "./Task_FillStore";
+import { task as task_collect_dropped_energy} from "./Task_CollectDroppedEnergy";
 
 /**
  * TODO what is required of these Task modules
@@ -49,7 +47,7 @@ function runTask(creep, depth) {
     if (creep.memory.task && creep.memory.task.name) {
         //creep.say(creep.memory.task.name);
         ++creep.memory.ticks;
-        let still_running = task_mapping[creep.memory.task.name].task.run(creep);
+        let still_running = task_mapping[creep.memory.task.name].run(creep);
         if (!still_running) {
             completeTask(creep);
         }
@@ -63,13 +61,13 @@ function runTask(creep, depth) {
 
 function assignTask(creep) {
     //creep.say("assignTask");
-    if (creep.memory.role == constants.Role.MINER) {
+    if (creep.memory.role == Role.MINER) {
         creep.memory.task = {name: 'fill_store'};
-    } else if (creep.memory.role == constants.Role.SCOUT) {
+    } else if (creep.memory.role == Role.SCOUT) {
         creep.memory.task = {name: 'claim_room'};
-    } else if (creep.memory.role == constants.Role.ARCHER) {
+    } else if (creep.memory.role == Role.ARCHER) {
         // TODO this does not belong here
-        if (!defense.kite(creep) && !creep.pos.inRangeTo(Game.flags["Flag1"], 5)) {
+        if (!kite(creep) && !creep.pos.inRangeTo(Game.flags["Flag1"], 5)) {
             creep.moveTo(Game.flags["Flag1"].pos);
         }
     } else {
@@ -83,11 +81,11 @@ function assignTask(creep) {
 
 function completeTask(creep) {
     //creep.say("completeTask");
-    log.info(creep.id, " is completing task ", creep.memory.task.name);
+    info(creep.id, " is completing task ", creep.memory.task.name);
     let creep_task = creep.memory.task;
     if (task_mapping[creep_task.name].finish && 
         task_mapping[creep_task.name].hasOwnProperty('finish')) {
-        log.info(creep.id, " is calling finish for ", creep.memory.task.name);
+        info(creep.id, " is calling finish for ", creep.memory.task.name);
         task_mapping[creep_task.name].finish(creep, creep_task);
     }
     creep.memory.old_task = creep.memory.task;
@@ -110,7 +108,7 @@ function getPath(creep, queue_task){
     let second_target = queue_task.id && Game.getObjectById(queue_task.id);
     if (!second_target) return 0;
     
-    first_target = task.getEnergyForTask(creep, queue_task).object;
+    first_target = getEnergyForTask(creep, queue_task).object;
     
     if (first_target)
         return creep.pos.findPathTo(first_target.pos).length +
@@ -121,7 +119,7 @@ function getPath(creep, queue_task){
 
 // Fetches the next task for creep from the task queue. Returns a creep_task.
 function getNextTask(creep) {
-    log.info("Finding task for creep ", creep.id);
+    info("Finding task for creep ", creep.id);
     
     let max_priority = -1;
     let queue_task = null;
@@ -140,27 +138,20 @@ function getNextTask(creep) {
     
     if (!queue_task) return null;
     
-    log.info("Taking task: ", queue_task);
+    info("Taking task: ", queue_task);
     
     if (typeof task_mapping[queue_task.name].take === 'function' &&
         task_mapping[queue_task.name].hasOwnProperty('take')) {
         let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
         return creep_task;
     } else {
-        log.warning("take function not implemented for ", queue_task.name);
+        warning("take function not implemented for ", queue_task.name);
         queue_task.priority = 0;
         let creep_task = {}
         Object.assign(creep_task, queue_task);
-        Object.assign(creep_task, task.getEnergyForTask(creep, creep_task).task);
+        Object.assign(creep_task, getEnergyForTask(creep, creep_task).task);
         return creep_task;
     }
 }
 
-module.exports = {
-    updateTaskQueue: updateTaskQueue,
-    assignTask: assignTask,
-    increasePriorities: increasePriorities,
-    getPath: getPath,
-    getNextTask: getNextTask,
-    runTask: runTask,
-};
+export { updateTaskQueue, assignTask, increasePriorities, getPath, getNextTask, runTask};

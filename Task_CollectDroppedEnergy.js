@@ -1,15 +1,15 @@
-var tasks = require("Task");
-var task = new tasks.Task("collect_dropped_energy", null);
-var base = require("Base");
-var log = require("Logging");
+import { Task, State, fillStore, findQueueTask } from "./Task";
+var task = new Task("collect_dropped_energy", null);
+import { getOurRooms } from "./Base";
+import { error } from "./Logging";
 
 task.state_array = [
-    new tasks.State(collectDroppedEnergy),
-    new tasks.State(tasks.fillStore),
+    new State(collectDroppedEnergy),
+    new State(fillStore),
 ];
 
-function updateQueue() {
-    let rooms = base.getOurRooms();
+task.updateQueue = () => {
+    let rooms = getOurRooms();
     let dropped_energy = [];
     
     rooms.forEach(room => {
@@ -22,7 +22,7 @@ function updateQueue() {
     for (let drop of dropped_energy) {
         if (!Memory.new_tasks.dropped_energy.find(drop_task => drop_task.id == drop.id)) {
             let queue_task = {id: drop.id, priority: 2500, name:"collect_dropped_energy"};
-            log.error("TCDE 25", drop.pos, drop.amount);
+            error("TCDE 25", drop.pos, drop.amount);
             Memory.new_tasks.dropped_energy.push(queue_task);
         }
     }
@@ -63,7 +63,7 @@ function reprioritize(queue_task) {
     }
 }
 
-function take(creep, queue_task) {
+task.take = (creep, queue_task) => {
     if (!queue_task) return null;
     
     let resource = Game.getObjectById(queue_task.id);
@@ -84,8 +84,8 @@ function take(creep, queue_task) {
     return creep_task;
 }
 
-function finish(creep, creep_task) {
-    let queue_task = tasks.findQueueTask("dropped_energy", creep_task.id);
+task.finish = (creep, creep_task) =>{
+    let queue_task = findQueueTask("dropped_energy", creep_task.id);
     
     if (!queue_task) return;
 
@@ -95,9 +95,4 @@ function finish(creep, creep_task) {
     reprioritize(queue_task);
 }
 
-module.exports = {
-    task: task,
-    updateQueue: updateQueue,
-    take: take,
-    finish: finish,
-};
+export {task};

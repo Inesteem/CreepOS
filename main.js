@@ -1,55 +1,43 @@
-require("Creep");
-var task = require("Task");
-var spawn_machine = require("SpawnMachine");
-var task_machine = require("TaskMachine");
-var defense = require("Defense");
-var build_machine = require("BuildMachine");
-var tower = require("Tower");
-var base = require("Base");
-var constants = require("Constants");
-var algorithm = require("Algorithm");
-var log = require("Logging");
-require("RoomPosition");
-var scheduler = require("Scheduler");
-
-
-var harvest_id = "harvesting";
-var upgrade_id = "upgrading";
-var store_id = "storing";
-var build_id = "building";
-
-
+import "./Creep";
+import { monitor as SpawnMachine_monitor } from "./SpawnMachine";
+import { monitor as defense_monitor } from "./Defense";
+import { monitorBuildRoadTasks } from "./BuildMachine";
+import { operateTowers } from "./Tower";
+import { handlePossibleRespawn } from "./Base";
+import { Role } from "./Constants";
+import { updateTaskQueue, runTask, increasePriorities } from "./Scheduler";
 
 module.exports.loop = function () {
+    console.log("tick");
     
-    base.handlePossibleRespawn();
+    handlePossibleRespawn();
 
-    scheduler.increasePriorities();
+    increasePriorities();
     
-    build_machine.monitorBuildRoadTasks();
+    monitorBuildRoadTasks();
     
-    tower.operateTowers();
+    operateTowers();
     
     Memory.new_tasks = Memory.new_tasks || {};
     if (Game.time % 10 === 0){
-        scheduler.updateTaskQueue();
+        updateTaskQueue();
     }
     
-    spawn_machine.monitor();
+    SpawnMachine_monitor();
     
-    defense.monitor();
+    defense_monitor();
     
-    _.forEach(Game.creeps, (creep) => {
+    for (let creep of Game.creeps.values()) {
         
-        if (!creep.room.controller.safeMode && creep.memory.role != constants.Role.ARCHER) {
+        if (!creep.room.controller.safeMode && creep.memory.role != Role.ARCHER) {
             const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);
             if(targets.length > 0) {
                 creep.moveAwayFrom(targets[0], 3);
-                return;
+                continue;
             }
         }
-        scheduler.runTask(creep,1);
-    });
+        runTask(creep,1);
+    }
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name]) {

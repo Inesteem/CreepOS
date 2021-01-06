@@ -1,30 +1,21 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('SpawnMachine');
- * mod.thing == 'a thing'; // true
- */
- 
- var constants = require("Constants");
- var log = require("Logging");
- var base = require("Base");
+ import { Role, MAX_WORKER_NUM, MAX_MINER_NUM } from "./Constants";
+ import { info } from "./Logging";
+ import { numCreeps, getNoOwnerStructures } from "./Base";
  
 function monitor() {
-    var mom_worker_num = base.numCreeps((creep) => creep.memory.role == constants.Role.WORKER);
-    var mom_miner_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.MINER);
+    var mom_worker_num = numCreeps((creep) => creep.memory.role == Role.WORKER);
+    var mom_miner_num  = numCreeps((creep) => creep.memory.role == Role.MINER);
     // TODO archers are spawned by Defense module, is that a good idea?
-    var mom_archer_num  = base.numCreeps((creep) => creep.memory.role == constants.Role.ARCHER);
+    var mom_archer_num  = numCreeps((creep) => creep.memory.role == Role.ARCHER);
     
-    if (mom_worker_num < constants.MAX_WORKER_NUM) {
-        log.info("Attempting to spawn worker: " +mom_worker_num +" vs " + constants.MAX_WORKER_NUM);
+    if (mom_worker_num < MAX_WORKER_NUM) {
+        info("Attempting to spawn worker: " +mom_worker_num +" vs " + MAX_WORKER_NUM);
         spawnCreep();
     }
-    else if (base.getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length > 0
-            && mom_miner_num < constants.MAX_MINER_NUM) {
+    else if (getNoOwnerStructures(Game.spawns['Spawn1'].room, STRUCTURE_CONTAINER).length > 0
+            && mom_miner_num < MAX_MINER_NUM) {
         spawnMiner();
-        log.info("Attempting to spawn miner: " + mom_miner_num +" vs " + constants.MAX_MINER_NUM);
+        info("Attempting to spawn miner: " + mom_miner_num +" vs " + MAX_MINER_NUM);
     }
 }
 
@@ -50,7 +41,7 @@ var spawnCreep = function(){
     //console.log("spawned kevin with body " + JSON.stringify(body));
     
     if(allowSpawn(body))
-        return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.WORKER}});
+        return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: Role.WORKER}});
     return ERR_NOT_ENOUGH_ENERGY;
 }
 
@@ -68,14 +59,14 @@ var spawnMiner = function(){
     body.pop();
     
     if(allowSpawn(body)) 
-        return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.MINER}});
+        return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: Role.MINER}});
     return ERR_NOT_ENOUGH_ENERGY;
 }
 
 var spawnScout = function() {
     let newName = "Scouty";
     let body = [MOVE, CLAIM];
-    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.SCOUT}});
+    Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: Role.SCOUT}});
 }
 
 function spawnArcher() {
@@ -97,30 +88,17 @@ function spawnArcher() {
     }
     body.shift();
     
-    return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: constants.Role.ARCHER}});
+    return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: Role.ARCHER}});
 }
 
 
 function allowSpawn(body) {
-    var num_creeps = _.filter(Game.creeps, (creep) => true).length;
+    var num_creeps = Game.creeps.value().filter((creep) => true).length;
     var max_cost = Game.spawns['Spawn1'].room.energyCapacityAvailable;
     var energy = Game.spawns['Spawn1'].room.energyAvailable;
-    log.info("spawn requires energy: ", Math.min(max_cost, num_creeps * num_creeps + 300), " we have ", energy);
+    info("spawn requires energy: ", Math.min(max_cost, num_creeps * num_creeps + 300), " we have ", energy);
     return energy >= Math.min(max_cost, num_creeps * num_creeps + 300);
 }
 
-function bodyCost(body) {
-    let sum = 0;
-    for (let i in body)
-        sum += BODYPART_COST[body[i]];
-    return sum;
-}
 
-
-module.exports = {
-    spawnCreep : spawnCreep,
-    spawnMiner : spawnMiner,
-    spawnScout: spawnScout,
-    spawnArcher: spawnArcher,
-    monitor: monitor,
-};
+export { spawnCreep, spawnMiner, spawnScout, spawnArcher, monitor};

@@ -1,42 +1,34 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('Attack');
- * mod.thing == 'a thing'; // true
- */
-var base = require("Base");
-var constants = require("Constants");
-var spawn_machine = require("SpawnMachine");
-var game = require("Game");
-require("Room");
+import { getOurRooms} from "./Base";
+import { Role } from "./Constants";
+import { spawnArcher } from "./SpawnMachine";
+import { findEnemyCreeps as findEnemyCreeps } from "./Game";
+import "./Room";
 
 // Detects whether safe mode needs to be activated in any of our rooms and activates it.
 // If a room has enemies but no safe mode, spawns defenders.
 function monitor() {
-    const rooms = base.getOurRooms();
-    const enemies = game.findEnemyCreeps(rooms, (creep) => true);
+    const rooms = getOurRooms();
+    const enemies = findEnemyCreeps(rooms, (creep) => true);
     for (let enemy of enemies.all) {
         let room = enemy.room;
-        let num_archers = room.numCreeps( (creep) => creep.memory.role == constants.Role.ARCHER);
+        let num_archers = room.numCreeps( (creep) => creep.memory.role == Role.ARCHER);
         if (!room.controller.safeMode
                 && !room.controller.safeModeCooldown
                 && room.controller.safeModeAvailable) {
             room.controller.activateSafeMode();
             if (num_archers < 2) {
-                spawn_machine.spawnArcher();
+                spawnArcher();
             }
         }
         else if (!room.controller.safeMode && num_archers < 5) {
-            spawn_machine.spawnArcher();
+            spawnArcher();
         }
     }
 }
     
 var kite = function(creep){
-    const rooms = base.getOurRooms();
-    const enemies = base.findEnemyCreeps(rooms, (creep) => true);
+    const rooms = getOurRooms();
+    const enemies = findEnemyCreeps(rooms, (creep) => true).all;
     
     const target = creep.pos.findClosestByRange(enemies);
     if (!target) return false;
@@ -50,7 +42,4 @@ var kite = function(creep){
     return true;
 };
 
-module.exports = {
-    kite : kite,
-    monitor: monitor,
-};
+export { kite, monitor };

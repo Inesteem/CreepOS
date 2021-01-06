@@ -1,0 +1,14 @@
+{
+    "name": "CreepOS",
+    "entry": "main.js",
+    "output": "main.min.js",
+    "includeImports": true,
+    "includeReference": true,
+    "closure": {
+        "module_resolution": "NODE",
+        "compilation_level":"SIMPLE",
+        "js_module_root": "/home/miri/screeps/CreepOS",
+        "warning_level": "VERBOSE",
+        "externs": "screeps.ext.js"
+    }
+}

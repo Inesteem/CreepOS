@@ -7,7 +7,7 @@
  * mod.thing == 'a thing'; // true
  */
  
-var base = require("Base");
+import { findCreeps, getOurRooms } from "./Base";
  
 StructureTower.prototype.repairClosest = function() {
     let structure = this.pos.findClosestByRange(FIND_STRUCTURES, {
@@ -32,7 +32,7 @@ StructureTower.prototype.attackClosest = function() {
 }
 
 StructureTower.prototype.healClosest = function(filter) {
-    let toHeal = base.findCreeps((creep) => creep.hits < creep.hitsMax && filter(creep));                                           
+    let toHeal = findCreeps((creep) => creep.hits < creep.hitsMax && filter(creep));                                           
 
     if (toHeal.length) {
         this.heal(toHeal[0]);
@@ -43,7 +43,7 @@ StructureTower.prototype.healClosest = function(filter) {
 
 function operateTowers() {
     let towers = [];
-    let rooms = base.getOurRooms();
+    let rooms = getOurRooms();
     
     rooms.forEach(room => {
         towers = towers.concat(room.find(FIND_MY_STRUCTURES, {
@@ -76,6 +76,4 @@ function operateTowers() {
     });
 }
 
-module.exports = {
-    operateTowers: operateTowers
-};
+export {operateTowers};
