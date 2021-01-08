@@ -2,7 +2,11 @@ import { getFreeStore, getUnclaimedFlags, getStoresWithEnergy } from './Base';
 import { error } from "./Logging";
 
 const giveup_time = 250;//TODO : move to constants
- 
+
+/**
+ * @constructor
+ * @param {function(Creep):boolean} func 
+ */
 function State(func){
     if (typeof func !== 'function') {
         error("Creating state without function!");
@@ -11,6 +15,11 @@ function State(func){
     this.func = func;
 }
  
+/**
+ * @constructor
+ * @param {string} name 
+ * @param {?State} initial_state 
+ */
 function Task(name, initial_state){
     this.name = name;
     

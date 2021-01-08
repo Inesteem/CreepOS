@@ -1,5 +1,7 @@
-import { Task, State, takeFromStore, upgradeController } from "./Task";
+import { Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
 import { getOurRooms } from "./Base";
+
+
 
 var task = new Task("upgrade", null);
 
@@ -34,19 +36,12 @@ task.take = function(creep, queue_task) {
     queue_task.add_priority = 2;
     let creep_task = {};
     
-    Object.assign(creep_task, tasks.getEnergyForTask(creep, queue_task).task);
+    Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     
     Object.assign(creep_task, queue_task);
     
     return creep_task;
     
 }
-
-var task = new tasks.Task("upgrade", null);
-
-task.state_array = [
-    new tasks.State(tasks.takeFromStore),
-    new tasks.State(tasks.upgradeController),
-];
 
 export {task};

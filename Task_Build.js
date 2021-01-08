@@ -4,6 +4,9 @@ import { BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BU
 import { getOurRooms } from "./Base";
 
 
+/**
+ * @constructor 
+ */
 function BuildTask(){
     this.state_array = [
         new State(takeFromStore),

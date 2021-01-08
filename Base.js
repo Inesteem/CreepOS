@@ -13,7 +13,7 @@ function getStoresWithEnergy(room) {
 
 function handlePossibleRespawn() {
     if (Memory.main_spawn && Memory.main_spawn != Game.spawns['Spawn1'].pos &&
-        Game.creeps.length == 0) {
+        Game.creeps.values().length === 0) {
         info("Detected respawn!");
         Memory = {};
         Memory.tasks = [];
@@ -71,7 +71,7 @@ function findCreeps(filter) {
         error("base.findCreeps: filter is not a function.");
         return 0;
     }
-    return Game.creep.values().filter((creep) => filter(creep));
+    return Game.creeps.values().filter((creep) => filter(creep));
 }
 
 function findEnemyCreeps(rooms, filter) {
@@ -129,3 +129,8 @@ export {
     findEnemyCreeps,
     getStoresWithEnergy,
 };
+
+
+
+
+

@@ -3,6 +3,10 @@ const LOG_LEVEL = {
     WARNING: 1,   // Log warnings and errors.
     ERROR: 2,       // Only log errors.
     
+    /**
+     * Converts log level number to string.
+     * @param {number} log_level 
+     */
     toString: function(log_level) {
         switch(log_level) {
             case LOG_LEVEL.ERROR: return "ERROR";

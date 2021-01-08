@@ -2,6 +2,11 @@ import { State, takeFromStore, Task } from "./Task";
 import { info } from "./Logging";
 import { getOurRooms } from "./Base";
 
+
+
+/**
+ * @constructor 
+ */
 function RepairTask(){
     this.state_array = [
         new State(takeFromStore),
