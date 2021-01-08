@@ -93,6 +93,21 @@ var PathFinder = {
 /**
  * @constructor
  */
+var StructureController = function() {};
+
+/**
+ * @constructor
+ */
+var Deposite = function() {};
+
+/**
+ * @constructor
+ */
+var Mineral = function() {};
+
+/**
+ * @constructor
+ */
 var PowerCreep = function() {};
 
 /**
