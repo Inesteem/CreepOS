@@ -1,4 +1,4 @@
-RoomPosition.prototype.getAdjacentContainer = function(filter) {
+RoomPositio.prototype.getAdjacentContainer = function(filter) {
     let structures = this.getAdjacentStructures();
     for (let structure of structures) {
         if (structure.structure.structureType == STRUCTURE_CONTAINER && 

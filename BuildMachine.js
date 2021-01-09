@@ -52,7 +52,7 @@ function snapshot() {
     if (!Memory.roads) {
         Memory.roads = new Map();
     }
-    for (let creep of Game.creeps.values()) {
+    for (let creep of Object.values(Game.creeps)) {
         const room = creep.room;
         if (!Memory.roads[room.name]) {
             Memory.roads[room.name] = new Array(50).fill(new Array(50).fill(0));

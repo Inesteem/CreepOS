@@ -19,7 +19,7 @@ function monitor() {
     }
 }
 
-var spawnCreep = function(){
+function spawnCreep(){
     var newName = "Kevin" + Game.time;
     
     var parts = [WORK, CARRY, MOVE];
@@ -40,12 +40,12 @@ var spawnCreep = function(){
     body.pop();
     //console.log("spawned kevin with body " + JSON.stringify(body));
     
-    if(allowSpawn(body))
+    if(allowSpawn())
         return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: Role.WORKER}});
     return ERR_NOT_ENOUGH_ENERGY;
 }
 
-var spawnMiner = function(){
+function spawnMiner(){
     var newName = "Lars" + Game.time;
     
     var parts = [WORK];
@@ -58,12 +58,12 @@ var spawnMiner = function(){
     }
     body.pop();
     
-    if(allowSpawn(body)) 
+    if(allowSpawn()) 
         return Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: Role.MINER}});
     return ERR_NOT_ENOUGH_ENERGY;
 }
 
-var spawnScout = function() {
+function spawnScout() {
     let newName = "Scouty";
     let body = [MOVE, CLAIM];
     Game.spawns['Spawn1'].spawnCreep(body, newName, {memory: {role: Role.SCOUT}});
@@ -92,8 +92,8 @@ function spawnArcher() {
 }
 
 
-function allowSpawn(body) {
-    var num_creeps = Game.creeps.value().filter((creep) => true).length;
+function allowSpawn() {
+    var num_creeps = Object.values(Game.creeps).filter((creep) => true).length;
     var max_cost = Game.spawns['Spawn1'].room.energyCapacityAvailable;
     var energy = Game.spawns['Spawn1'].room.energyAvailable;
     info("spawn requires energy: ", Math.min(max_cost, num_creeps * num_creeps + 300), " we have ", energy);

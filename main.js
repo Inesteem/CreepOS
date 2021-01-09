@@ -8,8 +8,6 @@ import { Role } from "./Constants";
 import { updateTaskQueue, runTask, increasePriorities } from "./Scheduler";
 
 module.exports.loop = function () {
-    console.log("tick");
-    
     handlePossibleRespawn();
 
     increasePriorities();
@@ -27,7 +25,7 @@ module.exports.loop = function () {
     
     defense_monitor();
     
-    for (let creep of Game.creeps.values()) {
+    for (let creep of Object.values(Game.creeps)) {
         
         if (!creep.room.controller.safeMode && creep.memory.role != Role.ARCHER) {
             const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);

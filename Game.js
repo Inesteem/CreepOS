@@ -1,7 +1,7 @@
 import { error } from "./Logging";
 import "./Room";
 
-var findEnemyCreeps = function(rooms, filter) {
+function findEnemyCreeps(rooms, filter) {
     let enemies = {'all' : [], 'remote_fighters' : [], 'close_fighters' : [], 'healers' : []};
     for (let room of rooms ) {
         let room_enemies = room.findAllHostileCreeps();
@@ -13,12 +13,12 @@ var findEnemyCreeps = function(rooms, filter) {
     return enemies;
 }
 
-var numCreeps = function(filter) {
+function numCreeps(filter) {
     if (typeof filter !== 'function') {
         error("base.numCreeps: filter is not a function.");
         return 0;
     }
-    return Game.creeps.values().filter((creep) => filter(creep)).length;
+    return Object.values(Game.creeps).filter((creep) => filter(creep)).length;
 }
 
 export { numCreeps, findEnemyCreeps };

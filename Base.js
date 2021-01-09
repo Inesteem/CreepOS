@@ -13,7 +13,7 @@ function getStoresWithEnergy(room) {
 
 function handlePossibleRespawn() {
     if (Memory.main_spawn && Memory.main_spawn != Game.spawns['Spawn1'].pos &&
-        Game.creeps.values().length === 0) {
+        Object.values(Game.creeps).length === 0) {
         info("Detected respawn!");
         Memory = {};
         Memory.tasks = [];
@@ -22,7 +22,7 @@ function handlePossibleRespawn() {
     Memory.main_spawn = Game.spawns['Spawn1'].pos;
 }
 
-var getFreeStore = function(creep) {
+function getFreeStore(creep) {
     let storage  = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
                 return (structure.structureType == STRUCTURE_STORAGE ||
@@ -33,7 +33,7 @@ var getFreeStore = function(creep) {
     return storage;
 }
 
-var findNearestEnergyStored = function(position) {
+function findNearestEnergyStored(position) {
     if (!position) {
         error("Called findNearestEnergyStored with underfined position.");
     }
@@ -71,7 +71,7 @@ function findCreeps(filter) {
         error("base.findCreeps: filter is not a function.");
         return 0;
     }
-    return Game.creeps.values().filter((creep) => filter(creep));
+    return Object.values(Game.creeps).filter((creep) => filter(creep));
 }
 
 function findEnemyCreeps(rooms, filter) {
@@ -95,23 +95,26 @@ function numCreeps(filter) {
         error("base.numCreeps: filter is not a function.");
         return 0;
     }
-    return Game.creeps.values().filter((creep) => filter(creep)).length;
+    return Object.values(Game.creeps).filter((creep) => filter(creep)).length;
 }
 
-var findNearestEnergySource = function(position) {
+function findNearestEnergySource(position) {
     return position.findClosestByPath(FIND_SOURCES_ACTIVE);
 }
 
-var getOurRooms = function() {
-    let rooms = Game.flags.values().filter((flag) => flag.room).map((flag) => flag.room);
+/**
+ * @return {Array<Room>} Rooms with a flag.
+ */
+function getOurRooms() {
+    let rooms = Object.values(Game.flags).filter((flag) => flag.room).map((flag) => flag.room);
     if (!rooms.length) {
         error("No rooms found. Did you forget to set the flag?");
     }
     return rooms;
 }
 
-var getUnclaimedFlags = function() {
-    return Game.flags.values().filter((flag) => !flag.room);
+function getUnclaimedFlags() {
+    return Object.values(Game.flags).filter((flag) => !flag.room);
 }
 
 

@@ -16,5 +16,5 @@ Room.prototype.numCreeps = function(filter) {
         error("base.numCreeps: filter is not a function.");
         return 0;
     }
-    return Game.creeps.values().filter((creep) => filter(creep) && creep.room === this ).length;
+    return Object.values(Game.creeps).filter((creep) => filter(creep) && creep.room === this ).length;
 }

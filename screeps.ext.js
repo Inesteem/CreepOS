@@ -49,11 +49,11 @@ var Memory = {};
  * @const
  */
 var Game = {
-    /** @type {Object} */
+    /** @type {!Object} */
     creeps: {},
-    /** @type {Object} */
+    /** @type {!Object} */
     spawns: {},
-    /** @type {Object} */
+    /** @type {!Object} */
     flags: {},
     /** @type {number} */
     time: 0,
@@ -68,15 +68,39 @@ var Game = {
  * @constructor
  */
 var Room = function () {};
-/** @type {controller} */
+/** @type {number} */
+Room.prototype.energyAvailable;
+/** @type {number} */
+Room.prototype.energyCapacityAvailable;
+/** @type {StructureController} */
 Room.prototype.controller;
 /**
  * Find all objects of the specified type in the room. Results are cached automatically for the specified room and type before applying any custom filters. This automatic cache lasts until the end of the tick.
  * @param {number} type One of the FIND_* constants.
- * @param {opts=} opts An object with additional options.
+ * @param {Object=} opts An object with additional options.
  * @return {Array<Object>} An array with the objects found.
  */
 Room.prototype.find = function(type, opts) {};
+/**
+ * @param {string} type
+ * @param {number} top    Y
+ * @param {number} left   X
+ * @param {number} right  Y
+ * @param {number} bottom X
+ * @param {boolean=} asArray 
+ * @return {Object|Array<{x : number, y : number, structure: Structure}>} 
+ *  */
+Room.prototype.lookForAtArea = function(type, top, left, bottom, right, asArray) {};
+
+/**
+ * Any object with a position in a room. Almost all game objects prototypes are derived from RoomObject.
+ * @constructor
+ */
+var RoomObject = function() {};
+/** @type {RoomPosition} */
+RoomObject.prototype.pos;
+/** @type {Room} */
+RoomObject.prototype.room;
 
 var PathFinder = {
     
@@ -84,7 +108,7 @@ var PathFinder = {
      * @param {RoomPosition} _origin
      * @param {Object} _goal
      * @param {Object=} _opts
-     * @return {path: Array<RoomPosition>, ops: number, cost: number, incomplete: boolean}
+     * @return {{path: Array<RoomPosition>, ops: number, cost: number, incomplete: boolean}}
      */
     search : function(_origin, _goal, _opts) {}    
 
@@ -92,13 +116,9 @@ var PathFinder = {
 
 /**
  * @constructor
+ * @extends {Structure}
  */
 var StructureController = function() {};
-
-/**
- * @constructor
- */
-var Deposite = function() {};
 
 /**
  * @constructor
@@ -197,7 +217,7 @@ Creep.prototype.heal = function(target) {};
 Creep.prototype.move = function(direction) {};
 Creep.prototype.moveByPath = function(path) {};
 /**
- * @param {Structure | Creep | Controller} target 
+ * @param {Structure | Creep | Controller | Source} target 
  * @param {Object=} opts 
  */
 Creep.prototype.moveTo = function(target, opts) {};
@@ -277,9 +297,50 @@ Creep.prototype.room;
 Creep.prototype.hitsMax;
 /** @type number */
 Creep.prototype.hits;
+/** @type Store */
+Creep.prototype.store;
 
-var Tombstore = function () {};
+/**
+ * @constructor
+ */
+var ConstructionSite = function () {};
+/** @type {number} */
+ConstructionSite.prototype.progressTotal;
+/** @type {number} */
+ConstructionSite.prototype.progress;
+
+/**
+ * @constructor
+ */
+var Tombstone = function () {};
+
+/**
+ * @constructor
+ */
+var Deposit = function () {};
+
+/**
+ * @constructor
+ */
 var Ruin = function () {};
+
+/**
+ * A dropped piece of resource. It will decay after a while if not picked up. Dropped resource pile decays for ceil(amount/1000) units per tick.
+ * @constructor
+ */
+var Resource = function () {};
+/** @type {number} */
+Resource.prototype.amount;
+/** @type {string} */
+Resource.prototype.resourceType;
+
+/**
+ * @constructor
+ * @extends {RoomObject}
+ */
+var Source = function () {};
+/** @type {string} */
+Source.prototype.id;
 
 /**
  * @constructor
@@ -313,14 +374,15 @@ RoomPosition.prototype.findClosestByRange = function(type, opts) {};
 /**
  * @param {!(number|Array<Room>|Array<RoomPosition>)} type 
  * @param {Object=} opts
- * @return {(Structure | Creep)}
+ * @return {(Source | Structure)}
  */
 RoomPosition.prototype.findClosestByPath = function(type, opts) {};
 /**
- * @param {number} dir 
- * @return {number}
+ * Get linear direction to the specified position.
+ * @param {...Object} var_args
+ * @return {number} A number representing one of the direction constants.
  */
-RoomPosition.prototype.getDirectionTo = function(dir) {};
+RoomPosition.prototype.getDirectionTo = function(var_args) {};
 /**
  * @param {...Object} var_args
  * @return {Array<Object>} 
@@ -355,11 +417,20 @@ RoomPosition.prototype.findPathTo = function(var_args) {};
  * @constructor
  */
 var Store = function() {};
-/** @type {function(!number): number} */
-Store.prototype.getFreeCapacity = (resourceType) => {};
+/** 
+ *  @param {string} resourceType 
+ *  @return {number|null}
+*/
+Store.prototype.getFreeCapacity = function (resourceType) {};
+/** 
+ *  @param {string} resourceType 
+ *  @return {number|null}
+*/
+Store.prototype.getCapacity = function (resourceType) {};
 
 /**
  * @constructor
+ * @extends {RoomObject}
  */
 var Structure = function() {};
 /** @type {string} */
@@ -367,9 +438,11 @@ Structure.prototype.structureType;
 /** @type {Store} */
 Structure.prototype.store;
 /** @type {number} */
-Structure.hits;
+Structure.prototype.hits;
 /** @type {number} */
-Structure.hitsMax;
+Structure.prototype.hitsMax;
+/** @type {string} */
+Structure.prototype.id;
 
 var StructureTower; 
 

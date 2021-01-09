@@ -1,7 +1,6 @@
 import { State, takeFromStore, Task } from "./Task";
-import { info } from "./Logging";
+import { info, error} from "./Logging";
 import { getOurRooms } from "./Base";
-
 
 
 /**
@@ -14,7 +13,7 @@ function RepairTask(){
     ];
 }
 
-var repairStructure = function (creep) {
+function repairStructure(creep) {
     let structure = Game.getObjectById(creep.memory.task.id);
     
     if(!structure){

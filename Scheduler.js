@@ -1,4 +1,4 @@
-import { info, warning } from "./Logging";
+import { info, warning, error } from "./Logging";
 import { Role } from "./Constants";
 import { kite } from "./Defense";
 
@@ -31,7 +31,12 @@ var task_mapping = {
         'fill_structure':         task_fill_structure,
         'collect_dropped_energy': task_collect_dropped_energy, 
 };
-    
+
+/** @typedef {{id: string, priority: number, name: string}} */
+export var QueueTask;
+/** @typedef {{id: string, name: string}} */
+export var CreepTask;
+
 function updateTaskQueue() {
     for (let task_name in task_mapping) {
         if (task_mapping.hasOwnProperty(task_name)) {
@@ -47,6 +52,7 @@ function runTask(creep, depth) {
     if (creep.memory.task && creep.memory.task.name) {
         //creep.say(creep.memory.task.name);
         ++creep.memory.ticks;
+        error(creep.memory.task);
         let still_running = task_mapping[creep.memory.task.name].run(creep);
         if (!still_running) {
             completeTask(creep);
@@ -103,6 +109,11 @@ function increasePriorities() {
     }
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ */
 function getPath(creep, queue_task){
     let first_target = null;
     let second_target = queue_task.id && Game.getObjectById(queue_task.id);
@@ -122,7 +133,7 @@ function getNextTask(creep) {
     info("Finding task for creep ", creep.id);
     
     let max_priority = -1;
-    let queue_task = null;
+    let /** ?QueueTask */ possible_queue_task = null;
     
     for (let task_type in Memory.new_tasks) {
         let task_queue = Memory.new_tasks[task_type];
@@ -131,12 +142,14 @@ function getNextTask(creep) {
             let current_priority = task.priority / path_cost;
             if (current_priority > max_priority) {
                 max_priority = current_priority;
-                queue_task = task;
+                possible_queue_task = task;
             }
         }
     }
     
-    if (!queue_task) return null;
+    if (!possible_queue_task) return null;
+
+    let /** QueueTask */ queue_task = possible_queue_task;
     
     info("Taking task: ", queue_task);
     
@@ -149,7 +162,7 @@ function getNextTask(creep) {
         queue_task.priority = 0;
         let creep_task = {}
         Object.assign(creep_task, queue_task);
-        Object.assign(creep_task, getEnergyForTask(creep, creep_task).task);
+        Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
         return creep_task;
     }
 }

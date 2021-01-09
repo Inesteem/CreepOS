@@ -1,6 +1,7 @@
 import { getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
 import { getOurRooms } from "./Base";;
 import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "./Constants";
+import { error } from "./Logging";
 
 var task = new Task("fill_structure", null);
 
@@ -98,6 +99,11 @@ function reprioritize(queue_task) {
     }
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {{name: string, id: string, creep_exp_fillup: number}} creep_task 
+ */
 task.finish = (creep, creep_task) => {
     let queue_task = findQueueTask(creep_task.name, creep_task.id);
     if (queue_task && queue_task.expected_fillup) {
@@ -105,8 +111,6 @@ task.finish = (creep, creep_task) => {
         reprioritize(queue_task);
     }
 }
-
-
 
 task.state_array = [
     new State(takeFromStore),

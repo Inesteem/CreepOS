@@ -26,7 +26,7 @@ function monitor() {
     }
 }
     
-var kite = function(creep){
+function kite(creep){
     const rooms = getOurRooms();
     const enemies = findEnemyCreeps(rooms, (creep) => true).all;
     

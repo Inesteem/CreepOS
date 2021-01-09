@@ -3,18 +3,17 @@ var task = new Task("collect_dropped_energy", null);
 import { getOurRooms } from "./Base";
 import { error } from "./Logging";
 
-task.state_array = [
-    new State(collectDroppedEnergy),
-    new State(fillStore),
-];
-
 task.updateQueue = () => {
     let rooms = getOurRooms();
     let dropped_energy = [];
     
     rooms.forEach(room => {
         dropped_energy = dropped_energy.concat(room.find(FIND_DROPPED_RESOURCES, {
-                filter: (d) => d.amount >= 50 && d.resourceType == RESOURCE_ENERGY
+                filter: 
+                /** @param {Resource} d */
+                (d) => {
+                    return d.amount >= 50 && d.resourceType == RESOURCE_ENERGY;
+                }
             }));
     });
     
@@ -94,5 +93,10 @@ task.finish = (creep, creep_task) =>{
     
     reprioritize(queue_task);
 }
+
+task.state_array = [
+    new State(collectDroppedEnergy),
+    new State(fillStore),
+];
 
 export {task};

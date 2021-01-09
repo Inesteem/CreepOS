@@ -1,7 +1,7 @@
 import { PATH_REUSE_TICKS } from "./Constants";
 
 Creep.prototype.harvestClosest = function (){
-    const target = this.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+    const target = /** @type {Source | null} */ (this.pos.findClosestByPath(FIND_SOURCES_ACTIVE));
     if(target && this.harvest(target) == ERR_NOT_IN_RANGE) {
         this.moveTo(target, {visualizePathStyle: {stroke: '#ffff00'},reusePath: PATH_REUSE_TICKS});
     }

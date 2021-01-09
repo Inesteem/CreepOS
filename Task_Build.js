@@ -1,5 +1,5 @@
 import { findQueueTask, getEnergyForTask, State, takeFromStore, Task } from "./Task";
-import { info } from "./Logging";
+import { info, error } from "./Logging";
 import { BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "./Constants";
 import { getOurRooms } from "./Base";
 

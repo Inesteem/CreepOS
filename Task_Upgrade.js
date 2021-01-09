@@ -1,14 +1,8 @@
 import { Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
 import { getOurRooms } from "./Base";
-
-
+import {error} from "./Logging";
 
 var task = new Task("upgrade", null);
-
-task.state_array = [
-    new State(takeFromStore),
-    new State(upgradeController),
-];
 
 task.updateQueue = () => {
     let controller = [];
@@ -43,5 +37,11 @@ task.take = function(creep, queue_task) {
     return creep_task;
     
 }
+
+task.state_array = [
+    new State(takeFromStore),
+    new State(upgradeController),
+];
+
 
 export {task};
