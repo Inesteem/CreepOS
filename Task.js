@@ -1,6 +1,10 @@
 import { getFreeStore, getUnclaimedFlags, getStoresWithEnergy } from './Base';
 import { error } from "./Logging";
-import { QueueTask, CreepTask } from "./Scheduler";
+
+/** @typedef {{id: string, priority: number, name: string}} */
+export var QueueTask;
+/** @typedef {{id: string, name: string}} */
+export var CreepTask;
 
 const giveup_time = 250;//TODO : move to constants
 
@@ -29,6 +33,11 @@ function Task(name, initial_state){
         this.initial_state = initial_state;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ * @return {boolean} False if the creep's task is finished.
+ */
 Task.prototype.run = function(creep) {
     if (!creep.memory.task.current_state) {
         creep.memory.task.current_state = 0;
@@ -58,6 +67,10 @@ function getTarget(targetFunc, creep, id_name) {
     return target;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ */
 function harvestClosest(creep) {
     if (!creep.memory.task.source_id){
         let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
@@ -69,12 +82,16 @@ function harvestClosest(creep) {
     }
     creep.harvestFrom(Game.getObjectById(creep.memory.task.source_id));
     
-    if (creep.store.getFreeCapacity() == 0) return false;
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) return false;
     return true;
 };
 
+/**
+ * 
+ * @param {Creep} creep 
+ */
 function fillStore(creep) {
-    let target = getTarget(getFreeStore, creep, 'target_id');
+    let target = getTarget(getFreeStore, creep, 'id');
     
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
         return false;
@@ -85,6 +102,10 @@ function fillStore(creep) {
     return true;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ */
 function takeFromStore(creep) {
     let storage = null;
     if (!creep.memory.task.store_id) {
@@ -98,7 +119,7 @@ function takeFromStore(creep) {
         }
         creep.harvestFrom(source);
         
-        if (creep.store.getFreeCapacity() == 0) return false;
+        if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) return false;
         
         return true;
     }
@@ -119,6 +140,10 @@ function takeFromStore(creep) {
     return true;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ */
 function upgradeController(creep){
     let controller = Game.getObjectById(creep.memory.task.id);
 
@@ -133,6 +158,10 @@ function upgradeController(creep){
     return true;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ */
 function fillStructure(creep) {
     const structure = Game.getObjectById(creep.memory.task.id);
     
@@ -146,6 +175,10 @@ function fillStructure(creep) {
     return true;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ */
 function claimRoom(creep) {
     const flags = getUnclaimedFlags();
     if (flags.length > 0) {
@@ -157,11 +190,8 @@ function claimRoom(creep) {
     return true;
 }
 
-// Finds the closest energy source for the task if one is needed at all.
-// Returns {task: {}, object: null} if no energy is required or no source/store is found.
-// Returns the energy target object in the form {task: {source_id: id} or {store_id: id}, object: ... }
 /**
- * 
+ * Finds the closest energy source for the task if one is needed at all.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
  * @return {{task: {source_id: (string | undefined), store_id: (string | undefined)}, object: ?RoomObject}} 
@@ -197,7 +227,14 @@ function getEnergyForTask(creep, queue_task) {
     return result;
 }
 
+/**
+ * 
+ * @param {string} task_name 
+ * @param {string} id 
+ * @return {QueueTask}
+ */
 function findQueueTask(task_name, id) {
+    error(task_name);
     return Memory.new_tasks[task_name].find(queue_task => queue_task.id === id);
 }
 export {

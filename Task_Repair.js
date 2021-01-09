@@ -1,10 +1,11 @@
-import { State, takeFromStore, Task } from "./Task";
+import {  QueueTask, CreepTask, State, takeFromStore, Task } from "./Task";
 import { info, error} from "./Logging";
 import { getOurRooms } from "./Base";
 
 
 /**
- * @constructor 
+ * @constructor
+ * @extends {Task} 
  */
 function RepairTask(){
     this.state_array = [
@@ -12,6 +13,8 @@ function RepairTask(){
         new State(repairStructure),
     ];
 }
+RepairTask.prototype = new Task("repair", null);
+var task = new RepairTask();
 
 function repairStructure(creep) {
     let structure = Game.getObjectById(creep.memory.task.id);
@@ -28,10 +31,6 @@ function repairStructure(creep) {
     }
     return true;
 }
-
-RepairTask.prototype = new Task("repair", null);
-
-var task = new RepairTask();
 
 task.updateQueue = () => {
     let structures = [];

@@ -291,14 +291,17 @@ Creep.prototype.upgradeController = function(target) {};
  * @return {number} 
  */
 Creep.prototype.withdraw = function(target, resourceType, amount) {};
-/** @type Room */
+/** @type {Room} */
 Creep.prototype.room;
-/** @type number */
+/** @type {number} */
 Creep.prototype.hitsMax;
-/** @type number */
+/** @type {number} */
 Creep.prototype.hits;
-/** @type Store */
+/** @type {Store} */
 Creep.prototype.store;
+/** @type {string} */
+Creep.prototype.id;
+Creep.prototype.memory;
 
 /**
  * @constructor
@@ -308,6 +311,8 @@ var ConstructionSite = function () {};
 ConstructionSite.prototype.progressTotal;
 /** @type {number} */
 ConstructionSite.prototype.progress;
+/** @type {string} */
+ConstructionSite.prototype.id;
 
 /**
  * @constructor
@@ -395,7 +400,7 @@ RoomPosition.prototype.lookForAt = function(var_args) {};
 RoomPosition.prototype.createConstructionSite = function(structreType) {};
 /**
  * Check whether this position is in the given range of another position.
- * @param {...Object} var_args (x, y, range) or (target, range)
+ * @param {...(Object | number)} var_args (x, y, range) or (target, range)
  * @return {boolean} A boolean value. 
  */
 RoomPosition.prototype.inRangeTo = function(var_args) {};

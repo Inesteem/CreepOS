@@ -1,4 +1,4 @@
-import { Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
+import { QueueTask, CreepTask, Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
 import { getOurRooms } from "./Base";
 import {error} from "./Logging";
 
@@ -21,21 +21,20 @@ task.updateQueue = () => {
     
     // TODO when to delete?
 }
-
+/**
+ * @param {Creep} creep
+ * @param {QueueTask} queue_task 
+ * @return {CreepTask}
+ */
 task.take = function(creep, queue_task) {
-//    let structure = Game.getObjectById(queue_task.id);
-    
-//    if (!structure) return null;
     queue_task.priority = 500;
-    queue_task.add_priority = 2;
     let creep_task = {};
     
     Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
-    
-    Object.assign(creep_task, queue_task);
+    creep_task.id = queue_task.id;
+    creep_task.name = queue_task.name;
     
     return creep_task;
-    
 }
 
 task.state_array = [

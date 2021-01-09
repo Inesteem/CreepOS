@@ -1,4 +1,4 @@
-import { findQueueTask, getEnergyForTask, State, takeFromStore, Task } from "./Task";
+import {  QueueTask, CreepTask, findQueueTask, getEnergyForTask, State, takeFromStore, Task } from "./Task";
 import { info, error } from "./Logging";
 import { BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "./Constants";
 import { getOurRooms } from "./Base";
@@ -48,7 +48,8 @@ task.updateQueue = () => {
         if (!findQueueTask("build", structure.id)) {
             let queue_task = {
                 id: structure.id,
-                name: "build"
+                name: "build",
+                priority: 0
             };
             prioritize(queue_task);
             Memory.new_tasks.build.push(queue_task);
@@ -65,6 +66,9 @@ task.updateQueue = () => {
     }
 }
 
+/**
+ * @param {QueueTask} queue_task 
+ */
 function prioritize(queue_task) {
     let structure = Game.getObjectById(queue_task.id);
     
@@ -83,12 +87,17 @@ function prioritize(queue_task) {
     };
 }
 
+/**
+ * @param {Creep} creep
+ * @param {QueueTask} queue_task 
+ * @return {?CreepTask}
+ */
 task.take = (creep, queue_task) => {
     let structure = Game.getObjectById(queue_task.id);
     
     if (!structure) return null;
     
-    let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity();
+    let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
     
     queue_task.expected_progress = (queue_task.expected_progress || 0) + add_energy;
     
@@ -97,8 +106,9 @@ task.take = (creep, queue_task) => {
     let creep_task = {};
     creep_task.creep_exp_progress = add_energy;
     
-    Object.assign(creep_task, queue_task);
     Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
+    creep_task.id = queue_task.id;
+    creep_task.name = queue_task.name;
     
     return creep_task;
 }
@@ -128,5 +138,4 @@ task.finish = (creep, creep_task) => {
     queue_task.expected_progress -= creep_task.creep_exp_progress;
     reprioritize(queue_task);
 }
-
 export {task};

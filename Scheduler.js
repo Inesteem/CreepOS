@@ -11,6 +11,7 @@ import { task as task_upgrade} from "./Task_Upgrade";
 import { task as task_fill_store} from "./Task_FillStore";
 import { task as task_collect_dropped_energy} from "./Task_CollectDroppedEnergy";
 
+import { QueueTask, CreepTask } from "./Task";
 /**
  * TODO what is required of these Task modules
  * Mandatory:
@@ -32,10 +33,6 @@ var task_mapping = {
         'collect_dropped_energy': task_collect_dropped_energy, 
 };
 
-/** @typedef {{id: string, priority: number, name: string}} */
-export var QueueTask;
-/** @typedef {{id: string, name: string}} */
-export var CreepTask;
 
 function updateTaskQueue() {
     for (let task_name in task_mapping) {
@@ -48,6 +45,11 @@ function updateTaskQueue() {
     }
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {number} depth 
+ */
 function runTask(creep, depth) {
     if (creep.memory.task && creep.memory.task.name) {
         //creep.say(creep.memory.task.name);
@@ -65,13 +67,17 @@ function runTask(creep, depth) {
     }
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ */
 function assignTask(creep) {
     //creep.say("assignTask");
-    if (creep.memory.role == Role.MINER) {
+    if (creep.memory.role === Role.MINER) {
         creep.memory.task = {name: 'fill_store'};
-    } else if (creep.memory.role == Role.SCOUT) {
+    } else if (creep.memory.role === Role.SCOUT) {
         creep.memory.task = {name: 'claim_room'};
-    } else if (creep.memory.role == Role.ARCHER) {
+    } else if (creep.memory.role === Role.ARCHER) {
         // TODO this does not belong here
         if (!kite(creep) && !creep.pos.inRangeTo(Game.flags["Flag1"], 5)) {
             creep.moveTo(Game.flags["Flag1"].pos);
@@ -85,6 +91,10 @@ function assignTask(creep) {
     creep.memory.ticks = 0;
 }
 
+/**
+ * 
+ * @param {{memory : Object}} creep 
+ */
 function completeTask(creep) {
     //creep.say("completeTask");
     info(creep.id, " is completing task ", creep.memory.task.name);
@@ -128,7 +138,10 @@ function getPath(creep, queue_task){
     return creep.pos.findPathTo(second_target.pos).length;
 }
 
-// Fetches the next task for creep from the task queue. Returns a creep_task.
+/**
+ * Fetches the next task for creep from the task queue. Returns a creep_task.
+ * @param {Creep} creep 
+ */
 function getNextTask(creep) {
     info("Finding task for creep ", creep.id);
     
@@ -138,6 +151,9 @@ function getNextTask(creep) {
     for (let task_type in Memory.new_tasks) {
         let task_queue = Memory.new_tasks[task_type];
         for (let task of task_queue) {
+            if(task_mapping[task.name].hasOwnProperty('isSuitable')){
+                if(!task_mapping[task.name].isSuitable(creep, task)) continue;
+            }
             let path_cost = getPath(creep, task) + 1;
             let current_priority = task.priority / path_cost;
             if (current_priority > max_priority) {
@@ -167,4 +183,12 @@ function getNextTask(creep) {
     }
 }
 
-export { updateTaskQueue, assignTask, increasePriorities, getPath, getNextTask, runTask};
+export { 
+    updateTaskQueue, 
+    assignTask, 
+    increasePriorities, 
+    getPath, 
+    getNextTask, 
+    runTask,
+    completeTask,
+};

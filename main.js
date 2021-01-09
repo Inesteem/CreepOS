@@ -5,7 +5,7 @@ import { monitorBuildRoadTasks } from "./BuildMachine";
 import { operateTowers } from "./Tower";
 import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
-import { updateTaskQueue, runTask, increasePriorities } from "./Scheduler";
+import { updateTaskQueue, runTask, increasePriorities, completeTask } from "./Scheduler";
 
 module.exports.loop = function () {
     handlePossibleRespawn();
@@ -39,6 +39,9 @@ module.exports.loop = function () {
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name]) {
+            //TODO
+            completeTask({memory : Memory.creeps[name]});
+            //completeTask(/**@type Creep */ ({id : "id", memory : Memory.creeps[name]}));
             delete Memory.creeps[name];
        //     task_machine.createCollectDroppedEnergyTasks();
         } 

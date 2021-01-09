@@ -1,5 +1,9 @@
 import { info, error } from "./Logging";
 
+/**
+ * 
+ * @param {Room} room 
+ */
 function getStoresWithEnergy(room) {
     let stores = room.find(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -16,20 +20,25 @@ function handlePossibleRespawn() {
         Object.values(Game.creeps).length === 0) {
         info("Detected respawn!");
         Memory = {};
-        Memory.tasks = [];
+        Memory.new_tasks = {};
     }
-    Memory.tasks = Memory.tasks || [];
+    Memory.new_tasks = Memory.new_tasks || {};
     Memory.main_spawn = Game.spawns['Spawn1'].pos;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ * @return {Structure} Closest storage structure with free capacity.
+ */
 function getFreeStore(creep) {
-    let storage  = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+    let storage  = /** @type {Structure} */ (creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => {
                 return (structure.structureType == STRUCTURE_STORAGE ||
                     structure.structureType == STRUCTURE_CONTAINER) &&
                     structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
         }
-    });
+    }));
     return storage;
 }
 

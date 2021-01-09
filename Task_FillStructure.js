@@ -1,4 +1,4 @@
-import { getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
+import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
 import { getOurRooms } from "./Base";;
 import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "./Constants";
 import { error } from "./Logging";
@@ -27,7 +27,7 @@ task.updateQueue = () => {
     for (let structure of structures) {
         if (!Memory.new_tasks.fill_structure.find
                 (fill_task => fill_task.id == structure.id)) {
-            let queue_task = {id: structure.id, name:"fill_structure"};
+            let queue_task = {id: structure.id || "", name:"fill_structure", priority: 0};
             prioritize(queue_task, structure.structureType);
             Memory.new_tasks.fill_structure.push(queue_task);
         }
@@ -44,6 +44,10 @@ task.updateQueue = () => {
     }
 }
 
+/**
+ * @param {QueueTask} queue_task 
+ * @param {string} structure_type 
+ */
 function prioritize(queue_task, structure_type) {
     let structure = Game.getObjectById(queue_task.id);
     
@@ -61,13 +65,17 @@ function prioritize(queue_task, structure_type) {
             queue_task.priority = FILL_DEFAULT_PRIORITY;
     };
 }
-
+/**
+ * @param {Creep} creep
+ * @param {QueueTask} queue_task 
+ * @return {CreepTask|null}
+ */
 task.take = (creep, queue_task) => {
     let structure = Game.getObjectById(queue_task.id);
     
     if (!structure) return null;
     
-    let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity();
+    let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
     if (!queue_task.expected_fillup) {
         queue_task.expected_fillup = add_energy;
         
@@ -82,8 +90,8 @@ task.take = (creep, queue_task) => {
     creep_task.creep_exp_fill = add_energy;
     
     Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
-    
-    Object.assign(creep_task, queue_task);
+    creep_task.id = queue_task.id;
+    creep_task.name = queue_task.name;
     
     return creep_task;
 }
