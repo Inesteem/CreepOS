@@ -18,3 +18,21 @@ Room.prototype.numCreeps = function(filter) {
     }
     return Object.values(Game.creeps).filter((creep) => filter(creep) && creep.room === this ).length;
 }
+
+/**
+ * 
+ * @param {(function(Structure):boolean)=} filter 
+ * @return {Array<StructureSpawn>} All spawns matching filter in this room.
+ */
+Room.prototype.getSpawns = function(filter) {
+    let spawns = this.find(FIND_MY_STRUCTURES, 
+            {filter: (structure) => structure.structureType === STRUCTURE_SPAWN
+                && (typeof filter !== 'function' || filter(structure))});
+    return spawns;
+}
+
+Room.prototype.getHostileStructures = function(filter) {
+    let structures = this.find(FIND_HOSTILE_STRUCTURES, 
+            {filter: (structure) =>  (typeof filter !== 'function' || filter(structure))});
+    return structures;
+}

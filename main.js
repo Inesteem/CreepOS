@@ -6,6 +6,10 @@ import { operateTowers } from "./Tower";
 import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
 import { updateTaskQueue, runTask, increasePriorities, completeTask } from "./Scheduler";
+import { error } from "./Logging";
+import { getSpawns as GameGetSpawns } from "./Game";
+import "./Room";
+
 
 module.exports.loop = function () {
     handlePossibleRespawn();

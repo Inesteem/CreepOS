@@ -116,8 +116,9 @@ task.finish = (creep, creep_task) => {
     let queue_task = findQueueTask(creep_task.name, creep_task.id);
     if (queue_task && queue_task.expected_fillup) {
         queue_task.expected_fillup -= creep_task.creep_exp_fillup;
-        reprioritize(queue_task);
     }
+    if (queue_task)
+        reprioritize(queue_task);
 }
 
 task.state_array = [

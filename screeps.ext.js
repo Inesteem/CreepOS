@@ -118,7 +118,29 @@ var PathFinder = {
  * @constructor
  * @extends {Structure}
  */
+var OwnedStructure = function() {};
+/** @type {boolean} */
+OwnedStructure.prototype.my;
+
+/**
+ * @constructor
+ * @extends {OwnedStructure}
+ */
 var StructureController = function() {};
+
+/**
+ * @constructor
+ * @extends {Structure}
+ */
+var StructureSpawn = function () {};
+/**
+ * 
+ * @param {Array<string>} body 
+ * @param {string} name 
+ * @param {Object=} opts
+ * @return {number} 
+ */
+StructureSpawn.prototype.spawnCreep = function(body, name, opts) {}
 
 /**
  * @constructor
@@ -455,6 +477,8 @@ var StructureTower;
 var ERR_NOT_IN_RANGE;
 /** @const {number} */
 var ERR_NOT_ENOUGH_ENERGY;
+/** @const {number} */
+var OK;
 
 /** @const {string} */
 var STRUCTURE_STORAGE;
@@ -479,6 +503,8 @@ var FIND_MY_STRUCTURES;
 var FIND_HOSTILE_CREEPS;
 /** @const {number} */
 var FIND_STRUCTURES;
+/** @const {number} */
+var FIND_ENEMY_STRUCTURES;
 /** @const {number} */
 var FIND_SOURCES_ACTIVE;
 /** @const {number} */

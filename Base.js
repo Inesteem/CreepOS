@@ -112,13 +112,21 @@ function findNearestEnergySource(position) {
 }
 
 /**
- * @return {Array<Room>} Rooms with a flag.
+ * @return {Array<Room>} Rooms with a flag whose controller is ours.
  */
 function getOurRooms() {
-    let rooms = Object.values(Game.flags).filter((flag) => flag.room).map((flag) => flag.room);
+    let rooms = Object.values(Game.flags).filter((flag) => flag.room).map((flag) => flag.room).filter((room) => room.controller.my);
     if (!rooms.length) {
         error("No rooms found. Did you forget to set the flag?");
     }
+    return rooms;
+}
+
+/**
+ * @return {Array<Room>} Rooms with a flag whose controller is not ours.
+ */
+export function getRoomsToClaim() {
+    let rooms = Object.values(Game.flags).filter((flag) => flag.room).map((flag) => flag.room).filter((room) => !room.controller.my);
     return rooms;
 }
 

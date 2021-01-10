@@ -1,6 +1,6 @@
-import { getOurRooms} from "./Base";
+import { getOurRooms, getRoomsToClaim} from "./Base";
 import { Role } from "./Constants";
-import { spawnArcher } from "./SpawnMachine";
+import { spawnArcherInRoom } from "./SpawnMachine";
 import { findEnemyCreeps as findEnemyCreeps } from "./Game";
 import "./Room";
 
@@ -8,6 +8,7 @@ import "./Room";
 // If a room has enemies but no safe mode, spawns defenders.
 function monitor() {
     const rooms = getOurRooms();
+
     const enemies = findEnemyCreeps(rooms, (creep) => true);
     for (let enemy of enemies.all) {
         let room = enemy.room;
@@ -17,19 +18,20 @@ function monitor() {
                 && room.controller.safeModeAvailable) {
             room.controller.activateSafeMode();
             if (num_archers < 2) {
-                spawnArcher();
+                spawnArcherInRoom(room);
             }
         }
         else if (!room.controller.safeMode && num_archers < 5) {
-            spawnArcher();
+            spawnArcherInRoom(room);
         }
     }
+//    if(enemies.all.length === 0 && roomsToClaim)
 }
     
 function kite(creep){
     const rooms = getOurRooms();
     const enemies = findEnemyCreeps(rooms, (creep) => true).all;
-    
+    const strucutre 
     const target = creep.pos.findClosestByRange(enemies);
     if (!target) return false;
     if (!target.room.controller.safeMode && creep.pos.inRangeTo(target.pos, 2) 

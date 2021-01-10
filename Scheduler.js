@@ -54,7 +54,6 @@ function runTask(creep, depth) {
     if (creep.memory.task && creep.memory.task.name) {
         //creep.say(creep.memory.task.name);
         ++creep.memory.ticks;
-        error(creep.memory.task);
         let still_running = task_mapping[creep.memory.task.name].run(creep);
         if (!still_running) {
             completeTask(creep);

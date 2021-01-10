@@ -176,21 +176,6 @@ function fillStructure(creep) {
 }
 
 /**
- * 
- * @param {Creep} creep 
- */
-function claimRoom(creep) {
-    const flags = getUnclaimedFlags();
-    if (flags.length > 0) {
-        creep.moveToRoom(flags[0]);
-    } else {
-        creep.claimRoom();
-    }
-    
-    return true;
-}
-
-/**
  * Finds the closest energy source for the task if one is needed at all.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
@@ -234,7 +219,6 @@ function getEnergyForTask(creep, queue_task) {
  * @return {QueueTask}
  */
 function findQueueTask(task_name, id) {
-    error(task_name);
     return Memory.new_tasks[task_name].find(queue_task => queue_task.id === id);
 }
 export {
@@ -245,7 +229,6 @@ export {
     fillStore,
     upgradeController,
     fillStructure,
-    claimRoom,
     getEnergyForTask,
     findQueueTask,
 };

@@ -1,4 +1,4 @@
-import { numCreeps, getTowers } from "./Base";
+import { numCreeps, getTowers, getOurRooms } from "./Base";
 import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constants";
 import { info } from "./Logging";
 
@@ -43,7 +43,9 @@ function monitorBuildRoadTasks() {
     Memory.road_build_counter++;
     snapshot();
     if (Memory.road_build_counter > AUTOMATIC_ROAD_BUILD_TICKS) {
-        createBuildRoadTasks(Game.spawns['Spawn1'].room);
+        for (let room of getOurRooms() || []) {
+            createBuildRoadTasks(room);
+        }
         Memory.road_build_counter = 0;
     }
 }

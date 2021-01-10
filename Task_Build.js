@@ -1,6 +1,6 @@
 import {  QueueTask, CreepTask, findQueueTask, getEnergyForTask, State, takeFromStore, Task } from "./Task";
 import { info, error } from "./Logging";
-import { BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "./Constants";
+import { BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, BUILD_SPAWN_PRIORITY, PRIORITY_LEVEL_STEP } from "./Constants";
 import { getOurRooms } from "./Base";
 
 
@@ -82,6 +82,9 @@ function prioritize(queue_task) {
         case (STRUCTURE_EXTENSION):
             queue_task.priority = BUILD_EXTENSION_PRIORITY;
             break;
+        case (STRUCTURE_SPAWN):
+            queue_task.priority = BUILD_SPAWN_PRIORITY;
+            break;
         default:
             queue_task.priority = BUILD_DEFAULT_PRIORITY;
     };
@@ -123,6 +126,7 @@ function reprioritize(queue_task) {
     let expected_progress_total = structure.progress + (queue_task.expected_progress || 0);
     
     let completion = expected_progress_total / structure.progressTotal;
+
     if (completion >= 1) {
         queue_task.priority = 0;
     } else {

@@ -1,4 +1,5 @@
 import { error } from "./Logging";
+import { getOurRooms } from "./Base";
 import "./Room";
 
 function findEnemyCreeps(rooms, filter) {
@@ -21,4 +22,21 @@ function numCreeps(filter) {
     return Object.values(Game.creeps).filter((creep) => filter(creep)).length;
 }
 
-export { numCreeps, findEnemyCreeps };
+/**
+ * 
+ * @param {(function(Structure):boolean)=} filter An optional filter.
+ * @return {Array<StructureSpawn>} All spawns matching filter.
+ */
+function getSpawns(filter) {
+    let rooms = getOurRooms() || [];
+    let spawns = [];
+
+    for (let room of rooms) {
+        spawns = spawns.concat(room.find(FIND_MY_STRUCTURES, 
+            {filter: (structure) => structure.structureType === STRUCTURE_SPAWN
+                && (typeof filter !== 'function' || filter(structure))}));
+    }
+    return spawns;
+}
+
+export { numCreeps, findEnemyCreeps, getSpawns };
