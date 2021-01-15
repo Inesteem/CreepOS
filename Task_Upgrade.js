@@ -20,6 +20,14 @@ task.updateQueue = () => {
     }
     
     // TODO when to delete?
+    for (let i = 0; i < Memory.new_tasks.upgrade.length; i++) {
+        let upgrade_task = Memory.new_tasks.upgrade[i];
+        controller = Game.getObjectById(upgrade_task.id);
+        if (!controller || !controller.my) {
+            Memory.new_tasks.upgrade.splice(i, 1);
+            i--;
+        }
+    }
 }
 /**
  * @param {Creep} creep

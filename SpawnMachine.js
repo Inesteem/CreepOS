@@ -94,7 +94,6 @@ StructureSpawn.prototype.spawnScout = function () {
         idx = (idx + 1) % parts.length;
     }
     body.pop();
-    error(body);
 
     if (body.length >= 2)
         return this.spawnCreep(body, newName, { memory: { role: Role.SCOUT } });

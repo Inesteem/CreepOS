@@ -1,5 +1,6 @@
 import { getFreeStore, getUnclaimedFlags, getStoresWithEnergy } from './Base';
-import { error } from "./Logging";
+import { error, info } from "./Logging";
+import "./RoomPosition";
 
 /** @typedef {{id: string, priority: number, name: string}} */
 export var QueueTask;
@@ -179,9 +180,11 @@ function fillStructure(creep) {
  * Finds the closest energy source for the task if one is needed at all.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
+ * @param {number=} maxPathCost
  * @return {{task: {source_id: (string | undefined), store_id: (string | undefined)}, object: ?RoomObject}} 
  */
-function getEnergyForTask(creep, queue_task) {
+function getEnergyForTask(creep, queue_task, maxPathCost) {
+    info("getEnergyForTask", queue_task);
     let result = {task: {}, object: null};
     if (creep.store[RESOURCE_ENERGY]) return result;
     
@@ -205,12 +208,15 @@ function getEnergyForTask(creep, queue_task) {
             return result;
         }
     } else {
-        let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
+        let source = creep.pos.findClosestActiveSource(maxPathCost);
         if (source)
             return {task: {source_id: source.id}, object: source};
+        else 
+            return {task: {}, object: null, incomplete: true};
     }
     return result;
 }
+
 
 /**
  * 

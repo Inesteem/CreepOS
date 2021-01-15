@@ -1,27 +1,32 @@
 import "./Creep";
 import { monitor as SpawnMachine_monitor } from "./SpawnMachine";
 import { monitor as defense_monitor } from "./Defense";
-import { monitorBuildRoadTasks } from "./BuildMachine";
+import { monitorBuildContainer, monitorBuildRoadTasks, monitorExtensionBuilding } from "./BuildMachine";
 import { operateTowers } from "./Tower";
 import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
 import { updateTaskQueue, runTask, increasePriorities, completeTask } from "./Scheduler";
-import { error } from "./Logging";
+import { error, info } from "./Logging";
 import { getSpawns as GameGetSpawns } from "./Game";
 import "./Room";
 
 
 module.exports.loop = function () {
+    
     handlePossibleRespawn();
 
     increasePriorities();
     
     monitorBuildRoadTasks();
+    if (Game.time % 100 == 0) {
+        monitorExtensionBuilding();
+        monitorBuildContainer();
+    }
     
     operateTowers();
     
     Memory.new_tasks = Memory.new_tasks || {};
-    if (Game.time % 10 === 0){
+    if (Game.time % 30 === 0){
         updateTaskQueue();
     }
     
@@ -44,7 +49,9 @@ module.exports.loop = function () {
     for(var name in Memory.creeps) {
         if(!Game.creeps[name]) {
             //TODO
-            completeTask({memory : Memory.creeps[name]});
+            if (Memory.creeps[name].task) {
+                completeTask({memory : Memory.creeps[name]});
+            }
             //completeTask(/**@type Creep */ ({id : "id", memory : Memory.creeps[name]}));
             delete Memory.creeps[name];
        //     task_machine.createCollectDroppedEnergyTasks();

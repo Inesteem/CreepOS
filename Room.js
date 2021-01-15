@@ -22,17 +22,31 @@ Room.prototype.numCreeps = function(filter) {
 /**
  * 
  * @param {(function(Structure):boolean)=} filter 
- * @return {Array<StructureSpawn>} All spawns matching filter in this room.
+ * @return {!Array<StructureSpawn>} All spawns matching filter in this room.
  */
 Room.prototype.getSpawns = function(filter) {
     let spawns = this.find(FIND_MY_STRUCTURES, 
             {filter: (structure) => structure.structureType === STRUCTURE_SPAWN
                 && (typeof filter !== 'function' || filter(structure))});
-    return spawns;
+    return spawns || [];
 }
 
+/**
+ * 
+ * @param {(function(Structure):boolean)=} filter 
+ * @return {!Array<Structure>} All hostile structures matching filter in this room.
+ */
 Room.prototype.getHostileStructures = function(filter) {
     let structures = this.find(FIND_HOSTILE_STRUCTURES, 
             {filter: (structure) =>  (typeof filter !== 'function' || filter(structure))});
-    return structures;
+    return structures || [];
+}
+/**
+ * @param {{x : number, y : number}} pos
+ * @return {boolean}
+ */
+Room.prototype.inRoom = function(pos) {
+    if (pos.x <= 0 || pos.y <= 0) return false;
+    if (pos.x >= 49 || pos.y >= 49) return false;
+    return true;
 }

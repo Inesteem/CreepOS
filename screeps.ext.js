@@ -57,6 +57,8 @@ var Game = {
     flags: {},
     /** @type {number} */
     time: 0,
+    /** @type {!Object} */
+    rooms: {},
     /**
      * @param {string} id
      * @return {Object}
@@ -91,6 +93,12 @@ Room.prototype.find = function(type, opts) {};
  * @return {Object|Array<{x : number, y : number, structure: Structure}>} 
  *  */
 Room.prototype.lookForAtArea = function(type, top, left, bottom, right, asArray) {};
+/**
+ * Create new ConstructionSite at the specified location.
+ * @param {...(Object | number | string)} var_args (x, y, StructureType, [name]) or (pos, structureType, name)
+ * @return {number} OK or error code.
+ */
+Room.prototype.createConstructionSite = function(var_args) {};
 
 /**
  * Any object with a position in a room. Almost all game objects prototypes are derived from RoomObject.
@@ -386,6 +394,10 @@ Controller.prototype.safeModeCooldown;
  * @param {!string} room_name 
  */
 var RoomPosition = function(pos_x, pos_y, room_name) {};
+/** @type {number} */
+RoomPosition.prototype.x;
+/** @type {number} */
+RoomPosition.prototype.y;
 /**
  * @param {number|Array<RoomPosition>|Array<Room>} type
  * @param {number} range
@@ -439,6 +451,14 @@ RoomPosition.prototype.find = function(type, opts) {};
  * @return {Array<{x: number, y: number, dx: number, dy: number, direction: number}>} An array with path steps in the following format.
  */
 RoomPosition.prototype.findPathTo = function(var_args) {};
+/** @type {string} */
+RoomPosition.prototype.roomName;
+/**
+ * Get linear range to the specified position. 
+ * @param {...(Object | number)} var_args Can be (target) or (x, y) 
+ * @return {number}
+ */
+RoomPosition.prototype.getRangeTo = function(var_args) {};
 
 /**
  * @constructor
@@ -478,6 +498,12 @@ var ERR_NOT_IN_RANGE;
 /** @const {number} */
 var ERR_NOT_ENOUGH_ENERGY;
 /** @const {number} */
+var ERR_INVALID_TARGET;
+/** @const {number} */
+var ERR_FULL;
+/** @const {number} */
+var ERR_RCL_NOT_ENOUGH;
+/** @const {number} */
 var OK;
 
 /** @const {string} */
@@ -502,6 +528,8 @@ var FIND_MY_STRUCTURES;
 /** @const {number} */
 var FIND_HOSTILE_CREEPS;
 /** @const {number} */
+var FIND_HOSTILE_STRUCTURES;
+/** @const {number} */
 var FIND_STRUCTURES;
 /** @const {number} */
 var FIND_ENEMY_STRUCTURES;
@@ -511,15 +539,16 @@ var FIND_SOURCES_ACTIVE;
 var FIND_SOURCES;
 /** @const {number} */
 var FIND_DROPPED_RESOURCES;
-
-
-/** @const {number} */
-var LOOK_CONSTRUCTION_SITES;
 /** @const {number} */
 var FIND_MY_CONSTRUCTION_SITES;
 /** @const {number} */
+var FIND_CONSTRUCTION_SITES;
+
+/** @const {string} */
+var LOOK_CONSTRUCTION_SITES;
+/** @const {string} */
 var LOOK_SOURCES;
-/** @const {number} */
+/** @const {string} */
 var LOOK_STRUCTURES;
 
 
@@ -543,3 +572,6 @@ var CARRY;
 
 /** @const {string} */
 var RESOURCE_ENERGY;
+
+/** @const {{extension: Array<number>}} */
+var CONTROLLER_STRUCTURES;

@@ -1,6 +1,5 @@
 import { info, warning, error } from "./Logging";
 import { Role } from "./Constants";
-import { kite } from "./Defense";
 
 import { getEnergyForTask } from "./Task";
 import { task as task_build} from "./Task_Build";
@@ -10,6 +9,7 @@ import { task as task_claim_room} from "./Task_ClaimRoom";
 import { task as task_upgrade} from "./Task_Upgrade";
 import { task as task_fill_store} from "./Task_FillStore";
 import { task as task_collect_dropped_energy} from "./Task_CollectDroppedEnergy";
+import { task as task_kite} from "./Task_Kite";
 
 import { QueueTask, CreepTask } from "./Task";
 /**
@@ -31,6 +31,7 @@ var task_mapping = {
         'claim_room':             task_claim_room,
         'fill_structure':         task_fill_structure,
         'collect_dropped_energy': task_collect_dropped_energy, 
+        'kite':                   task_kite, 
 };
 
 
@@ -78,9 +79,7 @@ function assignTask(creep) {
         creep.memory.task = {name: 'claim_room'};
     } else if (creep.memory.role === Role.ARCHER) {
         // TODO this does not belong here
-        if (!kite(creep) && !creep.pos.inRangeTo(Game.flags["Flag1"], 5)) {
-            creep.moveTo(Game.flags["Flag1"].pos);
-        }
+        creep.memory.task = {name: 'kite'};
     } else {
         let next_task = getNextTask(creep);
         creep.memory.task = next_task;
@@ -122,13 +121,18 @@ function increasePriorities() {
  * 
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
+ * @param {number} maxPathCost The maximal path costs, returns -1 if path costs are more
  */
-function getPath(creep, queue_task){
+function getPath(creep, queue_task, maxPathCost){
     let first_target = null;
     let second_target = queue_task.id && Game.getObjectById(queue_task.id);
     if (!second_target) return 0;
     
-    first_target = getEnergyForTask(creep, queue_task).object;
+    let result = getEnergyForTask(creep, queue_task, maxPathCost);
+    if (!result.incomplete)
+        first_target = result.object;
+    else
+        return -1;
     
     if (first_target)
         return creep.pos.findPathTo(first_target.pos).length +
@@ -153,7 +157,8 @@ function getNextTask(creep) {
             if(task_mapping[task.name].hasOwnProperty('isSuitable')){
                 if(!task_mapping[task.name].isSuitable(creep, task)) continue;
             }
-            let path_cost = getPath(creep, task) + 1;
+            let path_cost = getPath(creep, task, max_priority * task.priority) + 1;
+            if (path_cost == -1) continue;
             let current_priority = task.priority / path_cost;
             if (current_priority > max_priority) {
                 max_priority = current_priority;
@@ -184,7 +189,6 @@ function getNextTask(creep) {
 
 export { 
     updateTaskQueue, 
-    assignTask, 
     increasePriorities, 
     getPath, 
     getNextTask, 

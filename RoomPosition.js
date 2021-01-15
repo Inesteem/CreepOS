@@ -1,6 +1,7 @@
 import { getOurRooms } from "./Base";
+import { error } from "./Logging";
 
-RoomPositio.prototype.getAdjacentContainer = function(filter) {
+RoomPosition.prototype.getAdjacentContainer = function(filter) {
     let structures = this.getAdjacentStructures();
     for (let structure of structures) {
         if (structure.structure.structureType == STRUCTURE_CONTAINER && 
@@ -35,25 +36,54 @@ RoomPosition.prototype.getAdjacentStructures = function() {
 
 /**
  * Finds the closest of all sources in our rooms. (Slow?)
+ * @param {number=} maxCost
+ * @param {number=} maxRooms
+ * @return {Source} The closest source or null if none is in range.
  */
 RoomPosition.prototype.findClosestActiveSource = function(maxCost, maxRooms) {
-    let rooms = getOurRooms() = [];
+    let rooms = getOurRooms() || [];
     let sources = [];
 
     for (let room of rooms) {
         sources = sources.concat(room.find(FIND_SOURCES_ACTIVE));
     }
 
-    return this.findClosestTarget(sources, maxCost || 1000, maxRooms || 4);
+    return /**@type Source */ (this.findClosestTarget(sources, 1, maxCost || 10000, maxRooms || 4));
 }
 
-RoomPosition.prototype.findClosestTarget = function(targets, maxCost, maxRooms) {
+/**
+ * Finds the closest structure matching filter
+ * @param {function(Structure):boolean} filter 
+ * @param {number} maxCost 
+ * @param {number} maxRooms
+ * @return {Object} 
+ */
+RoomPosition.prototype.findClosestStructure = function(filter, maxCost, maxRooms) {
+    let rooms = getOurRooms() || [];
+    let structures = [];
+
+    for (let room of rooms) {
+        structures = structures.concat(room.find(FIND_STRUCTURES, {filter: filter}));
+    }
+
+    return this.findClosestTarget(structures, 1, maxCost || 10000, maxRooms || 4);
+}
+
+/**
+ * 
+ * @param {Array<{pos: RoomPosition}>} targets
+ * @param {number=} range 
+ * @param {number=} maxCost 
+ * @param {number=} maxRooms
+ * @return {Object} The closest target or null if none is in range. 
+ */
+RoomPosition.prototype.findClosestTarget = function(targets, range, maxCost, maxRooms) {
     if (!targets || !targets.length) return null;
 
     let bestTarget = null;
-    let bestCost = maxCost;
+    let bestCost = maxCost || 10000;
     for (let target of targets) {
-        let result = PathFinder.search(this, target.pos, {maxCost: bestCost, maxRooms: maxRooms});
+        let result = PathFinder.search(this, {pos: target.pos, range: range}, {maxCost: bestCost, maxRooms: maxRooms || 10});
         if (result.incomplete) continue;
         if (result.cost < bestCost) { // This should always be the case.
             bestCost = result.cost;
@@ -61,5 +91,5 @@ RoomPosition.prototype.findClosestTarget = function(targets, maxCost, maxRooms) 
         }
     }
 
-    return target;
+    return bestTarget;
 }

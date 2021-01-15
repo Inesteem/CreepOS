@@ -1,19 +1,113 @@
 import { numCreeps, getTowers, getOurRooms } from "./Base";
 import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constants";
-import { info } from "./Logging";
+import { info, error } from "./Logging";
+
+// EXTENSION BUILDING
+
+function monitorExtensionBuilding() {
+    let rooms = getOurRooms();
+
+    for (let room of rooms) {
+        if (shouldBuildExtension(room)) {
+            let sources = room.find(FIND_SOURCES);
+            let x0 = 0, y0 = 0;
+            for (let i = 0; i < sources.length; i++) {
+                x0 += sources[i].pos.x;
+                y0 += sources[i].pos.y;
+            }
+            x0 = parseInt(x0 / sources.length, 10);
+            y0 = parseInt(y0 / sources.length, 10);
+            let x = 0, y = 0, n = 0;
+            while (true) {
+                n++;
+                if (n > 1000) {
+                    break;
+                }
+                let xp = x0 + x;
+                let yp = y0 + y;
+                if (xp > 0 && xp < 49 && yp > 0 && yp < 49) {
+                    let e = true;
+                    for (let structure of room.find(FIND_STRUCTURES,
+                        {
+                            filter: (structure) => structure.structureType === STRUCTURE_SPAWN ||
+                                structure.structureType === STRUCTURE_STORAGE ||
+                                structure.structureType === STRUCTURE_TOWER ||
+                                structure.structureType === STRUCTURE_CONTAINER ||
+                                structure.structureType === STRUCTURE_WALL
+                        }) || []) {
+                        if (structure.pos.getRangeTo(xp, yp) < 3) e = false;
+                    }
+                    for (let source of sources || []) {
+                        //error(source);
+                        if (source.pos.getRangeTo(xp, yp) < 3) e = false;
+                    }
+                    if (e) {
+                        let j = room.createConstructionSite(xp, yp, STRUCTURE_EXTENSION);
+                        if (j === OK) break;
+                    }
+                }
+                [x, y] = walk45DegRect(x, y);
+            }
+        }
+    }
+}
+
+function shouldBuildExtension(room) {
+    let maxExtensions = CONTROLLER_STRUCTURES.extension[room.controller.level];
+    let curExtensions = room.find(FIND_STRUCTURES, {filter: { structureType : STRUCTURE_EXTENSION}}).length;
+    if (curExtensions < maxExtensions) return true;
+    return false;
+}
+
+function walk45DegRect(x, y) { // walk in diagonal steps around x = 0, y = 0
+    if (x === 0 && y === 0) x = -2;
+    if (x < 0 && y >= 0) {
+        x++; y++;
+    } else if (x >= 0 && y > 0) {
+        x++; y--;
+    } else if (x > 0 && y <= 0) {
+        x--; y--;
+    } else if (x <= 0 && y < 0) {
+        x--; y++;
+        if (x < 0 && y == 0) x -= 2;
+    }
+    return [x, y];
+}
 
 // CONTAINER BUILDING
 
-function monitorBuildContainerTasks() {
-    
+function monitorBuildContainer() {
+    let rooms = getOurRooms();
+    for (let room of rooms) {
+        let num_container = room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}});
+        let num_container_constr = room.find(FIND_CONSTRUCTION_SITES, {filter: {structureType: STRUCTURE_CONTAINER}});
+        if (num_container + num_container_constr < 5) {
+            placeContainers(room);
+        }
+    }
 }
-
-function findSourceForNewContainer() {
-    
-}
-
-function findPositionForContainer(source) {
-    
+/**
+ * 
+ * @param {Room} room 
+ */
+function placeContainers(room) {
+    let sources = room.find(FIND_SOURCES) || [];
+    for (let source of sources){
+l1:     for (let d = 1; d < 4; ++d){
+            for (let dx = -1; dx <= 1; ++dx){
+                for (let dy = -1; dy <= 1; ++dy){
+                    let pos = {x: source.pos.x + d*dx, y: source.pos.y + d*dy};
+                    if (room.inRoom(pos)){
+                        let j = room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
+                        if (j === OK) break l1;
+                        else if (j === ERR_RCL_NOT_ENOUGH || j === ERR_FULL) return;
+                        else if (j === ERR_INVALID_TARGET) continue;
+                        else error("BM.placeContainers: invalid return value");
+                    }
+                }
+            }
+        }
+    }
 }
 
 // ROAD BUILDING
@@ -23,7 +117,7 @@ function max_road_number(room) {
         numCreeps((creep) => true) *
         (getTowers(room, (tower) => true).length + 1);
 }
-
+ 
 //function road_build_ratio(room) {
 //    let num_roads = room.find(FIND_STRUCTURES, {
 //            filter: (structure) => structure.structureType == STRUCTURE_ROAD
@@ -49,7 +143,7 @@ function monitorBuildRoadTasks() {
         Memory.road_build_counter = 0;
     }
 }
- 
+
 function snapshot() {
     if (!Memory.roads) {
         Memory.roads = new Map();
@@ -72,20 +166,20 @@ function snapshot() {
 
 function createBuildRoadTasks(room) {
     let num_roads = room.find(FIND_STRUCTURES, {
-            filter: (structure) => structure.structureType == STRUCTURE_ROAD
+        filter: (structure) => structure.structureType == STRUCTURE_ROAD
     }).length;
-    if (num_roads >= max_road_number(room)){
+    if (num_roads >= max_road_number(room)) {
         info("Not building any roads because we already have " + num_roads);
         return;
     }
 
     let positions = [];
-    
+
     for (let row = 0; row < 50; row++) {
         for (let col = 0; col < 50; col++) {
             //if (Memory.roads[room.name][row][col] >= constants.AUTOMATIC_ROAD_BUILD_TICKS * road_build_ratio(room))
             if (Memory.roads[room.name][row][col])
-                positions.push({x: col, y: row, val: Memory.roads[room.name][row][col]});
+                positions.push({ x: col, y: row, val: Memory.roads[room.name][row][col] });
             /*} else if (Memory.roads[room.name][row][col]) {
                 let ratio = road_build_ratio(room);
                 console.log("Not building road.");
@@ -96,9 +190,9 @@ function createBuildRoadTasks(room) {
             Memory.roads[room.name][row][col] = 0;
         }
     }
-    
+
     positions.sort((a, b) => b.val - a.val);
-    
+
     for (let i = 0; i < Math.min(AUTOMATIC_ROAD_BUILD_NUM, positions.length); i++) {
         let pos = new RoomPosition(positions[i].x, positions[i].y, room.name);
         pos.createConstructionSite(STRUCTURE_ROAD);
@@ -106,4 +200,4 @@ function createBuildRoadTasks(room) {
     }
 }
 
-export { monitorBuildRoadTasks };
+export { monitorBuildRoadTasks, monitorExtensionBuilding, monitorBuildContainer };

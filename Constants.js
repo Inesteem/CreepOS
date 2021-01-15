@@ -1,4 +1,4 @@
-export const MAX_WORKER_NUM = 4;
+export const MAX_WORKER_NUM = 5;
 export const MAX_MINER_NUM = 4;
 export const MAX_SCOUT_NUM = 1;
 
