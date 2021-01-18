@@ -25,6 +25,37 @@ RoomPosition.prototype.getAdjacentSource = function(filter) {
     return null;
 }
 
+RoomPosition.prototype.getAdjacentWalkables = function() {
+    let positions = [];
+    for (let dx = -1; dx <= 1; ++dx) {
+        for (let dy = -1; dy <= 1; ++dy) {
+            if(dy == 0 && dx == 0) continue;
+            let position = new RoomPosition(this.x + dx, this.y + dy, this.roomName);
+            let room = Game.rooms[this.roomName];
+            if (room.inRoom(position) && position.isWalkable()) {
+                positions.push(position);
+            }
+        }
+    }
+    return positions;
+}
+
+RoomPosition.prototype.isWalkable = function() {
+    let terrain = this.lookFor(LOOK_TERRAIN);
+    if (terrain == 'wall') {
+       return false;
+    }
+    
+    let result = true;
+    let structures = this.lookFor(LOOK_STRUCTURES);
+    structures.forEach(structure => {
+            if (OBSTACLE_OBJECT_TYPES.find((type) => type === structure.structureType)) {
+                result = false;
+            }
+    });
+    return result;
+}
+
 RoomPosition.prototype.getAdjacentStructures = function() {
     return Game.rooms[this.roomName]
                 .lookForAtArea(LOOK_STRUCTURES,
@@ -32,6 +63,23 @@ RoomPosition.prototype.getAdjacentStructures = function() {
                     Math.max(0, this.x - 1), 
                     Math.min(49, this.y + 1), 
                     Math.min(49, this.x + 1), true);
+}
+
+/**
+ * 
+ * @param {RoomPosition} pos
+ * @param {number} range 
+ * @param {number=} maxCost 
+ * @param {number=} maxRooms
+ * @return {number} 
+ */
+RoomPosition.prototype.getPathCosts = function(pos, range, maxCost, maxRooms) {
+    // TODO properly implement road costs.
+    let result = PathFinder.search(this, {pos: pos, range: range}, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16});
+    if (result.incomplete) {
+        return Infinity;
+    }
+    return result.cost;
 }
 
 /**
@@ -48,7 +96,7 @@ RoomPosition.prototype.findClosestActiveSource = function(maxCost, maxRooms) {
         sources = sources.concat(room.find(FIND_SOURCES_ACTIVE));
     }
 
-    return /**@type Source */ (this.findClosestTarget(sources, 1, maxCost || 10000, maxRooms || 4));
+    return /**@type Source */ (this.findClosestTarget(sources, 1, maxCost || 2000, maxRooms || 4));
 }
 
 /**
@@ -66,7 +114,7 @@ RoomPosition.prototype.findClosestStructure = function(filter, maxCost, maxRooms
         structures = structures.concat(room.find(FIND_STRUCTURES, {filter: filter}));
     }
 
-    return this.findClosestTarget(structures, 1, maxCost || 10000, maxRooms || 4);
+    return this.findClosestTarget(structures, 1, maxCost || 2000, maxRooms || 4);
 }
 
 /**
@@ -81,7 +129,7 @@ RoomPosition.prototype.findClosestTarget = function(targets, range, maxCost, max
     if (!targets || !targets.length) return null;
 
     let bestTarget = null;
-    let bestCost = maxCost || 10000;
+    let bestCost = maxCost || 2000;
     for (let target of targets) {
         let result = PathFinder.search(this, {pos: target.pos, range: range}, {maxCost: bestCost, maxRooms: maxRooms || 10});
         if (result.incomplete) continue;

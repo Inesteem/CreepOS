@@ -79,8 +79,8 @@ function walk45DegRect(x, y) { // walk in diagonal steps around x = 0, y = 0
 function monitorBuildContainer() {
     let rooms = getOurRooms();
     for (let room of rooms) {
-        let num_container = room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}});
-        let num_container_constr = room.find(FIND_CONSTRUCTION_SITES, {filter: {structureType: STRUCTURE_CONTAINER}});
+        let num_container = room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}}).length;
+        let num_container_constr = room.find(FIND_CONSTRUCTION_SITES, {filter: {structureType: STRUCTURE_CONTAINER}}).length;
         if (num_container + num_container_constr < 5) {
             placeContainers(room);
         }
@@ -94,9 +94,9 @@ function placeContainers(room) {
     let sources = room.find(FIND_SOURCES) || [];
     for (let source of sources){
 l1:     for (let d = 1; d < 4; ++d){
-            for (let dx = -1; dx <= 1; ++dx){
-                for (let dy = -1; dy <= 1; ++dy){
-                    let pos = {x: source.pos.x + d*dx, y: source.pos.y + d*dy};
+            for (let dx = -d; dx <= d; ++dx){
+                for (let dy = -d; dy <= d; ++dy){
+                    let pos = {x: source.pos.x + dx, y: source.pos.y + dy};
                     if (room.inRoom(pos)){
                         let j = room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
                         if (j === OK) break l1;

@@ -39,4 +39,17 @@ function getSpawns(filter) {
     return spawns;
 }
 
-export { numCreeps, findEnemyCreeps, getSpawns };
+/**
+ * 
+ * @return {StructureSpawn} the spawn with the most extensions.
+ */
+function getBiggestSpawn() {
+    //TODO
+    return Game.spawns["Spawn1"];
+}
+
+
+
+
+
+export { numCreeps, findEnemyCreeps, getSpawns, getBiggestSpawn};

@@ -59,6 +59,8 @@ var Game = {
     time: 0,
     /** @type {!Object} */
     rooms: {},
+    /** @type {{limit: number, getUsed: function():number}} */
+    cpu: {},
     /**
      * @param {string} id
      * @return {Object}
@@ -76,6 +78,8 @@ Room.prototype.energyAvailable;
 Room.prototype.energyCapacityAvailable;
 /** @type {StructureController} */
 Room.prototype.controller;
+/** @type {String} */
+Room.prototype.name;
 /**
  * Find all objects of the specified type in the room. Results are cached automatically for the specified room and type before applying any custom filters. This automatic cache lasts until the end of the tick.
  * @param {number} type One of the FIND_* constants.
@@ -99,6 +103,11 @@ Room.prototype.lookForAtArea = function(type, top, left, bottom, right, asArray)
  * @return {number} OK or error code.
  */
 Room.prototype.createConstructionSite = function(var_args) {};
+/**
+ * 
+ * @param {...(Object | number | string)} var_args 
+ */
+Room.prototype.lookForAt = function(var_args) {};
 
 /**
  * Any object with a position in a room. Almost all game objects prototypes are derived from RoomObject.
@@ -132,9 +141,31 @@ OwnedStructure.prototype.my;
 
 /**
  * @constructor
+ * @extends {Structure}
+ */
+var StructureKeeperLair = function() {};
+
+/**
+ * @constructor
  * @extends {OwnedStructure}
  */
 var StructureController = function() {};
+/** 
+ * How many ticks of safe mode remaining, or undefined.
+ * @type {number} */
+StructureController.prototype.safeMode;
+/** 
+ * During this period in ticks new safe mode activations will be blocked, undefined if cooldown is inactive. 
+ * @type {number} */
+StructureController.prototype.safeModeCooldown;
+/** 
+ * Safe mode activations available to use.
+ * @type {number} */
+StructureController.prototype.safeModeAvailable;
+/** 
+ * Activate safe mode if available.
+ * @return {number} */
+StructureController.prototype.activateSafeMode = function() {};
 
 /**
  * @constructor
@@ -184,6 +215,10 @@ var Creep = function() {
      */
     this.pos;
 };
+/** @type {{username : String}} */
+Creep.prototype.owner;
+/** @type {string} */
+Creep.prototype.name;
 /**
  * @param {Creep|PowerCreep|Structure} target
  * @return {number} 
@@ -226,11 +261,6 @@ Creep.prototype.drop = function(resourceType, amount) {};
  */
 Creep.prototype.generateSafeMode = function(controller) {};
 /**
- * @param {string} type 
- * @return {number} 
- */
-Creep.prototype.getActiveBodyparts = function(type) {};
-/**
  * @param {Source|Mineral|Deposit} target 
  * @return {number} 
  */
@@ -247,7 +277,7 @@ Creep.prototype.heal = function(target) {};
 Creep.prototype.move = function(direction) {};
 Creep.prototype.moveByPath = function(path) {};
 /**
- * @param {Structure | Creep | Controller | Source} target 
+ * @param {Structure | Creep | Controller | Source | RoomPosition} target 
  * @param {Object=} opts 
  */
 Creep.prototype.moveTo = function(target, opts) {};
@@ -321,6 +351,12 @@ Creep.prototype.upgradeController = function(target) {};
  * @return {number} 
  */
 Creep.prototype.withdraw = function(target, resourceType, amount) {};
+/**
+ * Get the quantity of live body parts of the given type. Fully damaged parts do not count.
+ * @param {number} type 
+ * @return {number} A number representing the quantity of body parts.
+ */
+Creep.prototype.getActiveBodyparts = function(type) {};
 /** @type {Room} */
 Creep.prototype.room;
 /** @type {number} */
@@ -459,6 +495,11 @@ RoomPosition.prototype.roomName;
  * @return {number}
  */
 RoomPosition.prototype.getRangeTo = function(var_args) {};
+/**
+ * 
+ * @param {string} type 
+ */
+RoomPosition.prototype.lookFor = function(type) {};
 
 /**
  * @constructor
@@ -493,6 +534,12 @@ Structure.prototype.id;
 
 var StructureTower; 
 
+/**
+ * @constructor
+ * @extends {RoomObject}
+ */
+var Flag = function() {};
+
 /** @const {number} */
 var ERR_NOT_IN_RANGE;
 /** @const {number} */
@@ -520,6 +567,8 @@ var STRUCTURE_EXTENSION;
 var STRUCTURE_SPAWN;
 /** @const {string} */
 var STRUCTURE_WALL;
+/** @const {string} */
+var STRUCTURE_KEEPER_LAIR;
 
 /** @const {number} */
 var FIND_MY_CREEPS;
@@ -550,6 +599,8 @@ var LOOK_CONSTRUCTION_SITES;
 var LOOK_SOURCES;
 /** @const {string} */
 var LOOK_STRUCTURES;
+/** @const {string} */
+var LOOK_TERRAIN;
 
 
 /** @const {number} */
@@ -575,3 +626,6 @@ var RESOURCE_ENERGY;
 
 /** @const {{extension: Array<number>}} */
 var CONTROLLER_STRUCTURES;
+
+/** @const Array<string> */
+var OBSTACLE_OBJECT_TYPES;

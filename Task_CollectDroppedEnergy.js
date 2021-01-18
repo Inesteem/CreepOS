@@ -102,18 +102,24 @@ task.finish = (creep, creep_task) =>{
     reprioritize(queue_task);
 }
 
-/**
- * Check if creep is suitbale for task
+ /**
+ * Estimates the time for creep to finish queue_task.
  * @param {Creep} creep 
- * @param {QueueTask} queue_task
- * @return boolean 
+ * @param {QueueTask} queue_task 
+ * @param {number=} max_cost
+ * @return {number}
  */
-task.isSuitable = (creep, queue_task) => {
-     let suitability = creep.store.getFreeCapacity(RESOURCE_ENERGY) >= 50;
-     //log.error(creep.name + " isSuitable for "+ queue_task.name + ": " + suitability);
-     return suitability;
- 
- }
+task.estimateTime = function(creep, queue_task, max_cost) {
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) < 50)
+        return Infinity;
+
+    let resource = Game.getObjectById(queue_task.id);
+    if (!resource) return 0;
+
+    let path_costs = creep.pos.getPathCosts(resource.pos, 1, max_cost);
+
+    return path_costs;
+}
  
 
 task.state_array = [

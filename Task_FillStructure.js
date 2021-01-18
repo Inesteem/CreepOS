@@ -121,6 +121,22 @@ task.finish = (creep, creep_task) => {
         reprioritize(queue_task);
 }
 
+/**
+ * Estimates the time for creep to finish queue_task.
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number=} max_cost
+ * @return {number}
+ */
+task.estimateTime = function(creep, queue_task, max_cost) {
+    let structure = Game.getObjectById(queue_task.id);
+    if (!structure) return 0;
+
+    let path_costs = creep.pos.getPathCosts(structure.pos, 1, max_cost);
+
+    return path_costs;
+}
+
 task.state_array = [
     new State(takeFromStore),
     new State(fillStructure)

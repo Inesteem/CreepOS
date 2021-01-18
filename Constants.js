@@ -34,6 +34,7 @@ export const Role = {
   WORKER: 2,
   ARCHER: 4,
   SCOUT: 5,
+  SLAYER: 6,
 };
 
 // There are four equideistant priority levels:
@@ -53,7 +54,7 @@ export const BUILD_DEFAULT_PRIORITY = 1 * PRIORITY_LEVEL_STEP;
 
 export const FILL_SPAWN_PRIORITY = 3 * PRIORITY_LEVEL_STEP;
 export const FILL_TOWER_PRIORITY = 2 * PRIORITY_LEVEL_STEP;
-export const FILL_EXTENSION_PRIORITY = 2.5 * PRIORITY_LEVEL_STEP;
+export const FILL_EXTENSION_PRIORITY = 3 * PRIORITY_LEVEL_STEP;
 export const FILL_DEFAULT_PRIORITY = 1 * PRIORITY_LEVEL_STEP;
 
 export const REPAIR_ROAD_PRIORITY = 0 * PRIORITY_LEVEL_STEP;

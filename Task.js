@@ -108,37 +108,40 @@ function fillStore(creep) {
  * @param {Creep} creep 
  */
 function takeFromStore(creep) {
-    let storage = null;
-    if (!creep.memory.task.store_id) {
-        if (!creep.memory.task.source_id){
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+        return false;
+    }
+    if (creep.memory.task.store_id) {
+        let storage = Game.getObjectById(creep.memory.task.store_id);
+
+        if (!storage || storage.store[RESOURCE_ENERGY] == 0) {
             return false;
         }
+    
+        creep.takeFrom(storage);
+
+        return true;
+    } else if (creep.memory.task.source_id) {
         let source = Game.getObjectById(creep.memory.task.source_id)
         
-        if (!source) {
+        if (!source || source.energy == 0) {
             return false;
         }
+
         creep.harvestFrom(source);
-        
-        if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) return false;
-        
+
+        return true;
+    } else if (creep.memory.task.resource_id) {
+        let resource = Game.getObjectById(creep.memory.task.resource_id);
+
+        if (!resource) {
+            return false;
+        }
+
+        creep.collectDroppedResource(resource);
         return true;
     }
-    
-    storage = Game.getObjectById(creep.memory.task.store_id);
-
-    if (!storage) {
-        return false;
-    }
-    
-    creep.takeFrom(storage);
-    
-    if (creep.store[RESOURCE_ENERGY] != 0 ||
-        storage.store[RESOURCE_ENERGY] == 0) {
-        return false;
-    }
-    
-    return true;
+    return false;
 }
 
 /**
@@ -180,10 +183,10 @@ function fillStructure(creep) {
  * Finds the closest energy source for the task if one is needed at all.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
- * @param {number=} maxPathCost
+ * @param {number=} max_time
  * @return {{task: {source_id: (string | undefined), store_id: (string | undefined)}, object: ?RoomObject}} 
  */
-function getEnergyForTask(creep, queue_task, maxPathCost) {
+function getEnergyForTask(creep, queue_task, max_time) {
     info("getEnergyForTask", queue_task);
     let result = {task: {}, object: null};
     if (creep.store[RESOURCE_ENERGY]) return result;
@@ -191,30 +194,18 @@ function getEnergyForTask(creep, queue_task, maxPathCost) {
     let target = queue_task.id && Game.getObjectById(queue_task.id);
     
     if (!target) return result;
-    
-    let stores = getStoresWithEnergy(creep.room);
-    if (stores.length) {
-        let store = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (structure) => 
-                structure.structureType == STRUCTURE_CONTAINER 
-                    && structure.store[RESOURCE_ENERGY] > creep.store.getFreeCapacity(RESOURCE_ENERGY)
-        });
-        if (!store) {
-            let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
-            if (source)
-                return {task: {source_id: source.id}, object: source};    
-        } else {
-            let result = {task: {store_id: store.id}, object: store};
-            return result;
-        }
+
+    let energy = creep.findOptimalEnergy(max_time);
+
+    if (!energy) return result;
+
+    if (energy.type == FIND_STRUCTURES) {
+        return {task: {store_id: energy.object.id}, object: energy.object};
+    } else if (energy.type == FIND_SOURCES) {
+        return {task: {source_id: energy.object.id}, object: energy.object};  
     } else {
-        let source = creep.pos.findClosestActiveSource(maxPathCost);
-        if (source)
-            return {task: {source_id: source.id}, object: source};
-        else 
-            return {task: {}, object: null, incomplete: true};
+        return {task: {drop_id: energy.object.id}, object: energy.object};
     }
-    return result;
 }
 
 

@@ -28,24 +28,24 @@ function getTarget(creep) {
     //TODO: hostile structures in own rooms
     
     //hostile creeps in claimed rooms
-    if (!target) {
-        target = creep.pos.findClosestTarget(enemiesClaimed,3,1000,5);
-    }
+    // if (!target) {
+    //     target = creep.pos.findClosestTarget(enemiesClaimed,3,1000,5);
+    // }
 
-    //hostile structures in claimed rooms
-    if(!target) {
-        const roomsToClaim = getRoomsToClaim();
-            error(roomsToClaim);
-        for (let room of roomsToClaim){
+    // //hostile structures in rooms to claim
+    // if(!target) {
+    //     const roomsToClaim = getRoomsToClaim();
+    //     error(roomsToClaim);
+    //     for (let room of roomsToClaim){
             
-            let hostile_structures = room.getHostileStructures();
-            error(room + " " + hostile_structures);
-            if (hostile_structures.length>0) {
-                target = hostile_structures[1];
-                break;
-            }
-        }
-    }
+    //         let hostile_structures = room.getHostileStructures();
+    //         error(room + " " + hostile_structures);
+    //         if (hostile_structures.length>0) {
+    //             target = hostile_structures[1];
+    //             break;
+    //         }
+    //     }
+    // }
     
     if(!target) return false;
 
@@ -71,7 +71,7 @@ function kiteTask(creep) {
         return true;
     }
 
-    if (!target.room.controller.safeMode && creep.pos.inRangeTo(target.pos, 2)
+    if ((!target.room.controller || !target.room.controller.safeMode) && creep.pos.inRangeTo(target.pos, 2)
         && target.getActiveBodyparts(ATTACK)) { // TODO: is creep
         creep.moveAwayFrom(target, 3);
     } else {
@@ -80,6 +80,7 @@ function kiteTask(creep) {
 
     return true;
 }
+
 
 
 

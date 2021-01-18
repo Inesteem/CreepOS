@@ -10,18 +10,21 @@ import { task as task_upgrade} from "./Task_Upgrade";
 import { task as task_fill_store} from "./Task_FillStore";
 import { task as task_collect_dropped_energy} from "./Task_CollectDroppedEnergy";
 import { task as task_kite} from "./Task_Kite";
+import { task as task_attack_source_keeper} from "./Task_Attack_SourceKeeper";
 
 import { QueueTask, CreepTask } from "./Task";
 /**
  * TODO what is required of these Task modules
  * Mandatory:
  * - task - a task object containing a state array to run the task
+ * - spawnCreep(queue_task) - spawns a creep suitable for the task and returns the spawn time, returns -1 if no spawn is possible.
  * 
  * Optional (will fallback to default or do nothing if not present):
  * - updateQueue -> called to fill new_tasks with queue_tasks
  * - take(creep, queue_task) -> called everytime a creep takes the task, returns
  *  the creep_task object to be stored in creep memory, returns null if the task is obsolete.
  * - finish(creep, creep_task) -> called when the creep finishes the task
+ * - estimateTime(creep, queue_task, max_cost) -> Estimate the time it takes for creep to finish queue_task
  */
 var task_mapping = {
         'upgrade':                task_upgrade,
@@ -32,6 +35,7 @@ var task_mapping = {
         'fill_structure':         task_fill_structure,
         'collect_dropped_energy': task_collect_dropped_energy, 
         'kite':                   task_kite, 
+        'attack_source_keeper':   task_attack_source_keeper, 
 };
 
 
@@ -46,12 +50,14 @@ function updateTaskQueue() {
     }
 }
 
+
 /**
  * 
  * @param {Creep} creep 
  * @param {number} depth 
  */
 function runTask(creep, depth) {
+
     if (creep.memory.task && creep.memory.task.name) {
         //creep.say(creep.memory.task.name);
         ++creep.memory.ticks;
@@ -62,8 +68,31 @@ function runTask(creep, depth) {
     }
     
     if (!creep.memory.task || !creep.memory.task.name) {
-        assignTask(creep);
-        if(depth > 0) runTask(creep, depth -1);
+        Memory.ready_queue = Memory.ready_queue || [];
+        Memory.ready_queue.push(creep.name);
+    }
+}
+
+
+function schedule() {
+    let task_queue_sorted = [];
+    for (let task_type in Memory.new_tasks) {
+        let task_queue = Memory.new_tasks[task_type];
+        for (let task of task_queue) {
+            task_queue_sorted.push(task);
+        }
+    }
+    task_queue_sorted.sort((a, b) => b.priority - a.priority);
+
+    for (let i = 0; i < Memory.ready_queue.length; ++ i){
+        let name = Memory.ready_queue[i];
+        let creep = Game.creeps[name];
+        if (creep) {
+            assignTask(creep, task_queue_sorted);
+            runTask(creep, 0);
+        }
+        Memory.ready_queue.splice(i, 1);
+        --i;
     }
 }
 
@@ -71,17 +100,18 @@ function runTask(creep, depth) {
  * 
  * @param {Creep} creep 
  */
-function assignTask(creep) {
+function assignTask(creep, task_queue_sorted) {
     //creep.say("assignTask");
     if (creep.memory.role === Role.MINER) {
         creep.memory.task = {name: 'fill_store'};
     } else if (creep.memory.role === Role.SCOUT) {
         creep.memory.task = {name: 'claim_room'};
     } else if (creep.memory.role === Role.ARCHER) {
-        // TODO this does not belong here
         creep.memory.task = {name: 'kite'};
+    } else if (creep.memory.role === Role.SLAYER) {
+        creep.memory.task = {name: 'attack_source_keeper'};
     } else {
-        let next_task = getNextTask(creep);
+        let next_task = getNextTask(creep, task_queue_sorted);
         creep.memory.task = next_task;
         
         
@@ -121,7 +151,7 @@ function increasePriorities() {
  * 
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
- * @param {number} maxPathCost The maximal path costs, returns -1 if path costs are more
+ * @param {number=} maxPathCost The maximal path costs, returns -1 if path costs are more
  */
 function getPath(creep, queue_task, maxPathCost){
     let first_target = null;
@@ -132,7 +162,7 @@ function getPath(creep, queue_task, maxPathCost){
     if (!result.incomplete)
         first_target = result.object;
     else
-        return -1;
+        return Infinity;
     
     if (first_target)
         return creep.pos.findPathTo(first_target.pos).length +
@@ -145,25 +175,31 @@ function getPath(creep, queue_task, maxPathCost){
  * Fetches the next task for creep from the task queue. Returns a creep_task.
  * @param {Creep} creep 
  */
-function getNextTask(creep) {
+function getNextTask(creep, task_queue_sorted) {
     info("Finding task for creep ", creep.id);
     
     let max_priority = -1;
     let /** ?QueueTask */ possible_queue_task = null;
     
-    for (let task_type in Memory.new_tasks) {
-        let task_queue = Memory.new_tasks[task_type];
-        for (let task of task_queue) {
-            if(task_mapping[task.name].hasOwnProperty('isSuitable')){
-                if(!task_mapping[task.name].isSuitable(creep, task)) continue;
-            }
-            let path_cost = getPath(creep, task, max_priority * task.priority) + 1;
-            if (path_cost == -1) continue;
-            let current_priority = task.priority / path_cost;
-            if (current_priority > max_priority) {
-                max_priority = current_priority;
-                possible_queue_task = task;
-            }
+    let searched = false;
+    for (let task of task_queue_sorted) {
+        if (max_priority) info(max_priority);
+        //Cancel and take whichever task we have if we ran out of CPU
+        if (searched && Game.cpu.getUsed() >= Game.cpu.limit) {
+            break;
+        }
+        let path_cost = 0;
+        let max_cost = searched ? task.priority / max_priority : undefined;
+        if (task.hasOwnProperty('estimateTime')) {
+            path_cost = task.estimateTime(creep, task, max_cost) + 1;
+        } else {
+            path_cost = getPath(creep, task, max_cost) + 1;
+        }
+        searched = true;
+        let current_priority = task.priority / path_cost;
+        if (current_priority !== null && current_priority > max_priority) {
+            max_priority = current_priority;
+            possible_queue_task = task;
         }
     }
     
@@ -194,4 +230,5 @@ export {
     getNextTask, 
     runTask,
     completeTask,
+    schedule,
 };

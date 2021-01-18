@@ -116,6 +116,25 @@ task.take = (creep, queue_task) => {
     return creep_task;
 }
 
+/**
+ * Estimates the time for creep to finish queue_task.
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number=} max_cost
+ * @return {number}
+ */
+task.estimateTime = function(creep, queue_task, max_cost) {
+    let structure = Game.getObjectById(queue_task.id);
+    if (!structure) return 0;
+
+    let path_costs = creep.pos.getPathCosts(structure.pos, 3, max_cost);
+
+    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+    let time_building = energy/(5 * creep.getActiveBodyparts(WORK));
+
+    return path_costs + time_building;
+}
+
 function reprioritize(queue_task) {
     let structure = Game.getObjectById(queue_task.id);
     if (!structure) {
@@ -142,4 +161,9 @@ task.finish = (creep, creep_task) => {
     queue_task.expected_progress -= creep_task.creep_exp_progress;
     reprioritize(queue_task);
 }
+
+task.spawnCreep = function(creep, queue_task) {
+    return -1;
+}
+
 export {task};

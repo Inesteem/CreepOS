@@ -32,10 +32,10 @@ StructureTower.prototype.attackClosest = function() {
 }
 
 StructureTower.prototype.healClosest = function(filter) {
-    let toHeal = findCreeps((creep) => creep.hits < creep.hitsMax && filter(creep));                                           
+    let toHeal = this.pos.findClosestByRange(FIND_MY_CREEPS, {filter: (creep) => creep.hits < creep.hitsMax && (!filter || filter(creep))});                                         
 
-    if (toHeal.length) {
-        this.heal(toHeal[0]);
+    if (toHeal) {
+        this.heal(toHeal);
         return true;
     }
     return false;
@@ -55,7 +55,7 @@ function operateTowers() {
     });
     
     towers.forEach(tower => {
-        if (!tower.room.controller.safeMode){
+        if (!tower.room.controller || !tower.room.controller.safeMode){
             
             if(!tower.healClosest((creep) =>  creep.getActiveBodyparts(RANGED_ATTACK) || 
                                             creep.getActiveBodyparts(ATTACK) || 

@@ -10,13 +10,16 @@ Room.prototype.findAllHostileCreeps = function (){
     return {'all' : enemies, 'remote_fighters' : remote_fighters, 'close_fighters' : close_combatants, 'healers' : healers};
 }
 
-
+/**
+ * 
+ * @param {(function(Creep):boolean)=} filter 
+ */
 Room.prototype.numCreeps = function(filter) {
-    if (typeof filter !== 'function') {
+    if (filter && typeof filter !== 'function') {
         error("base.numCreeps: filter is not a function.");
         return 0;
     }
-    return Object.values(Game.creeps).filter((creep) => filter(creep) && creep.room === this ).length;
+    return Object.values(Game.creeps).filter((creep) => (!filter || filter(creep)) && creep.room === this ).length;
 }
 
 /**

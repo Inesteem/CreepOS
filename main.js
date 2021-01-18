@@ -5,14 +5,13 @@ import { monitorBuildContainer, monitorBuildRoadTasks, monitorExtensionBuilding 
 import { operateTowers } from "./Tower";
 import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
-import { updateTaskQueue, runTask, increasePriorities, completeTask } from "./Scheduler";
+import { updateTaskQueue, runTask, increasePriorities, completeTask, schedule } from "./Scheduler";
 import { error, info } from "./Logging";
 import { getSpawns as GameGetSpawns } from "./Game";
 import "./Room";
 
 
 module.exports.loop = function () {
-    
     handlePossibleRespawn();
 
     increasePriorities();
@@ -36,7 +35,7 @@ module.exports.loop = function () {
     
     for (let creep of Object.values(Game.creeps)) {
         
-        if (!creep.room.controller.safeMode && creep.memory.role != Role.ARCHER) {
+        if ((creep.room.controller && !creep.room.controller.safeMode) && creep.memory.role != Role.ARCHER) {
             const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);
             if(targets.length > 0) {
                 creep.moveAwayFrom(targets[0], 3);
@@ -45,6 +44,9 @@ module.exports.loop = function () {
         }
         runTask(creep,1);
     }
+
+    schedule();
+
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name]) {

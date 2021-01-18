@@ -1,6 +1,7 @@
 import { QueueTask, CreepTask, Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
 import { getOurRooms } from "./Base";
 import {error} from "./Logging";
+import { PRIORITY_LEVEL_STEP } from "./Constants";
 
 var task = new Task("upgrade", null);
 
@@ -15,7 +16,9 @@ task.updateQueue = () => {
     Memory.new_tasks.upgrade = Memory.new_tasks.upgrade || [];
     for (let structure of controller) {
         if (!Memory.new_tasks.upgrade.find(controller_task => controller_task.id == structure.id)) {
-            Memory.new_tasks.upgrade.push({id: structure.id, priority: 500, name:"upgrade"});
+            let queue_task = {id: structure.id, priority: 500, name:"upgrade"};
+            prioritize(queue_task);
+            Memory.new_tasks.upgrade.push(queue_task);
         }
     }
     
@@ -29,13 +32,20 @@ task.updateQueue = () => {
         }
     }
 }
+
+function prioritize(queue_task) {
+    let controller = Game.getObjectById(queue_task.id);
+    if (controller.level == 1) queue_task.priority = 2 * PRIORITY_LEVEL_STEP;
+    else queue_task.priority = 0.5 * PRIORITY_LEVEL_STEP;
+}
+
 /**
  * @param {Creep} creep
  * @param {QueueTask} queue_task 
  * @return {CreepTask}
  */
 task.take = function(creep, queue_task) {
-    queue_task.priority = 500;
+    prioritize(queue_task);
     let creep_task = {};
     
     Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
@@ -43,6 +53,25 @@ task.take = function(creep, queue_task) {
     creep_task.name = queue_task.name;
     
     return creep_task;
+}
+
+/**
+ * Estimates the time for creep to finish queue_task.
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number=} max_cost
+ * @return {number}
+ */
+task.estimateTime = function(creep, queue_task, max_cost) {
+    let structure = Game.getObjectById(queue_task.id);
+    if (!structure) return 0;
+
+    let path_costs = creep.pos.getPathCosts(structure.pos, 3, max_cost);
+
+    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+    let time_upgrade = energy/creep.getActiveBodyparts(WORK);
+
+    return path_costs + time_upgrade;
 }
 
 task.state_array = [

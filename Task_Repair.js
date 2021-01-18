@@ -38,7 +38,7 @@ task.updateQueue = () => {
     
     rooms.forEach(room => {
        structures = structures.concat(room.find(FIND_STRUCTURES, {
-            filter: object => object.hits && object.hits < object.hitsMax
+            filter: object => object.hits && object.hits < object.hitsMax && object.structureType !== STRUCTURE_ROAD
         }));
     });
 
@@ -57,6 +57,27 @@ task.updateQueue = () => {
         }
     }
     info("Repair tasks: ", Memory.new_tasks.repair);
+}
+
+/**
+ * Estimates the time for creep to finish queue_task.
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number=} max_cost
+ * @return {number}
+ */
+task.estimateTime = function(creep, queue_task, max_cost) {
+    let structure = Game.getObjectById(queue_task.id);
+    if (!structure) return 0;
+
+    let to_repair = structure.hitsMax - structure.hits;
+
+    let path_costs = creep.pos.getPathCosts(structure.pos, 3, max_cost);
+
+    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+    let time_repairing = Math.min(to_repair/100, energy/creep.getActiveBodyparts(WORK));
+
+    return path_costs + time_repairing;
 }
 
 export {task};
