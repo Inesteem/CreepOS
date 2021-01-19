@@ -16,7 +16,7 @@ task.updateQueue = () => {
     Memory.new_tasks.upgrade = Memory.new_tasks.upgrade || [];
     for (let structure of controller) {
         if (!Memory.new_tasks.upgrade.find(controller_task => controller_task.id == structure.id)) {
-            let queue_task = {id: structure.id, priority: 500, name:"upgrade"};
+            let queue_task = {id: structure.id, priority: 2 * PRIORITY_LEVEL_STEP, name:"upgrade"};
             prioritize(queue_task);
             Memory.new_tasks.upgrade.push(queue_task);
         }
@@ -36,7 +36,7 @@ task.updateQueue = () => {
 function prioritize(queue_task) {
     let controller = Game.getObjectById(queue_task.id);
     if (controller.level == 1) queue_task.priority = 2 * PRIORITY_LEVEL_STEP;
-    else queue_task.priority = 0.5 * PRIORITY_LEVEL_STEP;
+    else queue_task.priority = 2 * PRIORITY_LEVEL_STEP;
 }
 
 /**
@@ -45,12 +45,13 @@ function prioritize(queue_task) {
  * @return {CreepTask}
  */
 task.take = function(creep, queue_task) {
-    prioritize(queue_task);
     let creep_task = {};
     
     Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
+
+    queue_task.priority = 0;
     
     return creep_task;
 }

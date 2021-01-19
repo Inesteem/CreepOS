@@ -119,21 +119,24 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     }
 
     let best_target = null;
-    let best_time = max_time || 2000;
+    let best_time = max_time || Infinity;
 
-    for (let resource of resources) {
-        //TODO
-        if (!resource.pos) continue;
-        let result = PathFinder.search(this.pos, {pos: resource.pos, range: 1}, {maxCost: best_time, maxRooms: max_rooms || 16});
-        if (result.incomplete) continue;
-        if (result.cost < best_time) {
-            best_time = result.cost;
-            best_target = {type: FIND_DROPPED_RESOURCES, object: resource};
-        }
-    }
+    let matrix = this.getCostMatrix();
+
+    // TODO?? Didnt work
+    // for (let resource of resources) {
+    //     //TODO
+    //     if (!resource.pos) continue;
+    //     let result = PathFinder.search(this.pos, {pos: resource.pos, range: 1}, {maxCost: best_time, maxRooms: max_rooms || 16});
+    //     if (result.incomplete) continue;
+    //     if (result.cost < best_time) {
+    //         best_time = result.cost;
+    //         best_target = {type: FIND_DROPPED_RESOURCES, object: resource};
+    //     }
+    // }
 
     for (let container of containers) {
-        let result = PathFinder.search(this.pos, {pos: container.pos, range: 1}, {maxCost: best_time, maxRooms: max_rooms || 16});
+        let result = PathFinder.search(this.pos, {pos: container.pos, range: 1}, Object.assign(matrix, {maxCost: best_time, maxRooms: max_rooms || 16}));
         if (result.incomplete) continue;
         if (result.cost < best_time) {
             best_time = result.cost;
@@ -142,7 +145,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     }
 
     for (let source of sources) {
-        let result = PathFinder.search(this.pos, {pos: source.pos, range: 1}, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16});
+        let result = PathFinder.search(this.pos, {pos: source.pos, range: 1}, Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16}));
         if (result.incomplete) continue;
         if (result.cost + harvest_time < best_time) {
             best_time = result.cost + harvest_time;
@@ -151,4 +154,35 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     }
 
     return best_target;
+}
+
+Creep.prototype.getCostMatrix = function() {
+    let fatigue_decrease = this.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = this.body.length - this.getActiveBodyparts(MOVE);
+    return {
+
+        plainCost: 2 * fatigue_base - fatigue_decrease,
+        swampCost: 10 * fatigue_base - fatigue_decrease,
+  
+        roomCallback: function(roomName) {
+            let costs = new PathFinder.CostMatrix;
+            let room = Game.rooms[roomName];
+            if (!room) return costs;
+  
+            room.find(FIND_STRUCTURES).forEach(function(struct) {
+                if (struct.structureType === STRUCTURE_ROAD) {
+                    // Favor roads over plain tiles
+                    let cost = fatigue_base - fatigue_decrease;
+                    costs.set(struct.pos.x, struct.pos.y, cost);
+                } else if (struct.structureType !== STRUCTURE_CONTAINER &&
+                       (struct.structureType !== STRUCTURE_RAMPART ||
+                        !struct.my)) {
+                    // Can't walk through non-walkable buildings
+                    costs.set(struct.pos.x, struct.pos.y, 0xff);
+                }
+            });
+  
+            return costs;
+        }
+    }   
 }

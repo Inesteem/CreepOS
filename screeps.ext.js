@@ -127,8 +127,14 @@ var PathFinder = {
      * @param {Object=} _opts
      * @return {{path: Array<RoomPosition>, ops: number, cost: number, incomplete: boolean}}
      */
-    search : function(_origin, _goal, _opts) {}    
+    search : function(_origin, _goal, _opts) {},
 
+    /**
+     * @constructor
+     */
+    CostMatrix: function() {
+        this.set = function(x, y, cost) {};
+    }
 };
 
 /**
@@ -569,6 +575,8 @@ var STRUCTURE_SPAWN;
 var STRUCTURE_WALL;
 /** @const {string} */
 var STRUCTURE_KEEPER_LAIR;
+/** @const {string} */
+var STRUCTURE_RAMPART;
 
 /** @const {number} */
 var FIND_MY_CREEPS;

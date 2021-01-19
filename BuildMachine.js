@@ -113,7 +113,7 @@ l1:     for (let d = 1; d < 4; ++d){
 // ROAD BUILDING
 
 function max_road_number(room) {
-    return 0.8 * room.controller.level * room.controller.level *
+    return 0.8 *
         numCreeps((creep) => true) *
         (getTowers(room, (tower) => true).length + 1);
 }

@@ -8,7 +8,6 @@ import { task as task_fill_structure} from "./Task_FillStructure";
 import { task as task_claim_room} from "./Task_ClaimRoom";
 import { task as task_upgrade} from "./Task_Upgrade";
 import { task as task_fill_store} from "./Task_FillStore";
-import { task as task_collect_dropped_energy} from "./Task_CollectDroppedEnergy";
 import { task as task_kite} from "./Task_Kite";
 import { task as task_attack_source_keeper} from "./Task_Attack_SourceKeeper";
 
@@ -33,7 +32,6 @@ var task_mapping = {
         'repair':                 task_repair,
         'claim_room':             task_claim_room,
         'fill_structure':         task_fill_structure,
-        'collect_dropped_energy': task_collect_dropped_energy, 
         'kite':                   task_kite, 
         'attack_source_keeper':   task_attack_source_keeper, 
 };
@@ -182,24 +180,25 @@ function getNextTask(creep, task_queue_sorted) {
     let /** ?QueueTask */ possible_queue_task = null;
     
     let searched = false;
-    for (let task of task_queue_sorted) {
+    for (let queue_task of task_queue_sorted) {
         if (max_priority) info(max_priority);
         //Cancel and take whichever task we have if we ran out of CPU
         if (searched && Game.cpu.getUsed() >= Game.cpu.limit) {
             break;
         }
         let path_cost = 0;
-        let max_cost = searched ? task.priority / max_priority : undefined;
-        if (task.hasOwnProperty('estimateTime')) {
-            path_cost = task.estimateTime(creep, task, max_cost) + 1;
+        let max_cost = searched ? queue_task.priority / max_priority : undefined;
+        if (task_mapping[queue_task.name].hasOwnProperty('estimateTime')) {
+            path_cost = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_cost) + 1;
+            //path_cost = 1;
         } else {
-            path_cost = getPath(creep, task, max_cost) + 1;
+            path_cost = getPath(creep, queue_task, max_cost) + 1;
         }
         searched = true;
-        let current_priority = task.priority / path_cost;
+        let current_priority = queue_task.priority / path_cost;
         if (current_priority !== null && current_priority > max_priority) {
             max_priority = current_priority;
-            possible_queue_task = task;
+            possible_queue_task = queue_task;
         }
     }
     
