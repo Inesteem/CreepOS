@@ -1,8 +1,8 @@
 import { Role, MAX_WORKER_NUM, MAX_MINER_NUM, MAX_SCOUT_NUM } from "./Constants";
 import { info, error } from "./Logging";
-import { getOurRooms, numCreeps, getNoOwnerStructures, getUnclaimedFlags, getRoomsToClaim } from "./Base";
+import { getOurRooms, getNoOwnerStructures, getUnclaimedFlags, getRoomsToClaim } from "./Base";
 import "./Room";
-import { getBiggestSpawn } from "./Game";
+import { getBiggestSpawn, numCreeps } from "./Game";
 import { getCreepBody as getSlayerBody } from  "./Task_Attack_SourceKeeper";
 
 
@@ -22,16 +22,16 @@ function monitor() {
     var scout_num = numCreeps((creep) => creep.memory.role == Role.SCOUT);
     var to_claim = getUnclaimedFlags().length > 0;
     for (let room of getOurRooms() || []) {
-        var mom_worker_num = numCreeps((creep) => creep.memory.role == Role.WORKER && creep.room === room);
+        //var mom_worker_num = numCreeps((creep) => creep.memory.role == Role.WORKER && creep.room === room);
         var mom_miner_num = numCreeps((creep) => creep.memory.role == Role.MINER && creep.room === room);
         var max_miner_num = getMaxMinerNum(room);
         let spawns = room.getSpawns();
         for (let spawn of spawns) {
-            if (mom_worker_num < MAX_WORKER_NUM) {
-                info("Attempting to spawn worker: " + mom_worker_num + " vs " + MAX_WORKER_NUM);
-                if(spawn.spawnKevin() === OK) continue;
-            }
-            else if (getNoOwnerStructures(room, STRUCTURE_CONTAINER).length > 0 && mom_miner_num < max_miner_num) {
+            //if (mom_worker_num < MAX_WORKER_NUM) {
+            //    info("Attempting to spawn worker: " + mom_worker_num + " vs " + MAX_WORKER_NUM);
+                //if(spawn.spawnKevin() === OK) continue;
+            //}
+            if (getNoOwnerStructures(room, STRUCTURE_CONTAINER).length > 0 && mom_miner_num < max_miner_num) {
                 info("Attempting to spawn miner: " + mom_miner_num + " vs " + max_miner_num);
                 if(spawn.spawnMiner() === OK) continue;
             }
@@ -175,10 +175,11 @@ function spawnArcherInRoom(room) {
  * @return {boolean} true if enough energy is available to spawn a 'good enough' creep 
  */
 StructureSpawn.prototype.allowSpawn = function () {
-    var num_creeps = this.room.numCreeps();
+    var num_creeps = numCreeps();
     var max_cost = this.room.energyCapacityAvailable;
     var energy = this.room.energyAvailable;
-    info("spawn requires energy: ", Math.min(max_cost, num_creeps * num_creeps * num_creeps + 300), " we have ", energy, " at ", this.room);
-    return energy >= Math.min(max_cost, num_creeps * num_creeps + 300);
+    let energy_req = num_creeps * num_creeps * num_creeps + 300;
+    info("spawn requires energy: ", Math.min(max_cost, energy_req), " we have ", energy, " at ", this.room);
+    return energy >= Math.min(max_cost, energy_req);
 }
 export { monitor, spawnArcherInRoom };

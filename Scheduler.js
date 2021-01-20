@@ -12,6 +12,8 @@ import { task as task_kite} from "./Task_Kite";
 import { task as task_attack_source_keeper} from "./Task_Attack_SourceKeeper";
 
 import { QueueTask, CreepTask } from "./Task";
+import { getOurRooms } from "./Base";
+import "./Room";
 /**
  * TODO what is required of these Task modules
  * Mandatory:
@@ -91,6 +93,31 @@ function schedule() {
         }
         Memory.ready_queue.splice(i, 1);
         --i;
+    }
+
+    //TODO get rid of this.
+    task_queue_sorted = [];
+    for (let task_type in Memory.new_tasks) {
+        let task_queue = Memory.new_tasks[task_type];
+        for (let task of task_queue) {
+            task_queue_sorted.push(task);
+        }
+    }
+    task_queue_sorted.sort((a, b) => b.priority - a.priority);
+
+    let rooms = getOurRooms();
+    for (let room of rooms) {
+        if (room.hasExcessEnergy(500)) {
+            if (task_queue_sorted.length) {
+                let queue_task = task_queue_sorted[0];
+                if (task_mapping[queue_task.name].hasOwnProperty('spawn')) {
+                    task_mapping[queue_task.name].spawn(queue_task, room);
+                } else {
+                    room.spawnKevin();
+                }
+                task_queue_sorted.pop();
+            }
+        }
     }
 }
 
@@ -195,6 +222,7 @@ function getNextTask(creep, task_queue_sorted) {
             path_cost = getPath(creep, queue_task, max_cost) + 1;
         }
         searched = true;
+        if (path_cost >= Infinity) continue;
         let current_priority = queue_task.priority / path_cost;
         if (current_priority !== null && current_priority > max_priority) {
             max_priority = current_priority;

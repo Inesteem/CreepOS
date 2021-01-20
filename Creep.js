@@ -1,6 +1,7 @@
 import { PATH_REUSE_TICKS } from "./Constants";
 import { getOurRooms } from "./Base";
 import { error } from "./Logging";
+import "./Source";
 
 Creep.prototype.harvestClosest = function (){
     const target = /** @type {Source | null} */ (this.pos.findClosestByPath(FIND_SOURCES_ACTIVE));
@@ -12,7 +13,9 @@ Creep.prototype.harvestClosest = function (){
 Creep.prototype.harvestFrom = function (target){
     if(target && this.harvest(target) == ERR_NOT_IN_RANGE) {
         this.moveTo(target, {visualizePathStyle: {stroke: '#ffff00'}, reusePath: PATH_REUSE_TICKS});
+        return false;
     }
+    return true;
 }
 
 Creep.prototype.takeFrom = function(structure) {
@@ -145,6 +148,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     }
 
     for (let source of sources) {
+        if (!source.hasFreeSpot()) continue;
         let result = PathFinder.search(this.pos, {pos: source.pos, range: 1}, Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16}));
         if (result.incomplete) continue;
         if (result.cost + harvest_time < best_time) {

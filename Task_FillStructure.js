@@ -77,8 +77,7 @@ task.take = (creep, queue_task) => {
     
     let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
     if (!queue_task.expected_fillup) {
-        queue_task.expected_fillup = add_energy;
-        
+        queue_task.expected_fillup = add_energy;  
     } else {
         queue_task.expected_fillup += add_energy;
     }
@@ -97,7 +96,7 @@ task.take = (creep, queue_task) => {
 }
 
 function reprioritize(queue_task) {
-    if (!queue_task.expected_fillup) queue_task.expected_fillup =0;
+    if (!queue_task.expected_fillup) queue_task.expected_fillup = 0;
     let fillup = queue_task.expected_fillup;
     let structure = Game.getObjectById(queue_task.id);
     if (!structure || fillup >= structure.store.getFreeCapacity(RESOURCE_ENERGY)) {
@@ -135,6 +134,34 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     let path_costs = creep.pos.getPathCosts(structure.pos, 1, max_cost);
 
     return path_costs;
+}
+
+task.spawn = function(queue_task, room) {
+    error("spawning for fill structure!");
+
+    let stored_energy = room.storedEnergy();
+
+    let parts = [];
+    let body = [];
+    if (stored_energy > 500) {
+        body = [MOVE, CARRY];
+        parts = [MOVE, CARRY];
+    } else {
+        body = [MOVE, MOVE, CARRY, WORK];
+        parts = [MOVE, MOVE, CARRY, WORK];
+    }
+
+    let newName = "FillStructure" + Game.time;
+    let idx = 0;
+
+    while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
+        body.push(parts[idx]);
+        idx = (idx + 1) % parts.length;
+    }
+    body.pop();
+
+    if (body.length > 4)
+        return (room.spawnCreep(body, newName, {}));
 }
 
 task.state_array = [

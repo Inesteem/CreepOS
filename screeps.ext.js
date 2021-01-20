@@ -76,10 +76,12 @@ var Room = function () {};
 Room.prototype.energyAvailable;
 /** @type {number} */
 Room.prototype.energyCapacityAvailable;
-/** @type {StructureController} */
+/** @type {?StructureController} */
 Room.prototype.controller;
-/** @type {String} */
+/** @type {!string} */
 Room.prototype.name;
+/** @type {?StructureStorage} */
+Room.prototype.storage;
 /**
  * Find all objects of the specified type in the room. Results are cached automatically for the specified room and type before applying any custom filters. This automatic cache lasts until the end of the tick.
  * @param {number} type One of the FIND_* constants.
@@ -174,6 +176,16 @@ StructureController.prototype.safeModeAvailable;
 StructureController.prototype.activateSafeMode = function() {};
 
 /**
+ * @extends RoomObject
+ * @constructor
+ */
+var StructureStorage = function () {};
+/**
+ * @type {Store}
+ */
+StructureStorage.prototype.store;
+
+/**
  * @constructor
  * @extends {Structure}
  */
@@ -186,6 +198,10 @@ var StructureSpawn = function () {};
  * @return {number} 
  */
 StructureSpawn.prototype.spawnCreep = function(body, name, opts) {}
+/**
+ * @type {Object}
+ */
+StructureSpawn.prototype.spawning;
 
 /**
  * @constructor
@@ -609,6 +625,8 @@ var LOOK_SOURCES;
 var LOOK_STRUCTURES;
 /** @const {string} */
 var LOOK_TERRAIN;
+/** @const {string} */
+var LOOK_CREEPS;
 
 
 /** @const {number} */

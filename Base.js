@@ -99,14 +99,6 @@ function findEnemyCreeps(rooms, filter) {
     return enemies;
 }
 
-function numCreeps(filter) {
-    if (typeof filter !== 'function') {
-        error("base.numCreeps: filter is not a function.");
-        return 0;
-    }
-    return Object.values(Game.creeps).filter((creep) => filter(creep)).length;
-}
-
 function findNearestEnergySource(position) {
     return position.findClosestByPath(FIND_SOURCES_ACTIVE);
 }
@@ -141,7 +133,6 @@ export {
     getUnclaimedFlags,
     findNearestEnergyStored,
     findNearestEnergySource,
-    numCreeps,
     getTowers,
     getNoOwnerStructures,
     findCreeps,

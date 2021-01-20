@@ -14,12 +14,17 @@ function findEnemyCreeps(rooms, filter) {
     return enemies;
 }
 
+/**
+ * 
+ * @param {function(Creep):boolean=} filter 
+ * @return {number} The number of all creeps.
+ */
 function numCreeps(filter) {
-    if (typeof filter !== 'function') {
-        error("base.numCreeps: filter is not a function.");
+    if (filter && typeof filter !== 'function') {
+        error("numCreeps: filter is not a function.");
         return 0;
     }
-    return Object.values(Game.creeps).filter((creep) => filter(creep)).length;
+    return Object.values(Game.creeps).filter((creep) => !filter || filter(creep)).length;
 }
 
 /**

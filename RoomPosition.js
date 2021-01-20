@@ -47,12 +47,15 @@ RoomPosition.prototype.isWalkable = function() {
     }
     
     let result = true;
-    let structures = this.lookFor(LOOK_STRUCTURES);
-    structures.forEach(structure => {
-            if (OBSTACLE_OBJECT_TYPES.find((type) => type === structure.structureType)) {
-                result = false;
-            }
-    });
+    let structures = this.lookFor(LOOK_STRUCTURES).concat(this.lookFor(LOOK_CONSTRUCTION_SITES));
+    for (let structure of structures) {
+        if (OBSTACLE_OBJECT_TYPES.find((type) => type === structure.structureType)) {
+            return false;
+        }
+    }
+    
+    let creeps = this.lookFor(LOOK_CREEPS);
+    if (creeps.length) return false;
     return result;
 }
 

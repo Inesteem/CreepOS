@@ -29,8 +29,6 @@ module.exports.loop = function () {
         updateTaskQueue();
     }
     
-    SpawnMachine_monitor();
-    
     defense_monitor();
     
     for (let creep of Object.values(Game.creeps)) {
@@ -46,6 +44,8 @@ module.exports.loop = function () {
     }
 
     schedule();
+
+    SpawnMachine_monitor();
 
     //FREE MEMORY
     for(var name in Memory.creeps) {

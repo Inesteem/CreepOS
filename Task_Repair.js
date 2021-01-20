@@ -69,6 +69,7 @@ task.updateQueue = () => {
 task.estimateTime = function(creep, queue_task, max_cost) {
     let structure = Game.getObjectById(queue_task.id);
     if (!structure) return 0;
+    if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
 
     let to_repair = structure.hitsMax - structure.hits;
 

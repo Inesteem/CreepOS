@@ -1,6 +1,7 @@
 import { getFreeStore, getUnclaimedFlags, getStoresWithEnergy } from './Base';
 import { error, info } from "./Logging";
 import "./RoomPosition";
+import "./Creep";
 
 /** @typedef {{id: string, priority: number, name: string}} */
 export var QueueTask;
@@ -81,7 +82,15 @@ function harvestClosest(creep) {
             return false;
         }
     }
-    creep.harvestFrom(Game.getObjectById(creep.memory.task.source_id));
+    let source = Game.getObjectById(creep.memory.task.source_id);
+
+    if (source.energy == 0)
+        return false;
+
+    if (!creep.harvestFrom(Game.getObjectById(creep.memory.task.source_id))) {
+        if (!source.hasFreeSpot())
+            return false;
+    }
     
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) return false;
     return true;
@@ -128,7 +137,9 @@ function takeFromStore(creep) {
             return false;
         }
 
-        creep.harvestFrom(source);
+        if (!creep.harvestFrom(source) && !source.hasFreeSpot()) {
+            return false;
+        }
 
         return true;
     } else if (creep.memory.task.resource_id) {

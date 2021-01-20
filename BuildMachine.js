@@ -1,6 +1,7 @@
-import { numCreeps, getTowers, getOurRooms } from "./Base";
+import { getTowers, getOurRooms } from "./Base";
 import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constants";
 import { info, error } from "./Logging";
+import { numCreeps } from "./Game";
 
 // EXTENSION BUILDING
 
@@ -27,6 +28,10 @@ function monitorExtensionBuilding() {
                 let yp = y0 + y;
                 if (xp > 0 && xp < 49 && yp > 0 && yp < 49) {
                     let e = true;
+                    let position = new RoomPosition(xp, yp, room.name);
+                    if (position.getAdjacentWalkables().length < 5) {
+                        e = false;
+                    }
                     for (let structure of room.find(FIND_STRUCTURES,
                         {
                             filter: (structure) => structure.structureType === STRUCTURE_SPAWN ||

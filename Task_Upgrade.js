@@ -67,6 +67,8 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     let structure = Game.getObjectById(queue_task.id);
     if (!structure) return 0;
 
+    if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+
     let path_costs = creep.pos.getPathCosts(structure.pos, 3, max_cost);
 
     let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
