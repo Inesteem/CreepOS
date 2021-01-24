@@ -56,62 +56,6 @@ Task.prototype.run = function(creep) {
     return true;
 }
 
-function getTarget(targetFunc, creep, id_name) {
-    let target = null;
-    if (!creep.memory.task[id_name]) {
-        target = targetFunc(creep);
-        if (target) {
-            creep.memory.task[id_name] = target.id;
-        }
-    } else {
-        target = Game.getObjectById(creep.memory.task[id_name]);
-    }
-    return target;
-}
-
-/**
- * 
- * @param {Creep} creep 
- */
-function harvestClosest(creep) {
-    if (!creep.memory.task.source_id){
-        let source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
-        if (source)
-            creep.memory.task.source_id = source.id;
-        else {
-            return false;
-        }
-    }
-    let source = Game.getObjectById(creep.memory.task.source_id);
-
-    if (source.energy == 0)
-        return false;
-
-    if (!creep.harvestFrom(Game.getObjectById(creep.memory.task.source_id))) {
-        if (!source.hasFreeSpot())
-            return false;
-    }
-    
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) return false;
-    return true;
-};
-
-/**
- * 
- * @param {Creep} creep 
- */
-function fillStore(creep) {
-    let target = getTarget(getFreeStore, creep, 'id');
-    
-    if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-        return false;
-    }
-    creep.storeAt(target);
-    if (creep.store[RESOURCE_ENERGY] == 0)
-        return false;
-    return true;
-}
-
 /**
  * 
  * @param {Creep} creep 
@@ -233,8 +177,6 @@ export {
     Task,
     State,
     takeFromStore,
-    harvestClosest,
-    fillStore,
     upgradeController,
     fillStructure,
     getEnergyForTask,

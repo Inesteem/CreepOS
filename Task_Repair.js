@@ -38,7 +38,7 @@ task.updateQueue = () => {
     
     rooms.forEach(room => {
        structures = structures.concat(room.find(FIND_STRUCTURES, {
-            filter: object => object.hits && object.hits < object.hitsMax && object.structureType !== STRUCTURE_ROAD
+            filter: object => object.hits && object.hits < object.hitsMax //&& object.structureType !== STRUCTURE_ROAD
         }));
     });
 
@@ -61,24 +61,80 @@ task.updateQueue = () => {
 
 /**
  * Estimates the time for creep to finish queue_task.
- * @param {Creep} creep 
+ * @param {{store: Object, getActiveBodyparts : (function(number): number), pos : RoomPosition}} creep 
  * @param {QueueTask} queue_task 
  * @param {number=} max_cost
  * @return {number}
  */
 task.estimateTime = function(creep, queue_task, max_cost) {
-    let structure = Game.getObjectById(queue_task.id);
+    let structure = /**@type {Structure} */ (Game.getObjectById(queue_task.id));
     if (!structure) return 0;
     if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
 
     let to_repair = structure.hitsMax - structure.hits;
 
-    let path_costs = creep.pos.getPathCosts(structure.pos, 3, max_cost);
-
-    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
-    let time_repairing = Math.min(to_repair/100, energy/creep.getActiveBodyparts(WORK));
+    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
+    let path_costs = creep.pos.getPathCosts(structure.pos, 3, fatigue_base, fatigue_decrease, max_cost);
+    
+    let energy = Math.min(to_repair/100, creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));
+    //let time_repairing = Math.min(to_repair/100, energy/creep.getActiveBodyparts(WORK));
+    let time_repairing = energy/creep.getActiveBodyparts(WORK);
 
     return path_costs + time_repairing;
 }
+
+
+
+task.spawn = function(queue_task, room) {
+    if (!room.allowSpawn()) return;
+
+    let parts = [MOVE, CARRY, WORK];
+    let body = [MOVE, CARRY, WORK];
+
+    let newName = "Mario" + Game.time;
+    let structure = Game.getObjectById(queue_task.id); //TODO: check if null
+    let pos = structure.pos;
+    let container = pos.findClosestStructure ((structure => {
+        return structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE; 
+    }));
+    if (!container) {
+        room.spawnKevin();
+        return;
+    }
+
+    let to_repair = (structure.hitsMax - structure.hits)/100;
+
+    let best_eff = 0;
+    while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
+        let best_part = "none";
+        for (let part of parts){
+            body.push(part);
+            let frankencreep = {pos : container.pos,
+                body: body, 
+                store : {energy: 0, getCapacity: (energy) => body.filter(x => x==CARRY).length * 50}, 
+                getActiveBodyparts : (part) => body.filter(x => x==part).length};
+            
+            let carry = body.filter(x => x == CARRY).length * 50;
+            let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
+            if (time == null || time == Infinity) {
+                body.pop();
+                continue;
+            }
+            let eff = Math.min(to_repair,carry)/time;
+            if(best_eff < eff){
+                best_eff = eff;
+                best_part = part;
+            }
+            body.pop();
+        }
+        if (best_part !== "none")
+            body.push(best_part);
+    }
+    body.pop();
+    if (body.length > 3)
+        return (room.spawnCreep(body, newName, {}));
+}
+
 
 export {task};

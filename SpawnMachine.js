@@ -31,11 +31,11 @@ function monitor() {
             //    info("Attempting to spawn worker: " + mom_worker_num + " vs " + MAX_WORKER_NUM);
                 //if(spawn.spawnKevin() === OK) continue;
             //}
-            if (getNoOwnerStructures(room, STRUCTURE_CONTAINER).length > 0 && mom_miner_num < max_miner_num) {
-                info("Attempting to spawn miner: " + mom_miner_num + " vs " + max_miner_num);
-                if(spawn.spawnMiner() === OK) continue;
-            }
-            else if (to_claim && scout_num < MAX_SCOUT_NUM) {
+            // if (getNoOwnerStructures(room, STRUCTURE_CONTAINER).length > 0 && mom_miner_num < max_miner_num) {
+            //     info("Attempting to spawn miner: " + mom_miner_num + " vs " + max_miner_num);
+            //     if(spawn.spawnMiner() === OK) continue;
+            // }
+            if (to_claim && scout_num < MAX_SCOUT_NUM) {
                 if (spawn.spawnScout() === OK) scout_num += 1;
             }
         }
@@ -112,7 +112,7 @@ StructureSpawn.prototype.spawnMiner = function () {
     while (this.spawnCreep(body, newName, { dryRun: true }) == 0) {
         body.push(parts[idx]);
         idx = (idx + 1) % parts.length;
-        if (body.length >= 13) break;
+        if (body.length > 8) break;
     }
     
     body.pop();

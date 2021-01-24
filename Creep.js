@@ -2,6 +2,7 @@ import { PATH_REUSE_TICKS } from "./Constants";
 import { getOurRooms } from "./Base";
 import { error } from "./Logging";
 import "./Source";
+import "./Room";
 
 Creep.prototype.harvestClosest = function (){
     const target = /** @type {Source | null} */ (this.pos.findClosestByPath(FIND_SOURCES_ACTIVE));
@@ -119,6 +120,12 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
                 structure.structureType === STRUCTURE_STORAGE) &&
             structure.store[RESOURCE_ENERGY] >= needed_energy
         }}));
+        containers = containers.concat(room.find(FIND_RUINS, {
+            filter : (ruin) => ruin.store[RESOURCE_ENERGY] >= needed_energy
+        }));
+        containers = containers.concat(room.find(FIND_TOMBSTONES, {
+            filter : (tombstone) => tombstone.store[RESOURCE_ENERGY] >= needed_energy
+        }));
     }
 
     let best_target = null;
@@ -148,7 +155,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     }
 
     for (let source of sources) {
-        if (!source.hasFreeSpot()) continue;
+        if (!source.hasFreeSpot() && !this.pos.inRangeTo(source.pos, 1)) continue;
         let result = PathFinder.search(this.pos, {pos: source.pos, range: 1}, Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16}));
         if (result.incomplete) continue;
         if (result.cost + harvest_time < best_time) {
@@ -163,30 +170,5 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
 Creep.prototype.getCostMatrix = function() {
     let fatigue_decrease = this.getActiveBodyparts(MOVE) * 2;
     let fatigue_base = this.body.length - this.getActiveBodyparts(MOVE);
-    return {
-
-        plainCost: 2 * fatigue_base - fatigue_decrease,
-        swampCost: 10 * fatigue_base - fatigue_decrease,
-  
-        roomCallback: function(roomName) {
-            let costs = new PathFinder.CostMatrix;
-            let room = Game.rooms[roomName];
-            if (!room) return costs;
-  
-            room.find(FIND_STRUCTURES).forEach(function(struct) {
-                if (struct.structureType === STRUCTURE_ROAD) {
-                    // Favor roads over plain tiles
-                    let cost = fatigue_base - fatigue_decrease;
-                    costs.set(struct.pos.x, struct.pos.y, cost);
-                } else if (struct.structureType !== STRUCTURE_CONTAINER &&
-                       (struct.structureType !== STRUCTURE_RAMPART ||
-                        !struct.my)) {
-                    // Can't walk through non-walkable buildings
-                    costs.set(struct.pos.x, struct.pos.y, 0xff);
-                }
-            });
-  
-            return costs;
-        }
-    }   
+    return this.room.getCostMatrix(fatigue_base, fatigue_decrease); 
 }

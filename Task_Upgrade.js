@@ -51,14 +51,14 @@ task.take = function(creep, queue_task) {
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
 
-    queue_task.priority = 0;
+    queue_task.priority = 1 * PRIORITY_LEVEL_STEP;
     
     return creep_task;
 }
 
 /**
  * Estimates the time for creep to finish queue_task.
- * @param {Creep} creep 
+ * @param {{store: Object, getActiveBodyparts : (function(number): number), pos : RoomPosition}} creep 
  * @param {QueueTask} queue_task 
  * @param {number=} max_cost
  * @return {number}
@@ -69,12 +69,64 @@ task.estimateTime = function(creep, queue_task, max_cost) {
 
     if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
 
-    let path_costs = creep.pos.getPathCosts(structure.pos, 3, max_cost);
+    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
+    let path_costs = creep.pos.getPathCosts(structure.pos, 3, fatigue_base, fatigue_decrease, max_cost);
 
     let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
     let time_upgrade = energy/creep.getActiveBodyparts(WORK);
 
     return path_costs + time_upgrade;
+}
+
+
+task.spawn = function(queue_task, room) {
+    if (!room.allowSpawn()) return;
+
+    let parts = [MOVE, CARRY, WORK];
+    let body = [MOVE, CARRY, WORK];
+
+    let newName = "Ash" + Game.time;
+    let pos = Game.getObjectById(queue_task.id).pos; //TODO: check if null
+    let container = pos.findClosestStructure ((structure => {
+        return structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE; 
+    }));
+  //  error("container ", container.pos);
+  //  error("controller ", pos);
+    if (!container) {
+        room.spawnKevin();
+        return;
+    }
+    while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
+        let best_part = MOVE;
+        let best_eff = 0;
+        for (let part of parts){
+            body.push(part);
+            let frankencreep = {pos : container.pos,
+                body: body, 
+                store : {energy: 0, getCapacity: (energy) => body.filter(x => x==CARRY).length * 50}, 
+                getActiveBodyparts : (part) => body.filter(x => x==part).length};
+            
+            let carry = body.filter(x => x == CARRY).length * 50;
+            let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
+            //error(body, time, " ", carry);
+            if (time == null || time == Infinity) {
+                body.pop();
+                continue;
+            }
+            let eff = carry/time;
+            //error(body, eff);
+            if(best_eff < eff){
+                best_eff = eff;
+                best_part = part;
+            }
+            body.pop();
+        }
+        body.push(best_part);
+    }
+    body.pop();
+    if (body.length > 3)
+        return (room.spawnCreep(body, newName, {}));
 }
 
 task.state_array = [

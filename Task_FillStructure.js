@@ -1,4 +1,4 @@
-import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
+import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure, upgradeController } from "./Task";
 import { getOurRooms } from "./Base";;
 import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "./Constants";
 import { error } from "./Logging";
@@ -131,14 +131,20 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     let structure = Game.getObjectById(queue_task.id);
     if (!structure) return 0;
 
-    let path_costs = creep.pos.getPathCosts(structure.pos, 1, max_cost);
+    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
+    let path_costs = creep.pos.getPathCosts(structure.pos, 1, fatigue_base, fatigue_decrease, max_cost);
+
+    let harvest_time = 0;
+    if (!creep.store[RESOURCE_ENERGY]) {
+        let energy = creep.store.getCapacity(RESOURCE_ENERGY);
+        harvest_time = Math.max(0, (energy - creep.room.storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
+    }
 
     return path_costs;
 }
 
 task.spawn = function(queue_task, room) {
-    error("spawning for fill structure!");
-
     let stored_energy = room.storedEnergy();
 
     let parts = [];
@@ -151,7 +157,7 @@ task.spawn = function(queue_task, room) {
         parts = [MOVE, MOVE, CARRY, WORK];
     }
 
-    let newName = "FillStructure" + Game.time;
+    let newName = "Muli" + Game.time;
     let idx = 0;
 
     while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
@@ -160,7 +166,7 @@ task.spawn = function(queue_task, room) {
     }
     body.pop();
 
-    if (body.length > 4)
+    if (body.length > 3)
         return (room.spawnCreep(body, newName, {}));
 }
 

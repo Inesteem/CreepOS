@@ -3,21 +3,85 @@ import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constant
 import { info, error } from "./Logging";
 import { numCreeps } from "./Game";
 
+function monitor() {
+    monitorBuildRoadTasks();
+    if (Game.time % 100 == 0) {
+        monitorExtensionBuilding();
+        monitorBuildContainer();
+        monitorTowerBuilding();
+    }
+}
+
+function findCentralPoint(positions) {
+    let x0 = 0, y0 = 0;
+    for (let i = 0; i < positions.length; i++) {
+        x0 += positions[i].x;
+        y0 += positions[i].y;
+    }
+    x0 = parseInt(x0 / positions.length, 10);
+    y0 = parseInt(y0 / positions.length, 10);
+    return {x: x0, y: y0};
+}
+
+/**
+ * 
+ * @param {RoomPosition} position 
+ * @param {function(RoomPosition):boolean} filter
+ * @return {RoomPosition | null} 
+ */
+function findClosestValidPosition(position, filter) {
+    for (let d = 0; d < 50; ++d){
+        for (let dx = -d; dx <= d; ++dx){
+            for (let dy = -d; dy <= d; ++dy){
+                if (dx != d && dy != d && dx != -d && dy != -d) continue;
+                if (!Game.rooms[position.roomName].inRoom({x: position.x + dx, y: position.y + dy})) continue;
+                let pos = new RoomPosition(position.x + dx, position.y + dy, position.roomName);
+                if (filter(pos)){
+                    return pos;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Checks that position has at least dist distance from important positions:
+ * every building that's not a road, Sources, Minerals
+ * @param {RoomPosition} position
+ * @param {number} dist Minimal distance from important positions. 
+ * @return {boolean}
+ */
+function hasDistance(position, dist) {
+    let room = Game.rooms[position.roomName];
+
+    let structures = room.find(FIND_STRUCTURES, {filter : (structure) =>
+        structure.structureType != STRUCTURE_ROAD
+    });
+    let construction_sites = room.find(FIND_CONSTRUCTION_SITES, {filter : (structure) =>
+        structure.structureType != STRUCTURE_ROAD
+    });
+    let minerals = room.find(FIND_MINERALS);
+    let sources = room.find(FIND_SOURCES);
+    for (let obj_pos of (structures.concat(construction_sites).concat(minerals).concat(sources)).map((obj) => obj.pos)) {
+        if (position.inRangeTo(obj_pos, dist)) return false;
+    }
+    return true;
+}
+
+
+
 // EXTENSION BUILDING
 
 function monitorExtensionBuilding() {
     let rooms = getOurRooms();
 
     for (let room of rooms) {
-        if (shouldBuildExtension(room)) {
+        if (canBuildExtension(room)) {
             let sources = room.find(FIND_SOURCES);
-            let x0 = 0, y0 = 0;
-            for (let i = 0; i < sources.length; i++) {
-                x0 += sources[i].pos.x;
-                y0 += sources[i].pos.y;
-            }
-            x0 = parseInt(x0 / sources.length, 10);
-            y0 = parseInt(y0 / sources.length, 10);
+            let central_point = findCentralPoint(sources.map((source) => source.pos));
+            let x0 = central_point.x;
+            let y0 = central_point.y;
             let x = 0, y = 0, n = 0;
             while (true) {
                 n++;
@@ -57,7 +121,7 @@ function monitorExtensionBuilding() {
     }
 }
 
-function shouldBuildExtension(room) {
+function canBuildExtension(room) {
     let maxExtensions = CONTROLLER_STRUCTURES.extension[room.controller.level];
     let curExtensions = room.find(FIND_STRUCTURES, {filter: { structureType : STRUCTURE_EXTENSION}}).length;
     if (curExtensions < maxExtensions) return true;
@@ -158,11 +222,6 @@ function snapshot() {
         if (!Memory.roads[room.name]) {
             Memory.roads[room.name] = new Array(50).fill(new Array(50).fill(0));
         }
-        //TODO don't count roads.
-        let objects = room.lookForAt(LOOK_STRUCTURES, creep.pos);
-        if (objects.length) continue;
-        objects = room.lookForAt(LOOK_CONSTRUCTION_SITES, creep.pos);
-        if (objects.length) continue;
         if (creep.fatigue) {
             Memory.roads[room.name][creep.pos.y][creep.pos.x]++;
         }
@@ -205,4 +264,45 @@ function createBuildRoadTasks(room) {
     }
 }
 
-export { monitorBuildRoadTasks, monitorExtensionBuilding, monitorBuildContainer };
+// TOWER BUILDING
+
+function monitorTowerBuilding() {
+    error("building tower");
+    let rooms = getOurRooms();
+
+    for (let room of rooms) {
+        if (canBuildTower(room)) {
+            let pos = findTowerPos(room);
+            if (pos) {
+                error(pos);
+                pos.createConstructionSite(STRUCTURE_TOWER);
+            }
+        }
+    }
+}
+
+function canBuildTower(room) {
+    let maxTowers = CONTROLLER_STRUCTURES.tower[room.controller.level];
+    let curTowers = room.find(FIND_STRUCTURES, {filter: { structureType : STRUCTURE_TOWER}}).length;
+    if (curTowers < maxTowers) return true;
+    return false;
+}
+
+/**
+ * 
+ * @param {Room} room 
+ */
+function findTowerPos(room) {
+    let structures = room.find(FIND_STRUCTURES).concat(room.find(FIND_CONSTRUCTION_SITES));
+    let central_point = findCentralPoint(structures.map((structure) => structure.pos));
+    error(central_point);
+    let central_position = new RoomPosition(central_point.x, central_point.y, room.name);
+    error(central_position);
+    let build_pos = findClosestValidPosition(central_position, (position) => {
+        return position.isGenerallyWalkable() && position.getAdjacentWalkables().length > 5 && hasDistance(position, 3);
+    });
+    error(build_pos);
+    return build_pos;
+}
+
+export { monitor };

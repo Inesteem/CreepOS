@@ -40,23 +40,33 @@ RoomPosition.prototype.getAdjacentWalkables = function() {
     return positions;
 }
 
+/**
+ * @return {boolean} Whether a creep can step on this field now.
+ */
 RoomPosition.prototype.isWalkable = function() {
+    if (!this.isGenerallyWalkable()) return false;
+
+    let creeps = this.lookFor(LOOK_CREEPS);
+    if (creeps.length) return false;
+    return true;
+}
+
+/**
+ * @return {boolean} Whether this field is theoretically walkable, might be blocked by creep.
+ */
+RoomPosition.prototype.isGenerallyWalkable = function() {
     let terrain = this.lookFor(LOOK_TERRAIN);
     if (terrain == 'wall') {
        return false;
     }
     
-    let result = true;
     let structures = this.lookFor(LOOK_STRUCTURES).concat(this.lookFor(LOOK_CONSTRUCTION_SITES));
     for (let structure of structures) {
         if (OBSTACLE_OBJECT_TYPES.find((type) => type === structure.structureType)) {
             return false;
         }
     }
-    
-    let creeps = this.lookFor(LOOK_CREEPS);
-    if (creeps.length) return false;
-    return result;
+    return true;
 }
 
 RoomPosition.prototype.getAdjacentStructures = function() {
@@ -72,17 +82,20 @@ RoomPosition.prototype.getAdjacentStructures = function() {
  * 
  * @param {RoomPosition} pos
  * @param {number} range 
+ * @param {number=} fatigue_base this.body.length - this.getActiveBodyparts(MOVE)
+ * @param {number=} fatigue_decrease this.getActiveBodyparts(MOVE) * 2
  * @param {number=} maxCost 
  * @param {number=} maxRooms
- * @return {number} 
+ * @return {number} Infinity if cost > maxcost, else cost
  */
-RoomPosition.prototype.getPathCosts = function(pos, range, maxCost, maxRooms) {
-    // TODO properly implement road costs.
-    let result = PathFinder.search(this, {pos: pos, range: range}, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16});
+RoomPosition.prototype.getPathCosts = function(pos, range, fatigue_base, fatigue_decrease, maxCost, maxRooms) {
+    let cost_matrix = Game.rooms[this.roomName].getCostMatrix(fatigue_base, fatigue_decrease);
+    let result = PathFinder.search(this, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
     if (result.incomplete) {
         return Infinity;
     }
-    return result.cost;
+    let value = result.cost;
+    return value;
 }
 
 /**
@@ -99,14 +112,14 @@ RoomPosition.prototype.findClosestActiveSource = function(maxCost, maxRooms) {
         sources = sources.concat(room.find(FIND_SOURCES_ACTIVE));
     }
 
-    return /**@type Source */ (this.findClosestTarget(sources, 1, maxCost || 2000, maxRooms || 4));
+    return /**@type Source */ (this.findClosestTarget(sources, 1, maxCost || 2000, maxRooms || 16));
 }
 
 /**
  * Finds the closest structure matching filter
  * @param {function(Structure):boolean} filter 
- * @param {number} maxCost 
- * @param {number} maxRooms
+ * @param {number=} maxCost 
+ * @param {number=} maxRooms
  * @return {Object} 
  */
 RoomPosition.prototype.findClosestStructure = function(filter, maxCost, maxRooms) {
@@ -117,7 +130,7 @@ RoomPosition.prototype.findClosestStructure = function(filter, maxCost, maxRooms
         structures = structures.concat(room.find(FIND_STRUCTURES, {filter: filter}));
     }
 
-    return this.findClosestTarget(structures, 1, maxCost || 2000, maxRooms || 4);
+    return this.findClosestTarget(structures, 1, maxCost || 2000, maxRooms || 16);
 }
 
 /**

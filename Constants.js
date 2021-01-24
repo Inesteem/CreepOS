@@ -41,7 +41,7 @@ export const Role = {
 // 0: We don't care
 // 1: Should be done at some point
 // 2: Do now.
-// 3: EmergencyG
+// 3: Emergency
 // The distance is level*PRIORITY_LEVEL
 export const PRIORITY_LEVEL_STEP = 1000;
 
@@ -61,5 +61,7 @@ export const REPAIR_ROAD_PRIORITY = 0 * PRIORITY_LEVEL_STEP;
 export const REPAIR_TOWER_PRIORITY = 1 * PRIORITY_LEVEL_STEP;
 export const REPAIR_EXTENSION_PRIORITY = 1 * PRIORITY_LEVEL_STEP;
 export const REPAIR_DEFAULT_PRIORITY = 0 * PRIORITY_LEVEL_STEP;
+
+export const FILL_STORE_DEFAULT_PRIORITY = 2 * PRIORITY_LEVEL_STEP;
 
 export const ERR_NO_SPAWN = -200;

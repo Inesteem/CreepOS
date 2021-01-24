@@ -116,27 +116,6 @@ task.take = (creep, queue_task) => {
     return creep_task;
 }
 
-/**
- * Estimates the time for creep to finish queue_task.
- * @param {Creep} creep 
- * @param {QueueTask} queue_task 
- * @param {number=} max_cost
- * @return {number}
- */
-task.estimateTime = function(creep, queue_task, max_cost) {
-    let structure = Game.getObjectById(queue_task.id);
-    if (!structure) return 0;
-
-    if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
-
-    let path_costs = creep.pos.getPathCosts(structure.pos, 3, max_cost);
-
-    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
-    let time_building = energy/(5 * creep.getActiveBodyparts(WORK));
-
-    return path_costs + time_building;
-}
-
 function reprioritize(queue_task) {
     let structure = Game.getObjectById(queue_task.id);
     if (!structure) {
@@ -155,6 +134,86 @@ function reprioritize(queue_task) {
         queue_task.priority += completion * PRIORITY_LEVEL_STEP;
     }
 }
+
+/**
+ * Estimates the time for creep to finish queue_task.
+ * @param {{store: Object, getActiveBodyparts : (function(number): number), pos : RoomPosition}} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number=} max_cost
+ * @return {number}
+ */
+task.estimateTime = function(creep, queue_task, max_cost) {
+    let structure = /**@type {ConstructionSite}  */ (Game.getObjectById(queue_task.id));
+    if (!structure) return 0;
+
+    if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+
+    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
+    let path_costs = creep.pos.getPathCosts(structure.pos, 3, fatigue_base, fatigue_decrease, max_cost);
+    
+    let to_build = structure.progressTotal - structure.progress;
+    let energy = Math.min(to_build, creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));
+    let time_building = energy/(5 * creep.getActiveBodyparts(WORK));
+
+    let harvest_time = 0;
+    if (!creep.store[RESOURCE_ENERGY])
+        harvest_time = Math.max(0, (energy - creep.room.storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
+
+    return path_costs + time_building + harvest_time;
+}
+
+
+task.spawn = function(queue_task, room) {
+    if (!room.allowSpawn()) return;
+
+    let parts = [MOVE, CARRY, WORK];
+    let body = [MOVE, CARRY, WORK];
+
+    let newName = "McGregor" + Game.time;
+    let structure = Game.getObjectById(queue_task.id); //TODO: check if null
+    let pos = structure.pos; //TODO: check if null
+    let container = pos.findClosestStructure ((structure => {
+        return structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE; 
+    }));
+    if (!container) {
+        room.spawnKevin();
+        return;
+    }
+    
+    let to_build = structure.progressTotal - structure.progress;
+    
+    while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
+        let best_part = MOVE;
+        let best_eff = 0;
+        for (let part of parts){
+            body.push(part);
+            let frankencreep = {pos : container.pos,
+                room: room,
+                body: body, 
+                store : {energy: 0, getCapacity: (energy) => body.filter(x => x==CARRY).length * 50}, 
+                getActiveBodyparts : (part) => body.filter(x => x==part).length};
+            
+            let carry = body.filter(x => x == CARRY).length * 50;
+            let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
+            if (time == null || time == Infinity) {
+                body.pop();
+                continue;
+            }
+            let eff = Math.min(to_build,carry)/time;
+            if(best_eff < eff){
+                best_eff = eff;
+                best_part = part;
+            }
+            body.pop();
+        }
+        body.push(best_part);
+    }
+    body.pop();
+    if (body.length > 3)
+        return (room.spawnCreep(body, newName, {}));
+}
+
 
 task.finish = (creep, creep_task) => {
     let queue_task = findQueueTask(creep_task.name, creep_task.id);

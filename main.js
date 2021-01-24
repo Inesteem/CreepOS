@@ -1,13 +1,13 @@
 import "./Creep";
 import { monitor as SpawnMachine_monitor } from "./SpawnMachine";
 import { monitor as defense_monitor } from "./Defense";
-import { monitorBuildContainer, monitorBuildRoadTasks, monitorExtensionBuilding } from "./BuildMachine";
 import { operateTowers } from "./Tower";
 import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
 import { updateTaskQueue, runTask, increasePriorities, completeTask, schedule } from "./Scheduler";
 import { error, info } from "./Logging";
 import { getSpawns as GameGetSpawns } from "./Game";
+import { monitor as buildMonitor } from "./BuildMachine";
 import "./Room";
 
 
@@ -15,17 +15,13 @@ module.exports.loop = function () {
     handlePossibleRespawn();
 
     increasePriorities();
-    
-    monitorBuildRoadTasks();
-    if (Game.time % 100 == 0) {
-        monitorExtensionBuilding();
-        monitorBuildContainer();
-    }
+
+    buildMonitor();
     
     operateTowers();
     
     Memory.new_tasks = Memory.new_tasks || {};
-    if (Game.time % 30 === 0){
+    if (Game.time % 1 === 0){
         updateTaskQueue();
     }
     

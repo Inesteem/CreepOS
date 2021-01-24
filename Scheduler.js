@@ -84,7 +84,7 @@ function schedule() {
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
 
-    for (let i = 0; i < Memory.ready_queue.length; ++ i){
+    for (let i = 0; i < Math.min(1, Memory.ready_queue.length); ++ i){
         let name = Memory.ready_queue[i];
         let creep = Game.creeps[name];
         if (creep) {
@@ -126,10 +126,10 @@ function schedule() {
  * @param {Creep} creep 
  */
 function assignTask(creep, task_queue_sorted) {
-    //creep.say("assignTask");
-    if (creep.memory.role === Role.MINER) {
-        creep.memory.task = {name: 'fill_store'};
-    } else if (creep.memory.role === Role.SCOUT) {
+    // //creep.say("assignTask");
+    // if (creep.memory.role === Role.MINER) {
+    //     creep.memory.task = {name: 'fill_store'};
+    if (creep.memory.role === Role.SCOUT) {
         creep.memory.task = {name: 'claim_room'};
     } else if (creep.memory.role === Role.ARCHER) {
         creep.memory.task = {name: 'kite'};
@@ -208,7 +208,6 @@ function getNextTask(creep, task_queue_sorted) {
     
     let searched = false;
     for (let queue_task of task_queue_sorted) {
-        if (max_priority) info(max_priority);
         //Cancel and take whichever task we have if we ran out of CPU
         if (searched && Game.cpu.getUsed() >= Game.cpu.limit) {
             break;
@@ -221,8 +220,8 @@ function getNextTask(creep, task_queue_sorted) {
         } else {
             path_cost = getPath(creep, queue_task, max_cost) + 1;
         }
-        searched = true;
         if (path_cost >= Infinity) continue;
+        searched = true;
         let current_priority = queue_task.priority / path_cost;
         if (current_priority !== null && current_priority > max_priority) {
             max_priority = current_priority;

@@ -1,5 +1,6 @@
 import { ERR_NO_SPAWN } from "./Constants";
-import { error } from "./Logging";
+import { error, info } from "./Logging";
+import { numCreeps } from "./Game";
 import "./Source";
 
 Room.prototype.findAllHostileCreeps = function (){
@@ -60,7 +61,9 @@ Room.prototype.inRoom = function(pos) {
  * @return {number} The energy available in all containers and storage of the room.
  */
 Room.prototype.storedEnergy = function() {
-    let containers = this.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}}) || [];
+    let containers = this.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE
+    }) || [];
     let energy = 0;
     for (let container of containers) {
         energy += container.store[RESOURCE_ENERGY];
@@ -97,6 +100,18 @@ Room.prototype.spawnKevin = function() {
     }
 }
 
+Room.prototype.spawnMiner = function() {
+    let spawns = this.find(FIND_STRUCTURES, {filter: 
+        /**
+         * 
+         * @param {StructureSpawn} structure 
+         */
+        (structure) => structure.structureType === STRUCTURE_SPAWN && !structure.spawning});
+    if (spawns.length) {
+        spawns[0].spawnMiner();
+    }
+}
+
 Room.prototype.spawnCreep = function(body, name, opt) {
     let spawns = this.find(FIND_STRUCTURES, {filter: 
         /**
@@ -108,4 +123,44 @@ Room.prototype.spawnCreep = function(body, name, opt) {
         return spawns[0].spawnCreep(body, name, opt);
     }
     return ERR_NO_SPAWN;
+}
+
+Room.prototype.allowSpawn = function() {
+    var num_creeps = numCreeps();
+    var max_cost = this.energyCapacityAvailable;
+    var energy = this.energyAvailable;
+    let energy_req = num_creeps * num_creeps * num_creeps + 300;
+    info("spawn requires energy: ", Math.min(max_cost, energy_req), " we have ", energy, " at ", this);
+    return energy >= Math.min(max_cost, energy_req); 
+}
+
+Room.prototype.getCostMatrix = function(fatigue_base, fatigue_decrease) {
+    if (!fatigue_decrease) fatigue_decrease = 0;
+    if (!fatigue_base) fatigue_base = 1;
+return {
+
+    plainCost: Math.max(0, 2 * fatigue_base - fatigue_decrease),
+    swampCost: Math.max(0, 10 * fatigue_base - fatigue_decrease),
+
+    roomCallback: function(roomName) {
+        let costs = new PathFinder.CostMatrix;
+        let room = Game.rooms[roomName];
+        if (!room) return costs;
+
+        room.find(FIND_STRUCTURES).forEach(function(struct) {
+            if (struct.structureType === STRUCTURE_ROAD) {
+                // Favor roads over plain tiles
+                let cost = Math.max(0, fatigue_base - fatigue_decrease);
+                costs.set(struct.pos.x, struct.pos.y, cost);
+            } else if (struct.structureType !== STRUCTURE_CONTAINER &&
+                   (struct.structureType !== STRUCTURE_RAMPART ||
+                    !struct.my)) {
+                // Can't walk through non-walkable buildings
+                costs.set(struct.pos.x, struct.pos.y, 0xff);
+            }
+        });
+
+        return costs;
+    }
+};   
 }

@@ -393,6 +393,7 @@ Creep.prototype.memory;
 
 /**
  * @constructor
+ * @extends {RoomObject}
  */
 var ConstructionSite = function () {};
 /** @type {number} */
@@ -616,6 +617,12 @@ var FIND_DROPPED_RESOURCES;
 var FIND_MY_CONSTRUCTION_SITES;
 /** @const {number} */
 var FIND_CONSTRUCTION_SITES;
+/** @const {number} */
+var FIND_RUINS;
+/** @const {number} */
+var FIND_TOMBSTONES;
+/** @const {number} */
+var FIND_MINERALS;
 
 /** @const {string} */
 var LOOK_CONSTRUCTION_SITES;
@@ -650,7 +657,7 @@ var CARRY;
 /** @const {string} */
 var RESOURCE_ENERGY;
 
-/** @const {{extension: Array<number>}} */
+/** @const {{extension: Array<number>, tower: Array<number>}} */
 var CONTROLLER_STRUCTURES;
 
 /** @const Array<string> */
