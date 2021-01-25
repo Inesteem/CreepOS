@@ -568,6 +568,8 @@ var ERR_NOT_IN_RANGE;
 /** @const {number} */
 var ERR_NOT_ENOUGH_ENERGY;
 /** @const {number} */
+var ERR_NOT_ENOUGH_RESOURCES;
+/** @const {number} */
 var ERR_INVALID_TARGET;
 /** @const {number} */
 var ERR_FULL;

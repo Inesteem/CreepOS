@@ -110,6 +110,7 @@ Room.prototype.spawnMiner = function() {
     if (spawns.length) {
         return spawns[0].spawnMiner();
     }
+    return "";
 }
 
 Room.prototype.spawnCreep = function(body, name, opt) {

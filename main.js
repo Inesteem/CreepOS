@@ -47,6 +47,7 @@ module.exports.loop = function () {
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name] && !Memory.creeps[name].spawning) {
+            error("Game.creeps: " ,name);
             //TODO
             if (Memory.creeps[name].task) {
                 completeTask({memory : Memory.creeps[name]});

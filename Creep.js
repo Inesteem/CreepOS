@@ -12,9 +12,12 @@ Creep.prototype.harvestClosest = function (){
 }
 
 Creep.prototype.harvestFrom = function (target){
-    if(target && this.harvest(target) == ERR_NOT_IN_RANGE) {
-        this.moveTo(target, {visualizePathStyle: {stroke: '#ffff00'}, reusePath: PATH_REUSE_TICKS});
-        return false;
+    if(target){
+        let res = this.harvest(target);
+        if (res === ERR_NOT_IN_RANGE || res === ERR_NOT_ENOUGH_RESOURCES) {
+            this.moveTo(target, {visualizePathStyle: {stroke: '#ffff00'}, reusePath: PATH_REUSE_TICKS});
+            return false;
+        }
     }
     return true;
 }

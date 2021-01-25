@@ -117,7 +117,7 @@ function schedule() {
                 } else {
                     creep_name = room.spawnKevin();
                 }
-                if (creep_name != "") {
+                if (creep_name !== "") {
                     // TODO improve this section.
                     let creep = new Frankencreep(new RoomPosition(25, 25, room.name), [WORK, CARRY, MOVE], creep_name);
                     Memory.creeps[creep_name] = {};

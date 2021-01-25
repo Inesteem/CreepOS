@@ -10,14 +10,14 @@ import { error } from "./Logging";
  * @param {Creep} creep 
  */
 function harvest(creep) {
-    creep.say("harvest");
     if (!creep.memory.task.id){
         creep.say("no task id");
         return false;
     }
+    creep.say(creep.memory.task.id);
     let source = Game.getObjectById(creep.memory.task.id);
 
-    if (source.energy == 0) return true;
+//    if (source.energy == 0) return true;
 
     if (!source){
         creep.say("no source or source has no energy");
@@ -89,7 +89,7 @@ task.updateQueue = () => {
     for (let source of sources) {
         if (!Memory.new_tasks.fill_store.find
                 (fill_task => fill_task.id === source.id)) {
-            let queue_task = {id: source.id || "", name:"fill_store", priority: 0};
+            let queue_task = {id: source.id || "", name:"fill_store", priority: 0, num_creeps : 0};
             prioritize(queue_task);
             Memory.new_tasks.fill_store.push(queue_task);
         }
@@ -119,7 +119,8 @@ function prioritize(queue_task) {
  */
 task.take = (creep, queue_task) => {
     queue_task.priority = 0;
-    
+    queue_task.num_creeps = queue_task.num_creeps || 0;
+    queue_task.num_creeps += 1;
     let creep_task = {};
 
     creep_task.id = queue_task.id;
@@ -135,8 +136,15 @@ task.take = (creep, queue_task) => {
  */
 task.finish = (creep, creep_task) => {
     let queue_task = findQueueTask(creep_task.name, creep_task.id);
-    if (queue_task) prioritize(queue_task);
-    creep.say("finishing");
+    
+    if (queue_task){ 
+        queue_task.num_creeps -= 1;
+        if (queue_task.num_creeps <= 0) {
+            queue_task.num_creeps = 0;
+            prioritize(queue_task);       
+        }
+    }
+
     error("finishing", queue_task, creep_task);
 }
 
