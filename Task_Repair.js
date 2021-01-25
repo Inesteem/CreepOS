@@ -99,8 +99,7 @@ task.spawn = function(queue_task, room) {
         return structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE; 
     }));
     if (!container) {
-        room.spawnKevin();
-        return;
+        return room.spawnKevin();
     }
 
     let to_repair = (structure.hitsMax - structure.hits)/100;
@@ -132,8 +131,10 @@ task.spawn = function(queue_task, room) {
             body.push(best_part);
     }
     body.pop();
-    if (body.length > 3)
-        return (room.spawnCreep(body, newName, {}));
+    if (body.length > 3 && (room.spawnCreep(body, newName, {}) == OK)) {
+        return newName;
+    }
+    return "";
 }
 
 

@@ -14,6 +14,7 @@ import { task as task_attack_source_keeper} from "./Task_Attack_SourceKeeper";
 import { QueueTask, CreepTask } from "./Task";
 import { getOurRooms } from "./Base";
 import "./Room";
+import { Frankencreep } from "./FrankenCreep";
 /**
  * TODO what is required of these Task modules
  * Mandatory:
@@ -110,10 +111,21 @@ function schedule() {
         if (room.hasExcessEnergy(500)) {
             if (task_queue_sorted.length) {
                 let queue_task = task_queue_sorted[0];
+                let creep_name;
                 if (task_mapping[queue_task.name].hasOwnProperty('spawn')) {
-                    task_mapping[queue_task.name].spawn(queue_task, room);
+                    creep_name = task_mapping[queue_task.name].spawn(queue_task, room);
                 } else {
-                    room.spawnKevin();
+                    creep_name = room.spawnKevin();
+                }
+                if (creep_name != "") {
+                    // TODO improve this section.
+                    let creep = new Frankencreep(new RoomPosition(25, 25, room.name), [WORK, CARRY, MOVE], creep_name);
+                    Memory.creeps[creep_name] = {};
+                    creep.memory = Memory.creeps[creep_name];
+                    creep.memory.spawning = true;
+                    let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
+                    creep.memory.task = creep_task;
+                    error(Memory.creeps[creep_name]);
                 }
                 task_queue_sorted.pop();
             }

@@ -166,8 +166,10 @@ task.spawn = function(queue_task, room) {
     }
     body.pop();
 
-    if (body.length > 3)
-        return (room.spawnCreep(body, newName, {}));
+    if (body.length > 3 && room.spawnCreep(body, newName, {}) == OK){
+        return newName;
+    }
+    return "";
 }
 
 task.state_array = [

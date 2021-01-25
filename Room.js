@@ -96,7 +96,7 @@ Room.prototype.spawnKevin = function() {
          */
         (structure) => structure.structureType === STRUCTURE_SPAWN && !structure.spawning});
     if (spawns.length) {
-        spawns[0].spawnKevin();
+        return spawns[0].spawnKevin();
     }
 }
 
@@ -108,7 +108,7 @@ Room.prototype.spawnMiner = function() {
          */
         (structure) => structure.structureType === STRUCTURE_SPAWN && !structure.spawning});
     if (spawns.length) {
-        spawns[0].spawnMiner();
+        return spawns[0].spawnMiner();
     }
 }
 

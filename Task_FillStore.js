@@ -136,6 +136,8 @@ task.take = (creep, queue_task) => {
 task.finish = (creep, creep_task) => {
     let queue_task = findQueueTask(creep_task.name, creep_task.id);
     if (queue_task) prioritize(queue_task);
+    creep.say("finishing");
+    error("finishing", queue_task, creep_task);
 }
 
 /**
@@ -162,7 +164,7 @@ task.estimateTime = function(creep, queue_task, max_cost) {
 }
 
 task.spawn = function(queue_task, room) {
-    room.spawnMiner();
+    return room.spawnMiner();
 }
 
 export { task };

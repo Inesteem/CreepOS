@@ -81,7 +81,7 @@ task.estimateTime = function(creep, queue_task, max_cost) {
 
 
 task.spawn = function(queue_task, room) {
-    if (!room.allowSpawn()) return;
+    if (!room.allowSpawn()) return "";
 
     let parts = [MOVE, CARRY, WORK];
     let body = [MOVE, CARRY, WORK];
@@ -94,8 +94,7 @@ task.spawn = function(queue_task, room) {
   //  error("container ", container.pos);
   //  error("controller ", pos);
     if (!container) {
-        room.spawnKevin();
-        return;
+        return room.spawnKevin();
     }
     while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
         let best_part = MOVE;
@@ -125,8 +124,10 @@ task.spawn = function(queue_task, room) {
         body.push(best_part);
     }
     body.pop();
-    if (body.length > 3)
-        return (room.spawnCreep(body, newName, {}));
+    if (body.length > 3 &&  room.spawnCreep(body, newName, {}) == OK) {
+        return newName;
+    }
+    return "";
 }
 
 task.state_array = [

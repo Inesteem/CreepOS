@@ -28,7 +28,8 @@ module.exports.loop = function () {
     defense_monitor();
     
     for (let creep of Object.values(Game.creeps)) {
-        
+        creep.memory.spawning = undefined;
+
         if ((creep.room.controller && !creep.room.controller.safeMode) && creep.memory.role != Role.ARCHER) {
             const targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3);
             if(targets.length > 0) {
@@ -45,7 +46,7 @@ module.exports.loop = function () {
 
     //FREE MEMORY
     for(var name in Memory.creeps) {
-        if(!Game.creeps[name]) {
+        if(!Game.creeps[name] && !Memory.creeps[name].spawning) {
             //TODO
             if (Memory.creeps[name].task) {
                 completeTask({memory : Memory.creeps[name]});

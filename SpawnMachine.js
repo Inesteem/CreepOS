@@ -71,7 +71,7 @@ StructureSpawn.prototype.spawnSlayer= function () {
 
 
 /**
- * @return {number} OK on success, ERR on failure
+ * @return {string} The name.
  */
 StructureSpawn.prototype.spawnKevin = function () {
     var newName = "Kevin" + Game.time;
@@ -94,13 +94,15 @@ StructureSpawn.prototype.spawnKevin = function () {
     body.pop();
     //console.log("spawned kevin with body " + JSON.stringify(body));
 
-    if (this.allowSpawn())
-        return this.spawnCreep(body, newName, { memory: { role: Role.WORKER } });
-    return ERR_NOT_ENOUGH_ENERGY;
+    if (this.allowSpawn()) {
+        this.spawnCreep(body, newName, { memory: { role: Role.WORKER } });
+        return newName;
+    }
+    return "";
 }
 
 /**
- * @return {number} OK on success, ERR on failure
+ * @return {string} The name.
  */
 StructureSpawn.prototype.spawnMiner = function () {
     var newName = "Lars" + Game.time;
@@ -117,9 +119,11 @@ StructureSpawn.prototype.spawnMiner = function () {
     
     body.pop();
 
-    if (this.allowSpawn())
-        return this.spawnCreep(body, newName, { memory: { role: Role.MINER } });
-    return ERR_NOT_ENOUGH_ENERGY;
+    if (this.allowSpawn()) {
+        this.spawnCreep(body, newName, { memory: { role: Role.MINER } });
+        return newName;
+    }
+    return "";
 }
 
 /**
