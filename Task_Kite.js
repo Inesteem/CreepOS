@@ -65,7 +65,7 @@ function kiteTask(creep) {
         
         let flags = Object.values(Game.flags);
         let nearest_flag = creep.pos.findClosestByRange(flags);
-        if (!creep.pos.inRangeTo(nearest_flag, 5)) {
+        if (nearest_flag && !creep.pos.inRangeTo(nearest_flag, 5)) {
             creep.moveTo(nearest_flag);
         }
         return true;

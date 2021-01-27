@@ -141,7 +141,7 @@ task.estimateTime = function(creep, queue_task, max_cost) {
         harvest_time = Math.max(0, (energy - creep.room.storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
     }
 
-    return path_costs;
+    return path_costs + harvest_time;
 }
 
 task.spawn = function(queue_task, room) {

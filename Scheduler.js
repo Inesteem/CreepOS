@@ -70,7 +70,8 @@ function runTask(creep, depth) {
     
     if (!creep.memory.task || !creep.memory.task.name) {
         Memory.ready_queue = Memory.ready_queue || [];
-        Memory.ready_queue.push(creep.name);
+        if (!Memory.ready_queue.find((name) => name === creep.name))
+            Memory.ready_queue.push(creep.name);
     }
 }
 
@@ -85,16 +86,15 @@ function schedule() {
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
 
-    for (let i = 0; i < Math.min(1, Memory.ready_queue.length); ++ i){
-        let name = Memory.ready_queue[i];
+    for (let i = 0; i < 5 && Memory.ready_queue.length > 0; ++i){
+        let name = Memory.ready_queue.shift();
         let creep = Game.creeps[name];
         if (creep) {
             assignTask(creep, task_queue_sorted);
             runTask(creep, 0);
         }
-        Memory.ready_queue.splice(i, 1);
-        --i;
     }
+
 
     //TODO get rid of this.
     task_queue_sorted = [];
@@ -213,7 +213,7 @@ function getPath(creep, queue_task, maxPathCost){
  * @param {Creep} creep 
  */
 function getNextTask(creep, task_queue_sorted) {
-    info("Finding task for creep ", creep.id);
+    error("Finding task for creep ", creep.name);
     
     let max_priority = -1;
     let /** ?QueueTask */ possible_queue_task = null;
@@ -226,8 +226,12 @@ function getNextTask(creep, task_queue_sorted) {
         }
         let path_cost = 0;
         let max_cost = searched ? queue_task.priority / max_priority : undefined;
+        if (max_cost < 2) break;
         if (task_mapping[queue_task.name].hasOwnProperty('estimateTime')) {
+            let cpu_start = Game.cpu.getUsed();
             path_cost = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_cost) + 1;
+            let cpu_now = Game.cpu.getUsed();
+            if (cpu_now - cpu_start > 1) error("Estimate time for ", queue_task, " too expensive, took ", cpu_now - cpu_start, " max cost ", max_cost);
             //path_cost = 1;
         } else {
             path_cost = getPath(creep, queue_task, max_cost) + 1;

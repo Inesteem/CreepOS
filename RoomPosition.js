@@ -78,6 +78,7 @@ RoomPosition.prototype.getAdjacentStructures = function() {
                     Math.min(49, this.x + 1), true);
 }
 
+
 /**
  * 
  * @param {RoomPosition} pos
@@ -86,16 +87,80 @@ RoomPosition.prototype.getAdjacentStructures = function() {
  * @param {number=} fatigue_decrease this.getActiveBodyparts(MOVE) * 2
  * @param {number=} maxCost 
  * @param {number=} maxRooms
+ * @this {RoomPosition}
  * @return {number} Infinity if cost > maxcost, else cost
  */
 RoomPosition.prototype.getPathCosts = function(pos, range, fatigue_base, fatigue_decrease, maxCost, maxRooms) {
-    let cost_matrix = Game.rooms[this.roomName].getCostMatrix(fatigue_base, fatigue_decrease);
-    let result = PathFinder.search(this, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
+    let self = this;
+    // Save how often path costs was called for room areas.
+    Memory.getPathCosts = Memory.getPathCosts || {};
+    if (!Memory.getPathCosts[self.roomName]) {
+        initializePathCostCache(self.roomName);
+    }
+    if (!Memory.getPathCosts[pos.roomName]) {
+        initializePathCostCache(pos.roomName);
+    }
+    let posX = Math.floor(pos.x/5);
+    let posY = Math.floor(pos.y/5);
+    let selfX = Math.floor(self.x/5);
+    let selfY = Math.floor(self.y/5);
+    let posIdx = posX + posY*10;
+    let selfIdx = selfX + selfY*10;
+
+    if (self.roomName != pos.roomName){
+        let costs = getCosts(self.roomName, selfIdx, pos.roomName, posIdx);
+        if (costs){
+            return costs;
+        }
+    }
+
+    let callsA=Memory.getPathCosts[pos.roomName][posX][posY]++;
+    let callsB=Memory.getPathCosts[self.roomName][selfX][selfY]++;
+
+    let cost_matrix = Game.rooms[self.roomName].getCostMatrix(fatigue_base, fatigue_decrease);
+    let result = PathFinder.search(self, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
     if (result.incomplete) {
         return Infinity;
     }
     let value = result.cost;
+    
+    let thresh = 100;
+    if (callsA > thresh && callsB > thresh){       
+        setCosts(self.roomName, selfIdx, pos.roomName, posIdx, value);
+        setCosts(pos.roomName, posIdx, self.roomName, selfIdx, value);
+        Memory.getPathCosts[pos.roomName][posX][posY] = 0;
+        Memory.getPathCosts[self.roomName][selfX][selfY] = 0;
+    }
+    
     return value;
+
+}
+
+
+function setCosts(roomNameA, idxA, roomNameB, idxB, costs) {
+    Memory.path_costs = Memory.path_costs || {};
+    Memory.path_costs[roomNameA] = Memory.path_costs[roomNameA] || {};
+    Memory.path_costs[roomNameA][idxA] = Memory.path_costs[roomNameA][idxA] || {};  
+    Memory.path_costs[roomNameA][idxA][roomNameB] = Memory.path_costs[roomNameA][idxA][roomNameB] || {};  
+    Memory.path_costs[roomNameA][idxA][roomNameB][idxB] = Memory.path_costs[roomNameA][idxA][roomNameB][idxB] || {};
+    Memory.path_costs[roomNameA][idxA][roomNameB][idxB] = costs;
+}
+
+function getCosts(roomNameA, idxA, roomNameB, idxB) {
+    return Memory.path_costs && 
+        Memory.path_costs[roomNameA] && Memory.path_costs[roomNameA][idxA] && 
+        Memory.path_costs[roomNameA][idxA][roomNameB] && 
+        Memory.path_costs[roomNameA][idxA][roomNameB][idxB];
+}
+
+function initializePathCostCache(roomName) {
+    Memory.getPathCosts[roomName] = [];
+    for (let x = 0; x < 10; ++x) {
+        Memory.getPathCosts[roomName].push([]);
+        for (let y = 0; y < 10; ++y){
+            Memory.getPathCosts[roomName][x].push(0);
+        }
+    }
 }
 
 /**
