@@ -182,7 +182,7 @@ l1:     for (let d = 1; d < 4; ++d){
 // ROAD BUILDING
 
 function max_road_number(room) {
-    return 0.8 *
+    return 1.0 *
         numCreeps((creep) => true) *
         (getTowers(room, (tower) => true).length + 1);
 }
@@ -267,14 +267,12 @@ function createBuildRoadTasks(room) {
 // TOWER BUILDING
 
 function monitorTowerBuilding() {
-    error("building tower");
     let rooms = getOurRooms();
 
     for (let room of rooms) {
         if (canBuildTower(room)) {
             let pos = findTowerPos(room);
             if (pos) {
-                error(pos);
                 pos.createConstructionSite(STRUCTURE_TOWER);
             }
         }
@@ -295,13 +293,10 @@ function canBuildTower(room) {
 function findTowerPos(room) {
     let structures = room.find(FIND_STRUCTURES).concat(room.find(FIND_CONSTRUCTION_SITES));
     let central_point = findCentralPoint(structures.map((structure) => structure.pos));
-    error(central_point);
     let central_position = new RoomPosition(central_point.x, central_point.y, room.name);
-    error(central_position);
     let build_pos = findClosestValidPosition(central_position, (position) => {
         return position.isGenerallyWalkable() && position.getAdjacentWalkables().length > 5 && hasDistance(position, 3);
     });
-    error(build_pos);
     return build_pos;
 }
 

@@ -1,15 +1,18 @@
 import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
-import { getOurRooms } from "./Base";;
-import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY, FILL_STORE_DEFAULT_PRIORITY } from "./Constants";
-import "./RoomPosition";
-import "./Source";
-import { error } from "./Logging";
+import { getOurRooms } from "../Base";;
+import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY, FILL_STORE_DEFAULT_PRIORITY } from "../Constants";
+import "../RoomPosition";
+import "../Source";
+import { error } from "../Logging";
+import { Frankencreep } from "../FrankenCreep";
 
 /**
  * 
  * @param {Creep} creep 
  */
 function harvest(creep) {
+    creep.memory.task.store_id = undefined;
+
     if (!creep.memory.task.id){
         creep.say("no task id");
         return false;
@@ -20,7 +23,7 @@ function harvest(creep) {
 //    if (source.energy == 0) return true;
 
     if (!source){
-        creep.say("no source or source has no energy");
+        creep.say("source empty");
         return false;
     }
 
@@ -59,6 +62,7 @@ function fillStore(creep) {
     }
 
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+        creep.memory.task.store_id = undefined;
         return false;
     }
     creep.storeAt(target);
@@ -87,6 +91,9 @@ task.updateQueue = () => {
     // Update the new task map
     Memory.new_tasks.fill_store = Memory.new_tasks.fill_store || [];
     for (let source of sources) {
+        if (source.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}}).length == 0){
+            continue;
+        }
         if (!Memory.new_tasks.fill_store.find
                 (fill_task => fill_task.id === source.id)) {
             let queue_task = {id: source.id || "", name:"fill_store", priority: 0, num_creeps : 0};
@@ -102,7 +109,16 @@ task.updateQueue = () => {
         if (!source) {
             Memory.new_tasks.fill_store.splice(i, 1);
             i--;
+        } 
+        if (source.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}}).length == 0){
+            Memory.new_tasks.fill_store.splice(i, 1);
+            i--;
         }
+        //else if (Game.time%3000 == 0) {
+            // Delete task every 3000 ticks to avoid it getting stuck in a false state.
+       //     Memory.new_tasks.fill_store.splice(i, 1);
+       //     i--;
+       //  }
     }
 }
 
@@ -126,6 +142,9 @@ task.take = (creep, queue_task) => {
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
     
+    let source = /**@type {Source} */ (Game.getObjectById(creep_task.id));
+    source.reserveSource();
+
     return creep_task;
 }
 
@@ -144,8 +163,12 @@ task.finish = (creep, creep_task) => {
             prioritize(queue_task);       
         }
     }
+    let source = /**@type {Source} */ (Game.getObjectById(creep_task.id));
+    if (source)
+        source.freeSource();
 
-    error("finishing", queue_task, creep_task);
+    if (Game.creeps[creep.name])
+        creep.say("finishing");
 }
 
 /**
@@ -169,6 +192,15 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     let path_costs = creep.pos.getPathCosts(source.pos, 1, fatigue_base, fatigue_decrease, max_cost);
 
     return mine_time + path_costs;
+}
+
+/**
+ * @param {Creep} creep
+ * @param {CreepTask} creep_task 
+ * @return {Frankencreep}
+ */
+task.creepAfter = function(creep, creep_task) {
+    return null;
 }
 
 task.spawn = function(queue_task, room) {

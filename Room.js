@@ -82,8 +82,7 @@ Room.prototype.hasExcessEnergy = function(req_energy) {
     }
     let sources = this.find(FIND_SOURCES_ACTIVE);
     for (let source of sources || []) {
-        // TODO reserve energy in the sources.
-        if (source.hasFreeSpot()) return true;
+        if (!source.hasMiner()) return true;
     }
     return false;
 }

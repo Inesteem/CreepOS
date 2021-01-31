@@ -47,9 +47,12 @@ module.exports.loop = function () {
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name] && !Memory.creeps[name].spawning) {
-            error("Game.creeps: " ,name);
             //TODO
             if (Memory.creeps[name].task) {
+                completeTask({memory : Memory.creeps[name]});
+            }
+            while(Memory.creeps[name].task_queue && Memory.creeps[name].task_queue.length) {
+                Memory.creeps[name].task = Memory.creeps[name].task_queue.shift();
                 completeTask({memory : Memory.creeps[name]});
             }
             //completeTask(/**@type Creep */ ({id : "id", memory : Memory.creeps[name]}));

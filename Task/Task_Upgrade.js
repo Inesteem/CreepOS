@@ -1,7 +1,8 @@
 import { QueueTask, CreepTask, Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
-import { getOurRooms } from "./Base";
-import {error} from "./Logging";
-import { PRIORITY_LEVEL_STEP } from "./Constants";
+import { getOurRooms } from "../Base";
+import {error} from "../Logging";
+import { UPGRADE_HIGH_PRIORITY, UPGRADE_LOW_PRIORITY } from "../Constants";
+import { Frankencreep } from "../FrankenCreep";
 
 var task = new Task("upgrade", null);
 
@@ -16,7 +17,7 @@ task.updateQueue = () => {
     Memory.new_tasks.upgrade = Memory.new_tasks.upgrade || [];
     for (let structure of controller) {
         if (!Memory.new_tasks.upgrade.find(controller_task => controller_task.id == structure.id)) {
-            let queue_task = {id: structure.id, priority: 2 * PRIORITY_LEVEL_STEP, name:"upgrade"};
+            let queue_task = {id: structure.id, priority: UPGRADE_HIGH_PRIORITY, name:"upgrade"};
             prioritize(queue_task);
             Memory.new_tasks.upgrade.push(queue_task);
         }
@@ -35,8 +36,7 @@ task.updateQueue = () => {
 
 function prioritize(queue_task) {
     let controller = Game.getObjectById(queue_task.id);
-    if (controller.level == 1) queue_task.priority = 2 * PRIORITY_LEVEL_STEP;
-    else queue_task.priority = 2 * PRIORITY_LEVEL_STEP;
+    queue_task.priority = UPGRADE_HIGH_PRIORITY;
 }
 
 /**
@@ -47,11 +47,11 @@ function prioritize(queue_task) {
 task.take = function(creep, queue_task) {
     let creep_task = {};
     
-    Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
+    //Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
 
-    queue_task.priority = 1 * PRIORITY_LEVEL_STEP;
+    queue_task.priority = UPGRADE_LOW_PRIORITY;
     
     return creep_task;
 }
@@ -129,6 +129,23 @@ task.spawn = function(queue_task, room) {
     }
     return "";
 }
+
+/**
+ * @param {Creep} creep
+ * @param {CreepTask} creep_task 
+ * @return {Frankencreep}
+ */
+task.creepAfter = function(creep, creep_task) {
+    let target = Game.getObjectById(creep_task.id);
+    let freePositions = target.pos.getAdjacentGenerallyWalkables();
+    if (freePositions.length == 0) {
+        error (target, " is unreachable!");
+        return null;
+    }
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    return frankencreep;
+}
+
 
 task.state_array = [
     new State(takeFromStore),

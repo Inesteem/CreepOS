@@ -40,6 +40,21 @@ RoomPosition.prototype.getAdjacentWalkables = function() {
     return positions;
 }
 
+RoomPosition.prototype.getAdjacentGenerallyWalkables = function() {
+    let positions = [];
+    for (let dx = -1; dx <= 1; ++dx) {
+        for (let dy = -1; dy <= 1; ++dy) {
+            if(dy == 0 && dx == 0) continue;
+            let position = new RoomPosition(this.x + dx, this.y + dy, this.roomName);
+            let room = Game.rooms[this.roomName];
+            if (room.inRoom(position) && position.isGenerallyWalkable()) {
+                positions.push(position);
+            }
+        }
+    }
+    return positions;
+}
+
 /**
  * @return {boolean} Whether a creep can step on this field now.
  */

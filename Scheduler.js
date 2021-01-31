@@ -1,17 +1,17 @@
 import { info, warning, error } from "./Logging";
-import { Role } from "./Constants";
+import { PRIORITY_LEVEL_STEP, Role } from "./Constants";
 
-import { getEnergyForTask } from "./Task";
-import { task as task_build} from "./Task_Build";
-import { task as task_repair} from "./Task_Repair";
-import { task as task_fill_structure} from "./Task_FillStructure";
-import { task as task_claim_room} from "./Task_ClaimRoom";
-import { task as task_upgrade} from "./Task_Upgrade";
-import { task as task_fill_store} from "./Task_FillStore";
-import { task as task_kite} from "./Task_Kite";
-import { task as task_attack_source_keeper} from "./Task_Attack_SourceKeeper";
+import { getEnergyForTask,QueueTask, CreepTask  } from "./Task/Task";
+import { task as task_build} from "./Task/Task_Build";
+import { task as task_repair} from "./Task/Task_Repair";
+import { task as task_fill_structure} from "./Task/Task_FillStructure";
+import { task as task_claim_room} from "./Task/Task_ClaimRoom";
+import { task as task_upgrade} from "./Task/Task_Upgrade";
+import { task as task_fill_store} from "./Task/Task_FillStore";
+import { task as task_kite} from "./Task/Task_Kite";
+import { task as task_attack_source_keeper} from "./Task/Task_Attack_SourceKeeper";
+import { task as task_redistribute} from "./Task/Redistribute";
 
-import { QueueTask, CreepTask } from "./Task";
 import { getOurRooms } from "./Base";
 import "./Room";
 import { Frankencreep } from "./FrankenCreep";
@@ -37,6 +37,7 @@ var task_mapping = {
         'fill_structure':         task_fill_structure,
         'kite':                   task_kite, 
         'attack_source_keeper':   task_attack_source_keeper, 
+        'redistribute':   task_redistribute, 
 };
 
 
@@ -58,7 +59,7 @@ function updateTaskQueue() {
  * @param {number} depth 
  */
 function runTask(creep, depth) {
-
+    //if (creep) completeTask(creep);
     if (creep.memory.task && creep.memory.task.name) {
         //creep.say(creep.memory.task.name);
         ++creep.memory.ticks;
@@ -67,11 +68,16 @@ function runTask(creep, depth) {
             completeTask(creep);
         }
     }
-    
+    //if(creep.memory.task_queue) creep.say(creep.memory.task_queue.length);
     if (!creep.memory.task || !creep.memory.task.name) {
-        Memory.ready_queue = Memory.ready_queue || [];
-        if (!Memory.ready_queue.find((name) => name === creep.name))
-            Memory.ready_queue.push(creep.name);
+        if (creep.memory.task_queue && creep.memory.task_queue.length) {
+            creep.memory.task = creep.memory.task_queue.shift();
+            runTask(creep, depth-1);
+        } else {
+            Memory.ready_queue = Memory.ready_queue || [];
+            if (!Memory.ready_queue.find((name) => name === creep.name))
+                Memory.ready_queue.push(creep.name);
+        }
     }
 }
 
@@ -105,12 +111,15 @@ function schedule() {
         }
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
+    error (task_queue_sorted);
 
     let rooms = getOurRooms();
     for (let room of rooms) {
-        if (room.hasExcessEnergy(500)) {
+        if (room.hasExcessEnergy(1000)) {
             if (task_queue_sorted.length) {
                 let queue_task = task_queue_sorted[0];
+                if (queue_task.priority < 1 * PRIORITY_LEVEL_STEP) break;
+                error("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
                 let creep_name;
                 if (task_mapping[queue_task.name].hasOwnProperty('spawn')) {
                     creep_name = task_mapping[queue_task.name].spawn(queue_task, room);
@@ -125,7 +134,6 @@ function schedule() {
                     creep.memory.spawning = true;
                     let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
                     creep.memory.task = creep_task;
-                    error(Memory.creeps[creep_name]);
                 }
                 task_queue_sorted.pop();
             }
@@ -148,10 +156,25 @@ function assignTask(creep, task_queue_sorted) {
     } else if (creep.memory.role === Role.SLAYER) {
         creep.memory.task = {name: 'attack_source_keeper'};
     } else {
-        let next_task = getNextTask(creep, task_queue_sorted);
-        creep.memory.task = next_task;
-        
-        
+        if (creep.memory.task_queue && creep.memory.task_queue.length) {
+            creep.memory.task = creep.memory.task_queue.shift();
+        } else {
+            creep.say("reschedule");
+            creep.memory.task_queue = creep.memory.task_queue || [];
+            let next_task = getNextTask(creep, task_queue_sorted);
+            creep.memory.task = next_task;
+            let remaining_time = 0;
+            if (next_task) remaining_time = Math.min(next_task.estimated_time, 100);
+            let franky = creep;
+            while (next_task) {
+                franky = task_mapping[next_task.name].creepAfter(franky, next_task);
+                if (!franky) break;
+                next_task = getNextTask(franky, task_queue_sorted, remaining_time / creep.memory.task_queue.length);
+                if (next_task) {
+                    creep.memory.task_queue.push(next_task);
+                }
+            }
+        }
     }
     creep.memory.ticks = 0;
 }
@@ -211,12 +234,14 @@ function getPath(creep, queue_task, maxPathCost){
 /**
  * Fetches the next task for creep from the task queue. Returns a creep_task.
  * @param {Creep} creep 
+ * @param {!Array<QueueTask>} task_queue_sorted
+ * @param {number=} max_time The maximal time for the task to find.
+ * @return {CreepTask|null} A creep task if one was found.
  */
-function getNextTask(creep, task_queue_sorted) {
-    error("Finding task for creep ", creep.name);
-    
+function getNextTask(creep, task_queue_sorted, max_time) {
     let max_priority = -1;
     let /** ?QueueTask */ possible_queue_task = null;
+    let time_possible_task = undefined;
     
     let searched = false;
     for (let queue_task of task_queue_sorted) {
@@ -225,7 +250,8 @@ function getNextTask(creep, task_queue_sorted) {
             break;
         }
         let path_cost = 0;
-        let max_cost = searched ? queue_task.priority / max_priority : undefined;
+        let floor_priority = Math.floor(queue_task.priority/PRIORITY_LEVEL_STEP) * PRIORITY_LEVEL_STEP;
+        let max_cost = searched ? floor_priority / max_priority : max_time;
         if (max_cost < 2) break;
         if (task_mapping[queue_task.name].hasOwnProperty('estimateTime')) {
             let cpu_start = Game.cpu.getUsed();
@@ -238,10 +264,11 @@ function getNextTask(creep, task_queue_sorted) {
         }
         if (path_cost >= Infinity) continue;
         searched = true;
-        let current_priority = queue_task.priority / path_cost;
+        let current_priority = floor_priority / path_cost;
         if (current_priority !== null && current_priority > max_priority) {
             max_priority = current_priority;
             possible_queue_task = queue_task;
+            time_possible_task = path_cost;
         }
     }
     
@@ -254,13 +281,18 @@ function getNextTask(creep, task_queue_sorted) {
     if (typeof task_mapping[queue_task.name].take === 'function' &&
         task_mapping[queue_task.name].hasOwnProperty('take')) {
         let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
+        creep_task.estimated_time = time_possible_task;
         return creep_task;
     } else {
         warning("take function not implemented for ", queue_task.name);
         queue_task.priority = 0;
-        let creep_task = {}
+        let creep_task = {};
         Object.assign(creep_task, queue_task);
+        creep_task.id = queue_task.id;
+        creep_task.name = queue_task.name;
         Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
+        if (!creep_task.id || !creep_task.name) return null;
+        creep_task.estimated_time = time_possible_task;
         return creep_task;
     }
 }

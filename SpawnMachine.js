@@ -3,7 +3,7 @@ import { info, error } from "./Logging";
 import { getOurRooms, getNoOwnerStructures, getUnclaimedFlags, getRoomsToClaim } from "./Base";
 import "./Room";
 import { getBiggestSpawn, numCreeps } from "./Game";
-import { getCreepBody as getSlayerBody } from  "./Task_Attack_SourceKeeper";
+import { getCreepBody as getSlayerBody } from  "./Task/Task_Attack_SourceKeeper";
 
 
 function getMaxMinerNum(room) {

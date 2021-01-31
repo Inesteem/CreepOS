@@ -1,7 +1,7 @@
 import {  QueueTask, CreepTask, State, takeFromStore, Task } from "./Task";
-import { info, error} from "./Logging";
-import { getOurRooms } from "./Base";
-
+import { info, error} from "../Logging";
+import { getOurRooms } from "../Base";
+import { Frankencreep } from "../FrankenCreep";
 
 /**
  * @constructor
@@ -137,5 +137,24 @@ task.spawn = function(queue_task, room) {
     return "";
 }
 
+/**
+ * @param {Creep} creep
+ * @param {CreepTask} creep_task 
+ * @return {Frankencreep}
+ */
+task.creepAfter = function(creep, creep_task) {
+    let target = Game.getObjectById(creep_task.id);
+    let freePositions = target.pos.getAdjacentGenerallyWalkables();
+    if (freePositions.length == 0) {
+        error (target, " is unreachable!");
+        return null;
+    }
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    let energy_start = creep.store[RESOURCE_ENERGY] || creep.store.getFreeCapacity(RESOURCE_ENERGY);
+    let to_repair = target.hitsMax - target.hits;
+    let use = Math.min(to_repair/100, creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));
+    frankencreep.store[RESOURCE_ENERGY] = energy_start - use;
+    return frankencreep;
+}
 
 export {task};

@@ -1,7 +1,9 @@
 import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure, upgradeController } from "./Task";
-import { getOurRooms } from "./Base";;
-import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "./Constants";
-import { error } from "./Logging";
+import { getOurRooms } from "../Base";;
+import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "../Constants";
+import { error } from "../Logging";
+import { Frankencreep } from "../FrankenCreep";
+import "../RoomPosition";
 
 var task = new Task("fill_structure", null);
 
@@ -16,7 +18,7 @@ task.updateQueue = () => {
             filter: (structure) => {
                     return ( structure.structureType == STRUCTURE_SPAWN ||
                             structure.structureType == STRUCTURE_EXTENSION || 
-                            structure.structureType == STRUCTURE_TOWER ) &&
+                            structure.structureType == STRUCTURE_TOWER) &&
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
                 }
         }));
@@ -88,7 +90,7 @@ task.take = (creep, queue_task) => {
     
     creep_task.creep_exp_fill = add_energy;
     
-    Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
+    //Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
     
@@ -136,8 +138,8 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     let path_costs = creep.pos.getPathCosts(structure.pos, 1, fatigue_base, fatigue_decrease, max_cost);
 
     let harvest_time = 0;
-    if (!creep.store[RESOURCE_ENERGY]) {
-        let energy = creep.store.getCapacity(RESOURCE_ENERGY);
+    let energy = creep.store.getFreeCapacity(RESOURCE_ENERGY);
+    if (energy > creep.room.storedEnergy()) {
         harvest_time = Math.max(0, (energy - creep.room.storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
     }
 
@@ -170,6 +172,25 @@ task.spawn = function(queue_task, room) {
         return newName;
     }
     return "";
+}
+
+/**
+ * @param {Creep} creep
+ * @param {CreepTask} creep_task 
+ * @return {Frankencreep}
+ */
+task.creepAfter = function(creep, creep_task) {
+    let target = Game.getObjectById(creep_task.id);
+    let freePositions = target.pos.getAdjacentGenerallyWalkables();
+    if (freePositions.length == 0) {
+        error (target, " is unreachable!");
+        return null;
+    }
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    let energy_start = creep.store[RESOURCE_ENERGY] || creep.store.getFreeCapacity(RESOURCE_ENERGY);
+    let use = Math.min(energy_start, target.store.getFreeCapacity(RESOURCE_ENERGY));
+    frankencreep.store[RESOURCE_ENERGY] = energy_start - use;
+    return frankencreep;
 }
 
 task.state_array = [

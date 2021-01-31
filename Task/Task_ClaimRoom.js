@@ -1,6 +1,6 @@
 import {  QueueTask, CreepTask, Task, State, takeFromStore } from "./Task";
-import { getUnclaimedFlags } from "./Base";
-import { error } from "./Logging";
+import { getUnclaimedFlags } from "../Base";
+import { error } from "../Logging";
 
 var task = new Task("claim_room", null);
 

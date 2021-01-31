@@ -136,7 +136,6 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
 
     let matrix = this.getCostMatrix();
 
-    // TODO?? Didnt work
     // for (let resource of resources) {
     //     //TODO
     //     if (!resource.pos) continue;
