@@ -1,5 +1,4 @@
 import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure, upgradeController } from "./Task";
-import { getOurRooms } from "../Base";;
 import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "../Constants";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
@@ -10,7 +9,7 @@ var task = new Task("fill_structure", null);
 
 task.updateQueue = () => {
     let structures = [];
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
     
     // SPAWN
     

@@ -1,6 +1,6 @@
 import { PATH_REUSE_TICKS } from "./Constants";
-import { getOurRooms } from "./Base";
 import { error } from "./Logging";
+import "./Game";
 import "./Source";
 import "./Room";
 
@@ -105,8 +105,11 @@ Creep.prototype.moveAwayFrom = function(target, range) {
  * @return {{type: number, object: RoomObject}|null} type is one of FIND_SOURCES, FIND_STRUCTURES, FIND_DROPPED_ENERGY
  */
 Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
-    let rooms = getOurRooms() || [];
-    let sources = [];
+    let rooms = Game.getOurRooms() || [];
+    let sources = Game.find(
+        FIND_SOURCES_ACTIVE,
+        {filter : source => !source.hasFreeSpot() && !this.pos.inRangeTo(source.pos, 1) }
+    );
     let resources = [];
     let containers = [];
 
@@ -114,15 +117,26 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     let harvest_time = needed_energy / (2 * this.getActiveBodyparts(WORK));
 
     for (let room of rooms) {
-        sources = sources.concat(room.find(FIND_SOURCES_ACTIVE));
-        resources = resources.concat(room.find(FIND_DROPPED_RESOURCES), {filter: (resource) => {
-            return resource.amount >= needed_energy
-        }});
-        containers = containers.concat(room.find(FIND_STRUCTURES, {filter: (structure) => {
-            return (structure.structureType === STRUCTURE_CONTAINER ||
-                structure.structureType === STRUCTURE_STORAGE) &&
-            structure.store[RESOURCE_ENERGY] >= needed_energy
-        }}));
+        // sources = sources.concat(
+        //     room.find(
+        //         FIND_SOURCES_ACTIVE,
+        //         {filter : source => !source.hasFreeSpot() && !this.pos.inRangeTo(source.pos, 1) }
+        //     )
+        // );
+        resources = resources.concat(
+            room.find(
+                FIND_DROPPED_RESOURCES,
+                {filter: (resource) => resource.amount >= needed_energy}
+            )
+        );
+        containers = containers.concat(
+            room.find(
+                FIND_STRUCTURES,
+                {filter: (structure) => 
+                    (structure.structureType === STRUCTURE_CONTAINER ||structure.structureType === STRUCTURE_STORAGE)
+                    && structure.store[RESOURCE_ENERGY] >= needed_energy}
+            )
+        );
         containers = containers.concat(room.find(FIND_RUINS, {
             filter : (ruin) => ruin.store[RESOURCE_ENERGY] >= needed_energy
         }));
@@ -147,23 +161,34 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     //     }
     // }
 
-    for (let container of containers) {
-        let result = PathFinder.search(this.pos, {pos: container.pos, range: 1}, Object.assign(matrix, {maxCost: best_time, maxRooms: max_rooms || 16}));
-        if (result.incomplete) continue;
-        if (result.cost < best_time) {
-            best_time = result.cost;
-            best_target = {type: FIND_STRUCTURES, object: container};
-        }
+    let result = PathFinder.search(
+        this.pos,
+        containers.map(container => { return {pos: container.pos, range: 0}; }), 
+        Object.assign(matrix, {maxCost: best_time, maxRooms: max_rooms || 16})
+    );
+    if (!result.incomplete && result.cost < best_time) {
+        best_time = result.cost;
+        let position = result.path.pop() || this.pos;
+        best_target = {
+            type: FIND_STRUCTURES,
+            object: position
+                .lookFor(LOOK_STRUCTURES)
+                .find(structure => structure.structureType === STRUCTURE_CONTAINER)
+        };
     }
-
-    for (let source of sources) {
-        if (!source.hasFreeSpot() && !this.pos.inRangeTo(source.pos, 1)) continue;
-        let result = PathFinder.search(this.pos, {pos: source.pos, range: 1}, Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16}));
-        if (result.incomplete) continue;
-        if (result.cost + harvest_time < best_time) {
-            best_time = result.cost + harvest_time;
-            best_target = {type: FIND_SOURCES, object: source};
-        }
+  
+    result = PathFinder.search(
+        this.pos,
+        sources.map(source => { return {pos: source.pos, range: 1}; }),
+        Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16})
+    );
+    if (!result.incomplete && result.cost + harvest_time < best_time) {
+        best_time = result.cost + harvest_time;
+        let position = result.path.pop() || this.pos;
+        best_target = {
+            type: FIND_SOURCES,
+            object: position.getAdjacentSource()
+        };
     }
 
     return best_target;

@@ -1,4 +1,3 @@
-import { getOurRooms } from "./Base";
 import { error } from "./Logging";
 
 RoomPosition.prototype.getAdjacentContainer = function(filter) {
@@ -11,7 +10,10 @@ RoomPosition.prototype.getAdjacentContainer = function(filter) {
     }
     return null;
 }
-
+/**
+ * 
+ * @param {function(Source):boolean=} filter 
+ */
 RoomPosition.prototype.getAdjacentSource = function(filter) {
     let sources = Game.rooms[this.roomName]
                     .lookForAtArea(LOOK_SOURCES,
@@ -20,7 +22,7 @@ RoomPosition.prototype.getAdjacentSource = function(filter) {
                         Math.min(49, this.y + 1), 
                         Math.min(49, this.x + 1), true);
     for (let source of sources) {
-        if (filter(source.source)) return source.source;
+        if (!filter || filter(source.source)) return source.source;
     }
     return null;
 }
@@ -185,7 +187,7 @@ function initializePathCostCache(roomName) {
  * @return {Source} The closest source or null if none is in range.
  */
 RoomPosition.prototype.findClosestActiveSource = function(maxCost, maxRooms) {
-    let rooms = getOurRooms() || [];
+    let rooms = Game.getOurRooms() || [];
     let sources = [];
 
     for (let room of rooms) {
@@ -203,7 +205,7 @@ RoomPosition.prototype.findClosestActiveSource = function(maxCost, maxRooms) {
  * @return {Object} 
  */
 RoomPosition.prototype.findClosestStructure = function(filter, maxCost, maxRooms) {
-    let rooms = getOurRooms() || [];
+    let rooms = Game.getOurRooms() || [];
     let structures = [];
 
     for (let room of rooms) {

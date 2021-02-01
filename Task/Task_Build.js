@@ -1,8 +1,8 @@
 import {  QueueTask, CreepTask, findQueueTask, getEnergyForTask, State, takeFromStore, Task } from "./Task";
 import { info, error } from "../Logging";
 import { BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, BUILD_SPAWN_PRIORITY, PRIORITY_LEVEL_STEP } from "../Constants";
-import { getOurRooms } from "../Base";
 import { Frankencreep } from "../FrankenCreep";
+import "../Game";
 
 /**
  * @constructor 
@@ -35,7 +35,7 @@ var task = new BuildTask();
 
 task.updateQueue = () => {
     let structures = [];
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
 
     rooms.forEach(room => {
         structures = structures.concat(room.find(FIND_MY_CONSTRUCTION_SITES));

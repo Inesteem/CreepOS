@@ -1,5 +1,5 @@
 import { QueueTask, CreepTask, Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
-import { getOurRooms } from "../Base";
+import "../Game";
 import {error} from "../Logging";
 import { UPGRADE_HIGH_PRIORITY, UPGRADE_LOW_PRIORITY } from "../Constants";
 import { Frankencreep } from "../FrankenCreep";
@@ -8,7 +8,7 @@ var task = new Task("upgrade", null);
 
 task.updateQueue = () => {
     let controller = [];
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
     
     rooms.forEach(room => {
         controller.push(room.controller);

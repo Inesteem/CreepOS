@@ -1,6 +1,6 @@
 import { QueueTask, CreepTask, State, takeFromStore, Task, findQueueTask } from "./Task";
 import { info, error} from "../Logging";
-import { getOurRooms } from "../Base";
+import "../Game";
 import { Frankencreep } from "../FrankenCreep";
 import { REPAIR_DEFAULT_PRIORITY, REPAIR_PRIORITY, PRIORITY_LEVEL_STEP} from "../Constants";
 
@@ -35,7 +35,7 @@ function repairStructure(creep) {
 
 task.updateQueue = () => {
     let structures = [];
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
     
     rooms.forEach(room => {
        structures = structures.concat(room.find(FIND_STRUCTURES, {

@@ -1,7 +1,8 @@
 import { Role, MAX_WORKER_NUM, MAX_MINER_NUM, MAX_SCOUT_NUM } from "./Constants";
 import { info, error } from "./Logging";
-import { getOurRooms, getNoOwnerStructures, getUnclaimedFlags, getRoomsToClaim } from "./Base";
+import { getUnclaimedFlags, getRoomsToClaim } from "./Base";
 import "./Room";
+import "./Game";
 import { getBiggestSpawn, numCreeps } from "./Game";
 import { getCreepBody as getSlayerBody } from  "./Task/Task_Attack_SourceKeeper";
 
@@ -21,7 +22,7 @@ function getMaxMinerNum(room) {
 function monitor() {
     var scout_num = numCreeps((creep) => creep.memory.role == Role.SCOUT);
     var to_claim = getUnclaimedFlags().length > 0;
-    for (let room of getOurRooms() || []) {
+    for (let room of Game.getOurRooms()) {
         //var mom_worker_num = numCreeps((creep) => creep.memory.role == Role.WORKER && creep.room === room);
         var mom_miner_num = numCreeps((creep) => creep.memory.role == Role.MINER && creep.room === room);
         var max_miner_num = getMaxMinerNum(room);

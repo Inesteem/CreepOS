@@ -1,8 +1,9 @@
 import { QueueTask, CreepTask, Task, State } from "./Task";
 import { error } from "../Logging";
 import { findEnemyCreeps as findEnemyCreeps } from "../Game";
-import { getOurRooms, getRoomsToClaim } from "../Base";
+import { getRoomsToClaim } from "../Base";
 import "../Room";
+import "../Game";
 import "../RoomPosition";
 import { Role } from "../Constants";
 

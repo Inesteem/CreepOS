@@ -1,8 +1,8 @@
 import {  QueueTask, CreepTask, findQueueTask, Task, State} from "./Task";
-import { getOurRooms } from "../Base";;
 import { FILL_STORE_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "../Constants";
 import "../RoomPosition";
 import "../Source";
+import "../Game";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
 
@@ -80,7 +80,7 @@ task.state_array = [
 
 task.updateQueue = () => {
     let sources = [];
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
     
     // SPAWN
     
@@ -130,7 +130,7 @@ function prioritize(queue_task) {
     if (!source) return;
     let fullness =  source.room.getFreeCapacity(RESOURCE_ENERGY)/(source.room.getFreeCapacity(RESOURCE_ENERGY) + source.room.storedEnergy());
     queue_task.priority = FILL_STORE_DEFAULT_PRIORITY + fullness * PRIORITY_LEVEL_STEP;
-    error(source.room.getFreeCapacity(RESOURCE_ENERGY) , " ",  source.room.storedEnergy(), " ", fullness, " ",  queue_task.priority);
+    //error(source.room.getFreeCapacity(RESOURCE_ENERGY) , " ",  source.room.storedEnergy(), " ", fullness, " ",  queue_task.priority);
 }
 /**
  * @param {Creep} creep

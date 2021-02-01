@@ -1,13 +1,4 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('Tower');
- * mod.thing == 'a thing'; // true
- */
- 
-import { findCreeps, getOurRooms } from "./Base";
+import "./Game";
  
 StructureTower.prototype.repairClosest = function() {
     let structure = this.pos.findClosestByRange(FIND_STRUCTURES, {
@@ -43,7 +34,7 @@ StructureTower.prototype.healClosest = function(filter) {
 
 function operateTowers() {
     let towers = [];
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
     
     rooms.forEach(room => {
         towers = towers.concat(room.find(FIND_MY_STRUCTURES, {

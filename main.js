@@ -6,12 +6,15 @@ import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
 import { updateTaskQueue, runTask, increasePriorities, completeTask, schedule } from "./Scheduler";
 import { error, info } from "./Logging";
-import { getSpawns as GameGetSpawns } from "./Game";
+import { getSpawns as GameGetSpawns, initGame } from "./Game";
 import { monitor as buildMonitor } from "./BuildMachine";
 import "./Room";
 
 
 module.exports.loop = function () {
+    // Need to redefine functions on Game.
+    initGame();
+
     handlePossibleRespawn();
 
     increasePriorities();

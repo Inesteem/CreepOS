@@ -1,4 +1,4 @@
-import { getTowers, getOurRooms } from "./Base";
+import { getTowers } from "./Base";
 import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constants";
 import { info, error } from "./Logging";
 import { numCreeps } from "./Game";
@@ -74,7 +74,7 @@ function hasDistance(position, dist) {
 // EXTENSION BUILDING
 
 function monitorExtensionBuilding() {
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
 
     for (let room of rooms) {
         if (canBuildExtension(room)) {
@@ -146,7 +146,7 @@ function walk45DegRect(x, y) { // walk in diagonal steps around x = 0, y = 0
 // CONTAINER BUILDING
 
 function monitorBuildContainer() {
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
     for (let room of rooms) {
         let num_container = room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}}).length;
         let num_container_constr = room.find(FIND_CONSTRUCTION_SITES, {filter: {structureType: STRUCTURE_CONTAINER}}).length;
@@ -206,7 +206,7 @@ function monitorBuildRoadTasks() {
     Memory.road_build_counter++;
     snapshot();
     if (Memory.road_build_counter > AUTOMATIC_ROAD_BUILD_TICKS) {
-        for (let room of getOurRooms() || []) {
+        for (let room of Game.getOurRooms() || []) {
             createBuildRoadTasks(room);
         }
         Memory.road_build_counter = 0;
@@ -267,7 +267,7 @@ function createBuildRoadTasks(room) {
 // TOWER BUILDING
 
 function monitorTowerBuilding() {
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
 
     for (let room of rooms) {
         if (canBuildTower(room)) {

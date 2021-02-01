@@ -12,8 +12,8 @@ import { task as task_kite} from "./Task/Task_Kite";
 import { task as task_attack_source_keeper} from "./Task/Task_Attack_SourceKeeper";
 import { task as task_redistribute} from "./Task/Redistribute";
 
-import { getOurRooms } from "./Base";
 import "./Room";
+import "./Game";
 import { Frankencreep } from "./FrankenCreep";
 /**
  * TODO what is required of these Task modules
@@ -61,7 +61,7 @@ function updateTaskQueue() {
 function runTask(creep, depth) {
     //if (creep) completeTask(creep);
     if (creep.memory.task && creep.memory.task.name) {
-        creep.say(creep.memory.task.estimated_time + " " + creep.memory.ticks);
+        creep.say(Math.floor(creep.memory.task.estimated_time) + " " + creep.memory.ticks);
         ++creep.memory.ticks;
         let still_running = task_mapping[creep.memory.task.name].run(creep);
         if (!still_running) {
@@ -113,7 +113,7 @@ function schedule() {
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
     //error (task_queue_sorted);
 
-    let rooms = getOurRooms();
+    let rooms = Game.getOurRooms();
     for (let room of rooms) {
         if (room.hasExcessEnergy(1000)) {
             if (task_queue_sorted.length) {
@@ -176,7 +176,6 @@ function assignTask(creep, task_queue_sorted) {
             }
         }
     }
-    creep.memory.ticks = 0;
 }
 
 /**
@@ -193,6 +192,7 @@ function completeTask(creep) {
         task_mapping[creep_task.name].finish(creep, creep_task);
     }
     creep.memory.old_task = creep.memory.task;
+    creep.memory.ticks = 0;
     creep.memory.task = null;
 }
 
@@ -257,12 +257,13 @@ function getNextTask(creep, task_queue_sorted, max_time) {
             let cpu_start = Game.cpu.getUsed();
             path_cost = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_cost) + 1;
             let cpu_now = Game.cpu.getUsed();
-            if (cpu_now - cpu_start > 1) error("Estimate time for ", queue_task, " too expensive, took ", cpu_now - cpu_start, " max cost ", max_cost);
+            if (cpu_now - cpu_start > 1) warning("Estimate time for ", queue_task, " too expensive, took ", cpu_now - cpu_start, " max cost ", max_cost);
             //path_cost = 1;
         } else {
             path_cost = getPath(creep, queue_task, max_cost) + 1;
         }
         if (path_cost >= Infinity) continue;
+        if (isNaN(path_cost)) error("Path costs NaN, task ", queue_task);
         searched = true;
         let current_priority = floor_priority / path_cost;
         if (current_priority !== null && current_priority > max_priority) {

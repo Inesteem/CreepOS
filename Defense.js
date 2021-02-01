@@ -1,15 +1,16 @@
-import { getOurRooms, getRoomsToClaim} from "./Base";
+import { getRoomsToClaim} from "./Base";
 import { Role } from "./Constants";
 import { spawnArcherInRoom } from "./SpawnMachine";
 import { getBiggestSpawn, findEnemyCreeps } from "./Game";
 import { error } from "./Logging";
+import "./Game";
 import "./Room";
 import "./RoomPosition";
 
 // Detects whether safe mode needs to be activated in any of our rooms and activates it.
 // If a room has enemies but no safe mode, spawns defenders.
 function monitor() {
-    const rooms = getOurRooms();
+    const rooms = Game.getOurRooms();
     const roomsToClaim = getRoomsToClaim();
     let room_main_spawn = getBiggestSpawn().room;
 
@@ -45,7 +46,7 @@ function monitor() {
 }
 /*
 function kite(creep){
-    const rooms = getOurRooms();
+    const rooms = Game.getOurRooms();
     const enemies = findEnemyCreeps(rooms, (creep) => true).all;
     let target = creep.pos.findClosestByRange(enemies);
     

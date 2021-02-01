@@ -61,6 +61,8 @@ var Game = {
     rooms: {},
     /** @type {{limit: number, getUsed: function():number}} */
     cpu: {},
+    /** @type {!Object} */
+    prototype: {},
     /**
      * @param {string} id
      * @return {Object}

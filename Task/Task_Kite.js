@@ -1,8 +1,9 @@
 import { QueueTask, CreepTask, Task, State } from "./Task";
 import { error } from "../Logging";
 import { findEnemyCreeps as findEnemyCreeps } from "../Game";
-import { getOurRooms, getRoomsToClaim } from "../Base";
+import { getRoomsToClaim } from "../Base";
 import "../Room";
+import "../Game";
 import "../RoomPosition";
 import { Role } from "../Constants";
 
@@ -13,7 +14,7 @@ var task = new Task("kite", null);
  * @return {boolean}
  */
 function getTarget(creep) {
-    const rooms = getOurRooms();
+    const rooms = Game.getOurRooms();
     const enemies = findEnemyCreeps(rooms, (creep) => true).all;
     const roomsToClaim = getRoomsToClaim();
     const enemiesClaimed = findEnemyCreeps(roomsToClaim, (creep) => true).all;
