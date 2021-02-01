@@ -61,7 +61,7 @@ function updateTaskQueue() {
 function runTask(creep, depth) {
     //if (creep) completeTask(creep);
     if (creep.memory.task && creep.memory.task.name) {
-        //creep.say(creep.memory.task.name);
+        creep.say(creep.memory.task.estimated_time + " " + creep.memory.ticks);
         ++creep.memory.ticks;
         let still_running = task_mapping[creep.memory.task.name].run(creep);
         if (!still_running) {
@@ -111,7 +111,7 @@ function schedule() {
         }
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
-    error (task_queue_sorted);
+    //error (task_queue_sorted);
 
     let rooms = getOurRooms();
     for (let room of rooms) {
@@ -119,7 +119,7 @@ function schedule() {
             if (task_queue_sorted.length) {
                 let queue_task = task_queue_sorted[0];
                 if (queue_task.priority < 1 * PRIORITY_LEVEL_STEP) break;
-                error("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
+                //error("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
                 let creep_name;
                 if (task_mapping[queue_task.name].hasOwnProperty('spawn')) {
                     creep_name = task_mapping[queue_task.name].spawn(queue_task, room);

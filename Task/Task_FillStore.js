@@ -1,6 +1,6 @@
-import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
+import {  QueueTask, CreepTask, findQueueTask, Task, State} from "./Task";
 import { getOurRooms } from "../Base";;
-import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY, FILL_STORE_DEFAULT_PRIORITY } from "../Constants";
+import { FILL_STORE_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "../Constants";
 import "../RoomPosition";
 import "../Source";
 import { error } from "../Logging";
@@ -126,7 +126,11 @@ task.updateQueue = () => {
  * @param {QueueTask} queue_task 
  */
 function prioritize(queue_task) {
-    queue_task.priority = FILL_STORE_DEFAULT_PRIORITY;
+    let source = Game.getObjectById(queue_task.id);
+    if (!source) return;
+    let fullness =  source.room.getFreeCapacity(RESOURCE_ENERGY)/(source.room.getFreeCapacity(RESOURCE_ENERGY) + source.room.storedEnergy());
+    queue_task.priority = FILL_STORE_DEFAULT_PRIORITY + fullness * PRIORITY_LEVEL_STEP;
+    error(source.room.getFreeCapacity(RESOURCE_ENERGY) , " ",  source.room.storedEnergy(), " ", fullness, " ",  queue_task.priority);
 }
 /**
  * @param {Creep} creep

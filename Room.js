@@ -57,12 +57,13 @@ Room.prototype.inRoom = function(pos) {
     return true;
 }
 
+//TODO : refactor to getUsedCapacity
 /**
  * @return {number} The energy available in all containers and storage of the room.
  */
 Room.prototype.storedEnergy = function() {
     let containers = this.find(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER 
     }) || [];
     let energy = 0;
     for (let container of containers) {
@@ -72,6 +73,21 @@ Room.prototype.storedEnergy = function() {
     return energy;
 }
 
+/**
+ * @param {string} resource_type The resource type.
+ * @return {number} The energy capacity available in all containers and storage of the room.
+ */
+Room.prototype.getFreeCapacity = function(resource_type) {
+    let containers = this.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+    }) || [];
+    let free_capacity = 0;
+    for (let container of containers) {
+        free_capacity += container.store.getFreeCapacity(resource_type);
+    }
+    free_capacity += !this.storage || this.storage.store.getFreeCapacity(resource_type);
+    return free_capacity;
+}
 /**
  * @param {number} req_energy
  * @return {boolean} True if the room has more energy available in stores or sources than is used.

@@ -3,6 +3,7 @@ import { getOurRooms } from "../Base";;
 import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "../Constants";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
+import { storedEnergy } from "../Game";
 import "../RoomPosition";
 
 var task = new Task("fill_structure", null);
@@ -139,8 +140,8 @@ task.estimateTime = function(creep, queue_task, max_cost) {
 
     let harvest_time = 0;
     let energy = creep.store.getFreeCapacity(RESOURCE_ENERGY);
-    if (energy > creep.room.storedEnergy()) {
-        harvest_time = Math.max(0, (energy - creep.room.storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
+    if (energy > storedEnergy()) {
+        harvest_time = Math.max(0, (energy - storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
     }
 
     return path_costs + harvest_time;

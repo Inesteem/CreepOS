@@ -122,12 +122,12 @@ RoomPosition.prototype.getPathCosts = function(pos, range, fatigue_base, fatigue
     let posIdx = posX + posY*10;
     let selfIdx = selfX + selfY*10;
 
-    if (self.roomName != pos.roomName){
-        let costs = getCosts(self.roomName, selfIdx, pos.roomName, posIdx);
-        if (costs){
-            return costs;
-        }
-    }
+    //if (self.roomName != pos.roomName){
+    //    let costs = getCosts(self.roomName, selfIdx, pos.roomName, posIdx);
+    //    if (costs){
+    //        return costs;
+    //    }
+    //}
 
     let callsA=Memory.getPathCosts[pos.roomName][posX][posY]++;
     let callsB=Memory.getPathCosts[self.roomName][selfX][selfY]++;

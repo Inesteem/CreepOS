@@ -14,6 +14,15 @@ function findEnemyCreeps(rooms, filter) {
     return enemies;
 }
 
+function storedEnergy() {
+    let rooms = getOurRooms() || [];
+    let energy = 0;
+    for (let room of rooms) {
+        energy += room.storedEnergy();
+    }
+    return energy;
+}
+
 /**
  * 
  * @param {function(Creep):boolean=} filter 
@@ -57,4 +66,4 @@ function getBiggestSpawn() {
 
 
 
-export { numCreeps, findEnemyCreeps, getSpawns, getBiggestSpawn};
+export { numCreeps, findEnemyCreeps, getSpawns, getBiggestSpawn, storedEnergy };
