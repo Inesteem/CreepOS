@@ -139,10 +139,14 @@ task.estimateTime = function(creep, queue_task, max_cost) {
 
     let harvest_time = 0;
     let energy = creep.store.getFreeCapacity(RESOURCE_ENERGY);
-    if (energy > storedEnergy()) {
-        harvest_time = Math.max(0, (energy - storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
+    let available_store = Game.findMaxStoredResource(RESOURCE_ENERGY);
+    if (energy > available_store) {
+        if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+        harvest_time = (energy - available_store) / (2 * creep.getActiveBodyparts(WORK));
     }
-
+    //console.log("harvest_time " + harvest_time);
+    //console.log("path_cost " + path_costs);
+    if (harvest_time >= Infinity || path_costs >= Infinity) return Infinity;
     return path_costs + harvest_time;
 }
 

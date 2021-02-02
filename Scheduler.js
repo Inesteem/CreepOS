@@ -255,7 +255,8 @@ function getNextTask(creep, task_queue_sorted, max_time) {
         if (max_cost < 2) break;
         if (task_mapping[queue_task.name].hasOwnProperty('estimateTime')) {
             let cpu_start = Game.cpu.getUsed();
-            path_cost = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_cost) + 1;
+            path_cost = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_cost);
+            if (path_cost < Infinity) path_cost += 1;
             let cpu_now = Game.cpu.getUsed();
             if (cpu_now - cpu_start > 1) warning("Estimate time for ", queue_task, " too expensive, took ", cpu_now - cpu_start, " max cost ", max_cost);
             //path_cost = 1;

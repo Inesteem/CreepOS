@@ -26,6 +26,20 @@ export function initGame() {
         }
         return objects;
     }
+
+    Game.findMaxStoredResource = function(type) {
+        let stores = Game.find(
+            FIND_STRUCTURES,
+            {filter: (structure) => 
+                (structure.structureType === STRUCTURE_CONTAINER
+                || structure.structureType === STRUCTURE_STORAGE)
+                && structure.store[type] > 0
+            }
+        ).map(structure => structure.store);
+        stores.sort((a, b) => b[type] - a[type]);
+        if (!stores.length) return 0;
+        return stores[0][type]; 
+    }
 }
 
 

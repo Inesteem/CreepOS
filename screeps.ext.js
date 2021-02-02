@@ -61,8 +61,6 @@ var Game = {
     rooms: {},
     /** @type {{limit: number, getUsed: function():number}} */
     cpu: {},
-    /** @type {!Object} */
-    prototype: {},
     /**
      * @param {string} id
      * @return {Object}
@@ -638,6 +636,8 @@ var LOOK_STRUCTURES;
 var LOOK_TERRAIN;
 /** @const {string} */
 var LOOK_CREEPS;
+/** @const {string} */
+var LOOK_RESOURCES;
 
 
 /** @const {number} */

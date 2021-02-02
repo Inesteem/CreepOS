@@ -15,11 +15,6 @@ const giveup_time = 250;//TODO : move to constants
  * @param {!(function(Creep):boolean)} func 
  */
 function State(func){
-    if (typeof func !== 'function') {
-        error("Creating state without function!");
-        error(func);
-        return;
-    }
     this.func = func;
 }
  
