@@ -61,12 +61,28 @@ var Game = {
     rooms: {},
     /** @type {{limit: number, getUsed: function():number}} */
     cpu: {},
+    /** @type {{visual: {text: function(string, RoomPosition, Object)}}} */
+    map: {},
     /**
      * @param {string} id
      * @return {Object}
      */
     getObjectById: function (id) {},
 };
+
+/**
+ * @constructor
+ * @param {string} name 
+ */
+var RoomVisual = function (name) {}
+/**
+ * 
+ * @param {string} label 
+ * @param {number} x 
+ * @param {number} y 
+ * @param {Object=} opt 
+ */
+RoomVisual.prototype.text = function(label, x, y, opt) {}; 
 
 /**
  * @constructor

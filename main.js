@@ -12,6 +12,18 @@ import "./Room";
 
 
 module.exports.loop = function () {
+    for (let task_type in Memory.new_tasks) {
+        let task_queue = Memory.new_tasks[task_type];
+        for (let task of task_queue) {
+            let target = Game.getObjectById(task.id);
+            if (target) {
+                new RoomVisual(target.room.name).text("" + Math.floor(task.priority), target.pos.x, target.pos.y, {align: "right", font: 0.4}); 
+            }
+        }
+    }
+    Game.map.visual.text("Target💥", new RoomPosition(11,14,'W6N8'), {color: '#FFFFFF', fontSize: 10}); 
+
+
     // Need to redefine functions on Game.
     initGame();
 

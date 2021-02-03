@@ -1,9 +1,10 @@
+import { TERRAIN_PLAIN, TERRAIN_SWAMP } from "./Constants";
 import { error } from "./Logging";
 
 RoomPosition.prototype.getAdjacentContainer = function(filter) {
     let structures = this.getAdjacentStructures();
     for (let structure of structures) {
-        if (structure.structure.structureType == STRUCTURE_CONTAINER && 
+        if (structure.structure.structureType === STRUCTURE_CONTAINER && 
                 filter(structure.structure)) {
             return structure.structure;
         }
@@ -86,13 +87,19 @@ RoomPosition.prototype.isGenerallyWalkable = function() {
     return true;
 }
 
-RoomPosition.prototype.getAdjacentStructures = function() {
+/**
+ * 
+ * @param {(function({structure : Structure}):boolean)=} filter 
+ */
+RoomPosition.prototype.getAdjacentStructures = function(filter) {
+    filter = filter || ((s) => true);
     return Game.rooms[this.roomName]
                 .lookForAtArea(LOOK_STRUCTURES,
                     Math.max(0, this.y - 1), 
                     Math.max(0, this.x - 1), 
                     Math.min(49, this.y + 1), 
-                    Math.min(49, this.x + 1), true);
+                    Math.min(49, this.x + 1), true)
+                .filter(filter);
 }
 
 
@@ -100,21 +107,20 @@ RoomPosition.prototype.getAdjacentStructures = function() {
  * 
  * @param {RoomPosition} pos
  * @param {number} range 
- * @param {number=} fatigue_base this.body.length - this.getActiveBodyparts(MOVE)
- * @param {number=} fatigue_decrease this.getActiveBodyparts(MOVE) * 2
+ * @param {Creep} creep
  * @param {number=} maxCost 
  * @param {number=} maxRooms
  * @this {RoomPosition}
- * @return {number} Infinity if cost > maxcost, else cost
+ * @return {number} Infinity if cost > maxcost, else estimated path costs
  */
-RoomPosition.prototype.getPathCosts = function(pos, range, fatigue_base, fatigue_decrease, maxCost, maxRooms) {
+RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, maxRooms) {
     let self = this;
     // Save how often path costs was called for room areas.
-    Memory.getPathCosts = Memory.getPathCosts || {};
-    if (!Memory.getPathCosts[self.roomName]) {
+    Memory.estimatePathCosts = Memory.estimatePathCosts || {};
+    if (!Memory.estimatePathCosts[self.roomName]) {
         initializePathCostCache(self.roomName);
     }
-    if (!Memory.getPathCosts[pos.roomName]) {
+    if (!Memory.estimatePathCosts[pos.roomName]) {
         initializePathCostCache(pos.roomName);
     }
     let posX = Math.floor(pos.x/5);
@@ -124,58 +130,114 @@ RoomPosition.prototype.getPathCosts = function(pos, range, fatigue_base, fatigue
     let posIdx = posX + posY*10;
     let selfIdx = selfX + selfY*10;
 
-    //if (self.roomName != pos.roomName){
-    //    let costs = getCosts(self.roomName, selfIdx, pos.roomName, posIdx);
-    //    if (costs){
-    //        return costs;
-    //    }
-    //}
+    if (selfIdx != posIdx || self.roomName != pos.roomName){
+        let costs = computeCostsFromCache(self.roomName, selfIdx, pos.roomName, posIdx, creep);
+        if (costs != -1){
+            if (costs == 0){
+                error(getCachedPath(self.roomName, selfIdx, pos.roomName, posIdx));
+                error(pos);
+                error(self);
+                error("Cached path was zero");
+            }
+            return costs;
+        }
+    }
 
-    let callsA=Memory.getPathCosts[pos.roomName][posX][posY]++;
-    let callsB=Memory.getPathCosts[self.roomName][selfX][selfY]++;
+    let callsA=Memory.estimatePathCosts[pos.roomName][posX][posY]++;
+    let callsB=Memory.estimatePathCosts[self.roomName][selfX][selfY]++;
 
-    let cost_matrix = Game.rooms[self.roomName].getCostMatrix(fatigue_base, fatigue_decrease);
+    let cost_matrix = Game.rooms[this.roomName].getCostMatrix();
     let result = PathFinder.search(self, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
     if (result.incomplete) {
         return Infinity;
     }
-    let value = result.cost;
-    
+    let cache_path = computeCachePathFromPath(result.path || []);
+    let costs = computeCostsFromPath(cache_path, creep);
+
     let thresh = 100;
-    if (callsA > thresh && callsB > thresh){       
-        setCosts(self.roomName, selfIdx, pos.roomName, posIdx, value);
-        setCosts(pos.roomName, posIdx, self.roomName, selfIdx, value);
-        Memory.getPathCosts[pos.roomName][posX][posY] = 0;
-        Memory.getPathCosts[self.roomName][selfX][selfY] = 0;
+    if (callsA > thresh && callsB > thresh && (selfIdx != posIdx || self.roomName != pos.roomName)){       
+        setCachedPath(self.roomName, selfIdx, pos.roomName, posIdx, cache_path);
+        setCachedPath(pos.roomName, posIdx, self.roomName, selfIdx, cache_path);
+        Memory.estimatePathCosts[pos.roomName][posX][posY] = 0;
+        Memory.estimatePathCosts[self.roomName][selfX][selfY] = 0;
     }
     
-    return value;
+    return costs;
+}
 
+/**
+ * 
+ * @param {!Array<RoomPosition>} path 
+ */
+function computeCachePathFromPath(path) {
+    let result = {num_road: 0, num_plain: 0, num_swamp: 0};
+    for (let pos of path) {
+        let terrain = pos.lookFor(LOOK_TERRAIN);
+        let structures = pos.lookFor(LOOK_STRUCTURES).concat(pos.lookFor(LOOK_CONSTRUCTION_SITES));
+        let done = false;
+        for (let structure of structures) {
+            if (structure.structureType === STRUCTURE_ROAD) {
+                result.num_road++;
+                done = true;
+                break;
+            }
+        }
+        if (!done) {
+            if (terrain === TERRAIN_SWAMP) {
+                result.num_swamp++;
+            } else if (terrain === TERRAIN_PLAIN) {
+                result.num_plain++;
+            }
+        }
+    }
+    return result;
+}
+
+function computeCostsFromCache(roomNameA, idxA, roomNameB, idxB, creep) {
+    let path = getCachedPath(roomNameA, idxA, roomNameB, idxB);
+    if (!path) {
+        return -1;
+    }
+    return computeCostsFromPath(path, creep);
+}
+
+/**
+ * 
+ * @param {{num_road: number, num_plain: number, num_swamp: number}} path 
+ * @param {Creep} creep 
+ * @return {number}
+ */
+function computeCostsFromPath(path, creep) {
+    return (path.num_road * creep.getRoadCosts() + path.num_plain * creep.getPlainCosts() + path.num_swamp * creep.getSwampCosts());
 }
 
 
-function setCosts(roomNameA, idxA, roomNameB, idxB, costs) {
+function setCachedPath(roomNameA, idxA, roomNameB, idxB, path) {
     Memory.path_costs = Memory.path_costs || {};
     Memory.path_costs[roomNameA] = Memory.path_costs[roomNameA] || {};
     Memory.path_costs[roomNameA][idxA] = Memory.path_costs[roomNameA][idxA] || {};  
     Memory.path_costs[roomNameA][idxA][roomNameB] = Memory.path_costs[roomNameA][idxA][roomNameB] || {};  
     Memory.path_costs[roomNameA][idxA][roomNameB][idxB] = Memory.path_costs[roomNameA][idxA][roomNameB][idxB] || {};
-    Memory.path_costs[roomNameA][idxA][roomNameB][idxB] = costs;
+    Memory.path_costs[roomNameA][idxA][roomNameB][idxB] = path;
 }
 
-function getCosts(roomNameA, idxA, roomNameB, idxB) {
-    return Memory.path_costs && 
-        Memory.path_costs[roomNameA] && Memory.path_costs[roomNameA][idxA] && 
-        Memory.path_costs[roomNameA][idxA][roomNameB] && 
-        Memory.path_costs[roomNameA][idxA][roomNameB][idxB];
+function getCachedPath(roomNameA, idxA, roomNameB, idxB) {
+    if (!Memory.path_costs
+        || !Memory.path_costs[roomNameA]
+        || !Memory.path_costs[roomNameA][idxA]
+        || !Memory.path_costs[roomNameA][idxA][roomNameB]
+        || !Memory.path_costs[roomNameA][idxA][roomNameB][idxB]) {
+            return null;
+    }
+    return Memory.path_costs[roomNameA][idxA][roomNameB][idxB];
 }
 
 function initializePathCostCache(roomName) {
-    Memory.getPathCosts[roomName] = [];
+    Memory.estimatePathCosts[roomName] = [];
     for (let x = 0; x < 10; ++x) {
-        Memory.getPathCosts[roomName].push([]);
+        Memory.estimatePathCosts[roomName].push([]);
         for (let y = 0; y < 10; ++y){
-            Memory.getPathCosts[roomName][x].push(0);
+            Memory.estimatePathCosts[roomName][x].push(0);
         }
     }
 }

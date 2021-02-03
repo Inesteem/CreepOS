@@ -1,6 +1,6 @@
 import { ERR_NO_SPAWN } from "./Constants";
 import { error, info } from "./Logging";
-import { numCreeps } from "./Game";
+import "./Game";
 import "./Source";
 
 Room.prototype.findAllHostileCreeps = function (){
@@ -30,7 +30,7 @@ Room.prototype.numCreeps = function(filter) {
  * @param {(function(Structure):boolean)=} filter 
  * @return {!Array<StructureSpawn>} All spawns matching filter in this room.
  */
-Room.prototype.getSpawns = function(filter) {
+Room.prototype.findSpawns = function(filter) {
     let spawns = this.find(FIND_MY_STRUCTURES, 
             {filter: (structure) => structure.structureType === STRUCTURE_SPAWN
                 && (typeof filter !== 'function' || filter(structure))});
@@ -142,7 +142,7 @@ Room.prototype.spawnCreep = function(body, name, opt) {
 }
 
 Room.prototype.allowSpawn = function() {
-    var num_creeps = numCreeps();
+    var num_creeps = Game.numCreeps();
     var max_cost = this.energyCapacityAvailable;
     var energy = this.energyAvailable;
     let energy_req = num_creeps * num_creeps * num_creeps + 300;
@@ -155,8 +155,8 @@ Room.prototype.getCostMatrix = function(fatigue_base, fatigue_decrease) {
     if (!fatigue_base) fatigue_base = 1;
 return {
 
-    plainCost: Math.max(0, 2 * fatigue_base - fatigue_decrease),
-    swampCost: Math.max(0, 10 * fatigue_base - fatigue_decrease),
+    plainCost: Math.max(1, 2 * fatigue_base - fatigue_decrease),
+    swampCost: Math.max(1, 10 * fatigue_base - fatigue_decrease),
 
     roomCallback: function(roomName) {
         let costs = new PathFinder.CostMatrix;
@@ -166,7 +166,7 @@ return {
         room.find(FIND_STRUCTURES).forEach(function(struct) {
             if (struct.structureType === STRUCTURE_ROAD) {
                 // Favor roads over plain tiles
-                let cost = Math.max(0, fatigue_base - fatigue_decrease);
+                let cost = Math.max(1, fatigue_base - fatigue_decrease);
                 costs.set(struct.pos.x, struct.pos.y, cost);
             } else if (struct.structureType !== STRUCTURE_CONTAINER &&
                    (struct.structureType !== STRUCTURE_RAMPART ||

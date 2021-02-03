@@ -20,6 +20,9 @@ function Frankencreep(pos, body_parts, name) {
 
     this.findOptimalEnergy = Creep.prototype.findOptimalEnergy;
     this.getCostMatrix = Creep.prototype.getCostMatrix;
+    this.getRoadCosts = Creep.prototype.getRoadCosts;
+    this.getPlainCosts = Creep.prototype.getPlainCosts;
+    this.getSwampCosts = Creep.prototype.getSwampCosts;
     this.say = (msg) => error( "say ", msg);
 };
 

@@ -2,14 +2,28 @@ import { error } from "./Logging";
 import "./Room";
 
 export function initGame() {
+
     /**
+     * 
+     * @param {function(Creep):boolean=} filter 
+     * @return {number} The number of all creeps.
+     */
+    Game.numCreeps = function (filter) {
+        return Object.values(Game.creeps).filter((creep) => !filter || filter(creep)).length;
+    }
+
+
+    /**
+    * @param {function(Room):boolean=} filter 
     * @return {!Array<Room>} Rooms with a flag whose controller is ours.
     */
-    Game.getOurRooms = function() {
+    Game.getOurRooms = function(filter) {
         let rooms = Object.values(Game.flags).filter((flag) => flag.room).map((flag) => flag.room).filter((room) => room.controller && room.controller.my);
         if (!rooms.length) {
             error("No rooms found. Did you forget to set the flag?");
         }
+        if (rooms && filter) 
+            rooms.filter((room) => filter(room));
         return rooms || [];
     }
 
@@ -64,18 +78,6 @@ function storedEnergy() {
     return energy;
 }
 
-/**
- * 
- * @param {function(Creep):boolean=} filter 
- * @return {number} The number of all creeps.
- */
-function numCreeps(filter) {
-    if (filter && typeof filter !== 'function') {
-        error("numCreeps: filter is not a function.");
-        return 0;
-    }
-    return Object.values(Game.creeps).filter((creep) => !filter || filter(creep)).length;
-}
 
 /**
  * 
@@ -107,4 +109,4 @@ function getBiggestSpawn() {
 
 
 
-export { numCreeps, findEnemyCreeps, getSpawns, getBiggestSpawn, storedEnergy };
+export {findEnemyCreeps, getSpawns, getBiggestSpawn, storedEnergy };

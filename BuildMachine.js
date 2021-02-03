@@ -1,7 +1,7 @@
 import { getTowers } from "./Base";
 import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constants";
 import { info, error } from "./Logging";
-import { numCreeps } from "./Game";
+import "./Game";
 
 function monitor() {
     monitorBuildRoadTasks();
@@ -183,7 +183,7 @@ l1:     for (let d = 1; d < 4; ++d){
 
 function max_road_number(room) {
     return 1.0 *
-        numCreeps((creep) => true) *
+        Game.numCreeps((creep) => true) *
         (getTowers(room, (tower) => true).length + 1);
 }
  

@@ -191,9 +191,7 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     let energy = Math.min(source.energy, creep.store.getCapacity(RESOURCE_ENERGY));
     let mine_time = energy/(2 * creep.getActiveBodyparts(WORK));
 
-    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
-    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
-    let path_costs = creep.pos.getPathCosts(source.pos, 1, fatigue_base, fatigue_decrease, max_cost);
+    let path_costs = creep.pos.estimatePathCosts(source.pos, 1, creep, max_cost);
 
     return mine_time + path_costs;
 }
@@ -204,11 +202,19 @@ task.estimateTime = function(creep, queue_task, max_cost) {
  * @return {Frankencreep}
  */
 task.creepAfter = function(creep, creep_task) {
-    return null;
+    let target = Game.getObjectById(creep_task.id);
+    if (!target) return null;
+    let freePositions = target.pos.getAdjacentGenerallyWalkables();
+    if (freePositions.length == 0) {
+        error (target, " is unreachable!");
+        return null;
+    }
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    return frankencreep;
 }
 
-task.spawn = function(queue_task, room) {
-    return room.spawnMiner();
+task.spawn = function(queue_task, spawn) {
+    return spawn.spawnMiner();
 }
 
 export { task };

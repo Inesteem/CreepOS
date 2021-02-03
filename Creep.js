@@ -119,7 +119,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     let containers = Game.find(
         FIND_STRUCTURES,
                 {filter: (structure) => 
-                    (structure.structureType === STRUCTURE_CONTAINER ||structure.structureType === STRUCTURE_STORAGE)
+                    (structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE)
                     && structure.store[RESOURCE_ENERGY] >= needed_energy}
     // ).concat( Game.find (
     //     FIND_RUINS,
@@ -152,19 +152,22 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
 
     result = PathFinder.search(
         this.pos,
-        containers.map(container => { return {pos: container.pos, range: 0}; }), 
+        containers.map(container => { return {pos: container.pos, range: 1}; }), 
         Object.assign(matrix, {maxCost: best_time, maxRooms: max_rooms || 16})
     );
-    error(result);
+    //error(result);
     if (!result.incomplete && result.cost < best_time) {
         best_time = result.cost;
         let position = result.path.pop() || this.pos;
-        best_target = {
-            type: FIND_STRUCTURES,
-            object: position
-                .lookFor(LOOK_STRUCTURES)
-                .find(structure => structure.store)
-        };
+        let targets = position.getAdjacentStructures((obj) => obj.structure.structureType === STRUCTURE_STORAGE || obj.structure.structureType === STRUCTURE_CONTAINER); 
+        targets = targets.map((obj) => obj.structure);
+        if (targets.length) {
+            targets.sort((a,b) => b.store[RESOURCE_ENERGY] - a.store[RESOURCE_ENERGY]);
+            best_target = {
+                type: FIND_STRUCTURES,
+                object: targets[0],
+            };
+        }
     }
   
     result = PathFinder.search(
@@ -180,7 +183,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
             object: position.getAdjacentSource()
         };
     }
-    error(best_target);
+    //error(best_target);
 
     return best_target;
 }
@@ -189,4 +192,22 @@ Creep.prototype.getCostMatrix = function() {
     let fatigue_decrease = this.getActiveBodyparts(MOVE) * 2;
     let fatigue_base = this.body.length - this.getActiveBodyparts(MOVE);
     return this.room.getCostMatrix(fatigue_base, fatigue_decrease); 
+}
+
+Creep.prototype.getRoadCosts = function() {
+    let fatigue_decrease = this.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = this.body.length - this.getActiveBodyparts(MOVE);
+    return Math.max(1, fatigue_base - fatigue_decrease);
+}
+
+Creep.prototype.getPlainCosts = function() {
+    let fatigue_decrease = this.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = this.body.length - this.getActiveBodyparts(MOVE);
+    return Math.max(1, 2 * fatigue_base - fatigue_decrease);
+}
+
+Creep.prototype.getSwampCosts = function() {
+    let fatigue_decrease = this.getActiveBodyparts(MOVE) * 2;
+    let fatigue_base = this.body.length - this.getActiveBodyparts(MOVE);
+    return Math.max(1, 10 * fatigue_base - fatigue_decrease);
 }

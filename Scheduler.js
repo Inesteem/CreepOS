@@ -19,7 +19,7 @@ import { Frankencreep } from "./FrankenCreep";
  * TODO what is required of these Task modules
  * Mandatory:
  * - task - a task object containing a state array to run the task
- * - spawnCreep(queue_task) - spawns a creep suitable for the task and returns the spawn time, returns -1 if no spawn is possible.
+ * - spawnCreep(queue_task,spawn) - spawns a creep suitable for the task and returns the creep name, returns "" if no spawn is possible.
  * 
  * Optional (will fallback to default or do nothing if not present):
  * - updateQueue -> called to fill new_tasks with queue_tasks
@@ -113,30 +113,43 @@ function schedule() {
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
     //error (task_queue_sorted);
 
-    let rooms = Game.getOurRooms();
-    for (let room of rooms) {
-        if (room.hasExcessEnergy(1000)) {
-            if (task_queue_sorted.length) {
-                let queue_task = task_queue_sorted[0];
-                if (queue_task.priority < 1 * PRIORITY_LEVEL_STEP) break;
-                //error("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
-                let creep_name;
-                if (task_mapping[queue_task.name].hasOwnProperty('spawn')) {
-                    creep_name = task_mapping[queue_task.name].spawn(queue_task, room);
-                } else {
-                    creep_name = room.spawnKevin();
-                }
-                if (creep_name !== "") {
-                    // TODO improve this section.
-                    let creep = new Frankencreep(new RoomPosition(25, 25, room.name), [WORK, CARRY, MOVE], creep_name);
-                    Memory.creeps[creep_name] = {};
-                    creep.memory = Memory.creeps[creep_name];
-                    creep.memory.spawning = true;
-                    let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
-                    creep.memory.task = creep_task;
-                }
-                task_queue_sorted.pop();
-            }
+    let rooms = Game.getOurRooms((room) => room.hasExcessEnergy(1000));
+    let spawns = rooms.flatMap(room => room.findSpawns((spawn) => !spawn.spawning));
+    let num_spawns = spawns.length;
+    for (let i = 0; 
+            (i < num_spawns)
+            && (task_queue_sorted.length)
+            && (task_queue_sorted[0].priority >= 1 * PRIORITY_LEVEL_STEP);
+        ++i) {
+        let queue_task = task_queue_sorted.pop();
+        info("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
+        
+        let target = Game.getObjectById(queue_task.id);
+        let spawn = target.pos.findClosestTarget(spawns);
+        if (!spawn || !spawn.allowSpawn()) continue;
+        spawns.splice(spawns.indexOf(spawn), 1);
+
+        var num_creeps = Game.numCreeps();
+        var num_rooms = Game.getOurRooms().length;
+        var num_creeps_per_room = Math.floor(num_creeps / num_rooms);
+        if (num_creeps_per_room < 2) {
+            spawn.spawnKevin();
+            continue;
+        }
+        let creep_name;
+        if (task_mapping[queue_task.name].hasOwnProperty('spawn')) {
+            creep_name = task_mapping[queue_task.name].spawn(queue_task, spawn);
+        } else {
+            creep_name = spawn.spawnKevin();
+        }
+        if (creep_name !== "") {
+            // TODO improve this section.
+            let creep = new Frankencreep(spawn.pos, [WORK, CARRY, MOVE], creep_name);
+            Memory.creeps[creep_name] = {};
+            creep.memory = Memory.creeps[creep_name];
+            creep.memory.spawning = true;
+            let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
+            creep.memory.task = creep_task;
         }
     }
 }

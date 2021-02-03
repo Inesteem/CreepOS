@@ -58,7 +58,7 @@ task.take = function(creep, queue_task) {
 
 /**
  * Estimates the time for creep to finish queue_task.
- * @param {{store: Object, getActiveBodyparts : (function(number): number), pos : RoomPosition}} creep 
+ * @param {Creep} creep 
  * @param {QueueTask} queue_task 
  * @param {number=} max_cost
  * @return {number}
@@ -69,9 +69,7 @@ task.estimateTime = function(creep, queue_task, max_cost) {
 
     if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
 
-    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
-    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
-    let path_costs = creep.pos.getPathCosts(structure.pos, 3, fatigue_base, fatigue_decrease, max_cost);
+    let path_costs = creep.pos.estimatePathCosts(structure.pos, 3, creep, max_cost);
 
     let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
     let time_upgrade = energy/creep.getActiveBodyparts(WORK);
@@ -80,8 +78,8 @@ task.estimateTime = function(creep, queue_task, max_cost) {
 }
 
 
-task.spawn = function(queue_task, room) {
-    if (!room.allowSpawn()) return "";
+task.spawn = function(queue_task, spawn) {
+    if (!spawn.allowSpawn()) return "";
 
     let parts = [MOVE, CARRY, WORK];
     let body = [MOVE, CARRY, WORK];
@@ -94,18 +92,14 @@ task.spawn = function(queue_task, room) {
   //  error("container ", container.pos);
   //  error("controller ", pos);
     if (!container) {
-        return room.spawnKevin();
+        return spawn.spawnKevin();
     }
-    while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
+    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
         let best_part = MOVE;
         let best_eff = 0;
         for (let part of parts){
             body.push(part);
-            let frankencreep = {pos : container.pos,
-                body: body, 
-                store : {energy: 0, getCapacity: (energy) => body.filter(x => x==CARRY).length * 50}, 
-                getActiveBodyparts : (part) => body.filter(x => x==part).length};
-            
+            let frankencreep = new Frankencreep(container.pos, body, "Franki");
             let carry = body.filter(x => x == CARRY).length * 50;
             let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
             //error(body, time, " ", carry);
@@ -124,7 +118,7 @@ task.spawn = function(queue_task, room) {
         body.push(best_part);
     }
     body.pop();
-    if (body.length > 3 &&  room.spawnCreep(body, newName, {}) == OK) {
+    if (body.length > 3 &&  spawn.spawnCreep(body, newName, {}) == OK) {
         return newName;
     }
     return "";

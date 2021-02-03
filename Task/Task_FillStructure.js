@@ -126,32 +126,34 @@ task.finish = (creep, creep_task) => {
  * Estimates the time for creep to finish queue_task.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
- * @param {number=} max_cost
+ * @param {number=} max_time
  * @return {number}
  */
-task.estimateTime = function(creep, queue_task, max_cost) {
+task.estimateTime = function(creep, queue_task, max_time) {
     let structure = Game.getObjectById(queue_task.id);
-    if (!structure) return 0;
+    if (!structure) return Infinity;
 
-    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
-    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
-    let path_costs = creep.pos.getPathCosts(structure.pos, 1, fatigue_base, fatigue_decrease, max_cost);
+    let energy_struct = creep.findOptimalEnergy(max_time);
+    if (!energy_struct || !energy_struct.object) return Infinity;
 
     let harvest_time = 0;
-    let energy = creep.store.getFreeCapacity(RESOURCE_ENERGY);
-    let available_store = Game.findMaxStoredResource(RESOURCE_ENERGY);
-    if (energy > available_store) {
+    if (energy_struct.type == FIND_SOURCES) {
         if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
-        harvest_time = (energy - available_store) / (2 * creep.getActiveBodyparts(WORK));
+        let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
+        harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
     }
-    //console.log("harvest_time " + harvest_time);
-    //console.log("path_cost " + path_costs);
-    if (harvest_time >= Infinity || path_costs >= Infinity) return Infinity;
-    return path_costs + harvest_time;
+
+    let path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time);
+    if (path_time >= Infinity) return Infinity;
+    path_time += energy_struct.object.pos.estimatePathCosts(structure.pos, 1, creep, max_time - harvest_time - path_time);
+    if (path_time >= Infinity) return Infinity;
+
+    error( "fillStructure.estimateTime ", path_time, " ", harvest_time);
+    return path_time + harvest_time;
 }
 
-task.spawn = function(queue_task, room) {
-    let stored_energy = room.storedEnergy();
+task.spawn = function(queue_task, spawn) {
+    let stored_energy = spawn.room.storedEnergy();
 
     let parts = [];
     let body = [];
@@ -166,13 +168,13 @@ task.spawn = function(queue_task, room) {
     let newName = "Muli" + Game.time;
     let idx = 0;
 
-    while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
+    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
         body.push(parts[idx]);
         idx = (idx + 1) % parts.length;
     }
     body.pop();
 
-    if (body.length > 3 && room.spawnCreep(body, newName, {}) == OK){
+    if (body.length > 3 && spawn.spawnCreep(body, newName, {}) == OK){
         return newName;
     }
     return "";

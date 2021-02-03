@@ -87,7 +87,7 @@ task.take = (creep, queue_task) => {
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
     
-    error("redistribute from ", creep_task.store_id, " (", container.pos, ") to ", creep_task.id, " (", Game.getObjectById(creep_task.id).pos, ")"  );
+    //error("redistribute from ", creep_task.store_id, " (", container.pos, ") to ", creep_task.id, " (", Game.getObjectById(creep_task.id).pos, ")"  );
 
     return creep_task;
 }
@@ -138,10 +138,7 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     }));
     if (!container) return Infinity;
 
-
-    let fatigue_decrease = creep.getActiveBodyparts(MOVE) * 2;
-    let fatigue_base = creep.body.length - creep.getActiveBodyparts(MOVE);
-    let path_costs = creep.pos.getPathCosts(structure.pos, 1, fatigue_base, fatigue_decrease, max_cost);
+    let path_costs = creep.pos.estimatePathCosts(structure.pos, 1, creep, max_cost);
 
     let harvest_time = 0;
     let energy = creep.store.getFreeCapacity(RESOURCE_ENERGY);
@@ -152,8 +149,8 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     return path_costs + harvest_time;
 }
 
-task.spawn = function(queue_task, room) {
-    let stored_energy = room.storedEnergy();
+task.spawn = function(queue_task, spawn) {
+    let stored_energy = spawn.room.storedEnergy();
 
     let parts = [];
     let body = [];
@@ -168,13 +165,13 @@ task.spawn = function(queue_task, room) {
     let newName = "Yak" + Game.time;
     let idx = 0;
 
-    while (room.spawnCreep(body, newName, { dryRun: true }) == 0) {
+    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
         body.push(parts[idx]);
         idx = (idx + 1) % parts.length;
     }
     body.pop();
 
-    if (body.length > 3 && room.spawnCreep(body, newName, {}) == OK){
+    if (body.length > 3 && spawn.spawnCreep(body, newName, {}) == OK){
         return newName;
     }
     return "";
