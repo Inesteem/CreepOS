@@ -111,7 +111,7 @@ function schedule() {
         }
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
-    //error (task_queue_sorted);
+    error (task_queue_sorted);
 
     let rooms = Game.getOurRooms((room) => room.hasExcessEnergy(1000));
     let spawns = rooms.flatMap(room => room.findSpawns((spawn) => !spawn.spawning));
@@ -121,7 +121,7 @@ function schedule() {
             && (task_queue_sorted.length)
             && (task_queue_sorted[0].priority >= 1 * PRIORITY_LEVEL_STEP);
         ++i) {
-        let queue_task = task_queue_sorted.pop();
+        let queue_task = task_queue_sorted.shift();
         info("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
         
         let target = Game.getObjectById(queue_task.id);
@@ -265,7 +265,7 @@ function getNextTask(creep, task_queue_sorted, max_time) {
         let path_cost = 0;
         let floor_priority = Math.floor(queue_task.priority/PRIORITY_LEVEL_STEP) * PRIORITY_LEVEL_STEP;
         let max_cost = searched ? floor_priority / max_priority : max_time;
-        if (max_cost < 2) break;
+        if (max_cost && max_cost < 2) break;
         if (task_mapping[queue_task.name].hasOwnProperty('estimateTime')) {
             let cpu_start = Game.cpu.getUsed();
             path_cost = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_cost);

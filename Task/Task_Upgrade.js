@@ -1,4 +1,4 @@
-import { QueueTask, CreepTask, Task, State, takeFromStore, upgradeController, getEnergyForTask } from "./Task";
+import { QueueTask, CreepTask, Task, State, takeFromStore, upgradeController, findQueueTask } from "./Task";
 import "../Game";
 import {error} from "../Logging";
 import { UPGRADE_HIGH_PRIORITY, UPGRADE_LOW_PRIORITY } from "../Constants";
@@ -35,8 +35,18 @@ task.updateQueue = () => {
 }
 
 function prioritize(queue_task) {
-    let controller = Game.getObjectById(queue_task.id);
     queue_task.priority = UPGRADE_HIGH_PRIORITY;
+}
+
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {{name: string, id: string, creep_exp_fillup: number}} creep_task 
+ */
+task.finish = (creep, creep_task) => {
+    let queue_task = findQueueTask(creep_task.name, creep_task.id);
+    if (queue_task)
+        prioritize(queue_task);
 }
 
 /**
@@ -60,23 +70,44 @@ task.take = function(creep, queue_task) {
  * Estimates the time for creep to finish queue_task.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
- * @param {number=} max_cost
+ * @param {number=} max_time
  * @return {number}
  */
-task.estimateTime = function(creep, queue_task, max_cost) {
-    let structure = Game.getObjectById(queue_task.id);
-    if (!structure) return 0;
-
+task.estimateTime = function(creep, queue_task, max_time) {
+    error ("calculating estimateTime for upgrade");
+    let structure = /**@type {StructureController}*/ (Game.getObjectById(queue_task.id));
+    if (!structure) return Infinity;
     if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
 
-    let path_costs = creep.pos.estimatePathCosts(structure.pos, 3, creep, max_cost);
 
     let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
-    let time_upgrade = energy/creep.getActiveBodyparts(WORK);
+    let upgrade_time = energy/creep.getActiveBodyparts(WORK);
 
-    return path_costs + time_upgrade;
+    if (!creep.store[RESOURCE_ENERGY]) {
+        let energy_struct = creep.findOptimalEnergy(max_time - upgrade_time);
+        if (!energy_struct || !energy_struct.object) return Infinity;
+
+        let harvest_time = 0;
+        if (energy_struct.type == FIND_SOURCES) {
+            if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+            let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
+            harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
+        }
+
+        let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time - upgrade_time);
+        if (energy_path_time >= Infinity) return Infinity;
+        let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 3, creep, max_time - harvest_time - energy_path_time - upgrade_time);
+        if (work_path_time >= Infinity) return Infinity; 
+        error (" time is ", work_path_time + energy_path_time + harvest_time + upgrade_time);
+        
+        return work_path_time + energy_path_time + harvest_time + upgrade_time;
+    }
+    
+    let path_costs = creep.pos.estimatePathCosts(structure.pos, 3, creep, max_time - upgrade_time);
+    if (path_costs >= Infinity) return Infinity;
+    error (" time is ", path_costs + upgrade_time);
+    return path_costs + upgrade_time;
 }
-
 
 task.spawn = function(queue_task, spawn) {
     if (!spawn.allowSpawn()) return "";

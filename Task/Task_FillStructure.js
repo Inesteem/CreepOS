@@ -122,6 +122,8 @@ task.finish = (creep, creep_task) => {
         reprioritize(queue_task);
 }
 
+
+
 /**
  * Estimates the time for creep to finish queue_task.
  * @param {Creep} creep 
@@ -133,23 +135,28 @@ task.estimateTime = function(creep, queue_task, max_time) {
     let structure = Game.getObjectById(queue_task.id);
     if (!structure) return Infinity;
 
-    let energy_struct = creep.findOptimalEnergy(max_time);
-    if (!energy_struct || !energy_struct.object) return Infinity;
+    if (!creep.store[RESOURCE_ENERGY]) {
+        let energy_struct = creep.findOptimalEnergy(max_time);
+        if (!energy_struct || !energy_struct.object) return Infinity;
 
-    let harvest_time = 0;
-    if (energy_struct.type == FIND_SOURCES) {
-        if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
-        let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
-        harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
+        let harvest_time = 0;
+        if (energy_struct.type == FIND_SOURCES) {
+            if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+            let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
+            harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
+        }
+
+        let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time);
+        if (energy_path_time >= Infinity) return Infinity;
+        let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 1, creep, max_time - harvest_time - energy_path_time);
+        if (work_path_time >= Infinity) return Infinity; 
+        
+        return work_path_time + energy_path_time + harvest_time;
     }
 
-    let path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time);
-    if (path_time >= Infinity) return Infinity;
-    path_time += energy_struct.object.pos.estimatePathCosts(structure.pos, 1, creep, max_time - harvest_time - path_time);
-    if (path_time >= Infinity) return Infinity;
+    let path_time = creep.pos.estimatePathCosts(structure.pos, 1, creep, max_time);
 
-    error( "fillStructure.estimateTime ", path_time, " ", harvest_time);
-    return path_time + harvest_time;
+    return path_time;
 }
 
 task.spawn = function(queue_task, spawn) {

@@ -110,7 +110,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
 
     let sources = Game.find(
         FIND_SOURCES_ACTIVE,
-        {filter : source => !source.hasFreeSpot() && !this.pos.inRangeTo(source.pos, 1) }
+        {filter : source => source.hasFreeSpot() || this.pos.inRangeTo(source.pos, 1) }
     );
     let resources = Game.find(
         FIND_DROPPED_RESOURCES,
@@ -128,7 +128,6 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     //     FIND_TOMBSTONES,
     //     { filter : (tombstone) => tombstone.store[RESOURCE_ENERGY] >= needed_energy }
     );
-
     let best_target = null;
     let best_time = max_time || Infinity;
 

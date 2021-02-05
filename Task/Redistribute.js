@@ -24,7 +24,7 @@ task.updateQueue = () => {
     Memory.new_tasks.redistribute = Memory.new_tasks.redistribute || [];
     for (let storage of storages) {
         if (!Memory.new_tasks.redistribute.find
-                (redistribute_task => redistribute_task.id == storage.id)) {
+                (redistribute_task => redistribute_task.id === storage.id)) {
             let queue_task = {id: storage.id || "", name:"redistribute", priority: 0};
             prioritize(queue_task, storage.structureType);
             Memory.new_tasks.redistribute.push(queue_task);
@@ -60,7 +60,17 @@ task.take = (creep, queue_task) => {
     
     if (!structure) return null;
     
-    let add_energy = creep.store.getCapacity(RESOURCE_ENERGY);
+
+    let container  = /** @type {Structure} */ (creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (structure) => {
+                return (structure.structureType === STRUCTURE_CONTAINER) &&
+                    structure.store[RESOURCE_ENERGY] > 
+                    0.5 * structure.store.getCapacity(RESOURCE_ENERGY);
+        }
+    }));
+    if (!container) return null;
+
+    let add_energy = Math.min(container.store[RESOURCE_ENERGY],creep.store.getCapacity(RESOURCE_ENERGY));
     if (!queue_task.expected_fillup) {
         queue_task.expected_fillup = add_energy;  
     } else {
@@ -74,14 +84,6 @@ task.take = (creep, queue_task) => {
     creep_task.creep_exp_fill = add_energy;
     
      
-    let container  = /** @type {Structure} */ (creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => {
-                return (structure.structureType == STRUCTURE_CONTAINER) &&
-                    structure.store[RESOURCE_ENERGY] > 
-                    0.5 * structure.store.getCapacity(RESOURCE_ENERGY);
-        }
-    }));
-    if (!container) return null;
 
     creep_task.store_id = container.id;
     creep_task.id = queue_task.id;
@@ -121,13 +123,14 @@ task.finish = (creep, creep_task) => {
  * Estimates the time for creep to finish queue_task.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
- * @param {number=} max_cost
+ * @param {number=} max_time
  * @return {number}
  */
-task.estimateTime = function(creep, queue_task, max_cost) {
-    let structure = Game.getObjectById(queue_task.id);
-    if (!structure) return 0;
-
+task.estimateTime = function(creep, queue_task, max_time) {
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) < 100) 
+        return Infinity;
+    let storage = Game.getObjectById(queue_task.id);
+    if (!storage) return Infinity;
 
     let container  = /** @type {Structure} */ (creep.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -138,15 +141,12 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     }));
     if (!container) return Infinity;
 
-    let path_costs = creep.pos.estimatePathCosts(structure.pos, 1, creep, max_cost);
-
-    let harvest_time = 0;
-    let energy = creep.store.getFreeCapacity(RESOURCE_ENERGY);
-    if (energy > creep.room.storedEnergy()) {
-        harvest_time = Math.max(0, (energy - creep.room.storedEnergy())) / (2 * creep.getActiveBodyparts(WORK));
-    }
-
-    return path_costs + harvest_time;
+    let energy_path_time = creep.pos.estimatePathCosts(container.pos, 1, creep, max_time);
+    if (energy_path_time >= Infinity) return Infinity;
+    let work_path_time = container.pos.estimatePathCosts(storage.pos, 1, creep, max_time - energy_path_time);
+    if (work_path_time >= Infinity) return Infinity; 
+    
+    return work_path_time + energy_path_time;
 }
 
 task.spawn = function(queue_task, spawn) {
@@ -155,10 +155,10 @@ task.spawn = function(queue_task, spawn) {
     let parts = [];
     let body = [];
     if (stored_energy > 500) {
-        body = [MOVE, CARRY];
+        body = [MOVE, CARRY, CARRY];
         parts = [MOVE, CARRY];
     } else {
-        body = [MOVE, MOVE, CARRY, WORK];
+        body = [MOVE, CARRY, CARRY, WORK];
         parts = [MOVE, MOVE, CARRY, WORK];
     }
 

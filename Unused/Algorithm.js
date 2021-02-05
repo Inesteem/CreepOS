@@ -80,6 +80,7 @@ function getCosts(pos, room) {
     }
     pos = new RoomPosition(pos.x, pos.y, room.name);
     let costs = 2;
+    // This is wrong, lookFor returns an array.
     let terrain = pos.lookFor(LOOK_TERRAIN);
     if (terrain == 'plain') {
         let structures = pos.lookFor(LOOK_STRUCTURES);

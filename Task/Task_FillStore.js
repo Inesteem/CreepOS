@@ -17,7 +17,6 @@ function harvest(creep) {
         creep.say("no task id");
         return false;
     }
-    creep.say(creep.memory.task.id);
     let source = Game.getObjectById(creep.memory.task.id);
 
 //    if (source.energy == 0) return true;
@@ -46,7 +45,6 @@ function harvest(creep) {
  * @param {Creep} creep 
  */
 function fillStore(creep) {
-    creep.say("fill store");
     let target = null;
     if (!creep.memory.task.store_id) {
         target = creep.pos.findClosestStructure((s) => {
@@ -202,15 +200,17 @@ task.estimateTime = function(creep, queue_task, max_cost) {
  * @return {Frankencreep}
  */
 task.creepAfter = function(creep, creep_task) {
-    let target = Game.getObjectById(creep_task.id);
-    if (!target) return null;
-    let freePositions = target.pos.getAdjacentGenerallyWalkables();
-    if (freePositions.length == 0) {
-        error (target, " is unreachable!");
-        return null;
-    }
-    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
-    return frankencreep;
+    // Return null because the creep should not run away aftewards.
+    return null;
+    // let target = Game.getObjectById(creep_task.id);
+    // if (!target) return null;
+    // let freePositions = target.pos.getAdjacentGenerallyWalkables();
+    // if (freePositions.length == 0) {
+    //     error (target, " is unreachable!");
+    //     return null;
+    // }
+    // let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    // return frankencreep;
 }
 
 task.spawn = function(queue_task, spawn) {

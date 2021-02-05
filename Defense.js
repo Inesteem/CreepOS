@@ -2,7 +2,7 @@ import { getRoomsToClaim} from "./Base";
 import { Role } from "./Constants";
 import { spawnArcherInRoom } from "./SpawnMachine";
 import { getBiggestSpawn, findEnemyCreeps } from "./Game";
-import { error } from "./Logging";
+import { error, info } from "./Logging";
 import "./Game";
 import "./Room";
 import "./RoomPosition";
@@ -17,7 +17,7 @@ function monitor() {
     for (let room of rooms) {
         let num_archers = room.numCreeps((creep) => creep.memory.role == Role.ARCHER);
         if (room.getHostileStructures().length > 0 || room.findAllHostileCreeps().all.length) {
-            error( room.name, " is under attack");
+            info( room.name, " is under attack");
             if (!room.controller.safeMode
                 && !room.controller.safeModeCooldown
                 && room.controller.safeModeAvailable) {

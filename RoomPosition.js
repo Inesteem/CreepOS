@@ -1,4 +1,4 @@
-import { TERRAIN_PLAIN, TERRAIN_SWAMP } from "./Constants";
+import { TERRAIN_PLAIN, TERRAIN_SWAMP, TERRAIN_WALL } from "./Constants";
 import { error } from "./Logging";
 
 RoomPosition.prototype.getAdjacentContainer = function(filter) {
@@ -73,9 +73,11 @@ RoomPosition.prototype.isWalkable = function() {
  * @return {boolean} Whether this field is theoretically walkable, might be blocked by creep.
  */
 RoomPosition.prototype.isGenerallyWalkable = function() {
-    let terrain = this.lookFor(LOOK_TERRAIN);
-    if (terrain == 'wall') {
-       return false;
+    let terrains = this.lookFor(LOOK_TERRAIN);
+    for (let terrain of terrains) {
+        if (terrain === TERRAIN_WALL) {
+            return false;
+         }
     }
     
     let structures = this.lookFor(LOOK_STRUCTURES).concat(this.lookFor(LOOK_CONSTRUCTION_SITES));
@@ -114,6 +116,7 @@ RoomPosition.prototype.getAdjacentStructures = function(filter) {
  * @return {number} Infinity if cost > maxcost, else estimated path costs
  */
 RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, maxRooms) {
+    range = 1;
     let self = this;
     // Save how often path costs was called for room areas.
     Memory.estimatePathCosts = Memory.estimatePathCosts || {};
@@ -123,29 +126,23 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
     if (!Memory.estimatePathCosts[pos.roomName]) {
         initializePathCostCache(pos.roomName);
     }
-    let posX = Math.floor(pos.x/5);
-    let posY = Math.floor(pos.y/5);
-    let selfX = Math.floor(self.x/5);
-    let selfY = Math.floor(self.y/5);
+    let posX = Math.floor(pos.x/10);
+    let posY = Math.floor(pos.y/10);
+    let selfX = Math.floor(self.x/10);
+    let selfY = Math.floor(self.y/10);
     let posIdx = posX + posY*10;
     let selfIdx = selfX + selfY*10;
 
     if (selfIdx != posIdx || self.roomName != pos.roomName){
         let costs = computeCostsFromCache(self.roomName, selfIdx, pos.roomName, posIdx, creep);
         if (costs != -1){
-            if (costs == 0){
-                error(getCachedPath(self.roomName, selfIdx, pos.roomName, posIdx));
-                error(pos);
-                error(self);
-                error("Cached path was zero");
-            }
             return costs;
         }
     }
 
     let callsA=Memory.estimatePathCosts[pos.roomName][posX][posY]++;
     let callsB=Memory.estimatePathCosts[self.roomName][selfX][selfY]++;
-
+   
     let cost_matrix = Game.rooms[this.roomName].getCostMatrix();
     let result = PathFinder.search(self, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
     if (result.incomplete) {
@@ -172,7 +169,7 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
 function computeCachePathFromPath(path) {
     let result = {num_road: 0, num_plain: 0, num_swamp: 0};
     for (let pos of path) {
-        let terrain = pos.lookFor(LOOK_TERRAIN);
+        let terrains = pos.lookFor(LOOK_TERRAIN);
         let structures = pos.lookFor(LOOK_STRUCTURES).concat(pos.lookFor(LOOK_CONSTRUCTION_SITES));
         let done = false;
         for (let structure of structures) {
@@ -182,11 +179,13 @@ function computeCachePathFromPath(path) {
                 break;
             }
         }
-        if (!done) {
-            if (terrain === TERRAIN_SWAMP) {
-                result.num_swamp++;
-            } else if (terrain === TERRAIN_PLAIN) {
-                result.num_plain++;
+        for (let terrain of terrains) {
+            if (!done) {
+                if (terrain === TERRAIN_SWAMP) {
+                    result.num_swamp++;
+                } else if (terrain === TERRAIN_PLAIN) {
+                    result.num_plain++;
+                }
             }
         }
     }

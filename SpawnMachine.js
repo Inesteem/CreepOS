@@ -143,7 +143,7 @@ StructureSpawn.prototype.spawnScout = function () {
  * @return {number} OK on success, ERR on failure
  */
 StructureSpawn.prototype.spawnArcher = function () {
-    error("spawning archer");
+    info("spawning archer");
     let newName = "Legolas" + Game.time;
     let parts = [MOVE, MOVE, RANGED_ATTACK];
     let body = [MOVE, RANGED_ATTACK];

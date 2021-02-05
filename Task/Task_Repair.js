@@ -39,7 +39,7 @@ task.updateQueue = () => {
     
     rooms.forEach(room => {
        structures = structures.concat(room.find(FIND_STRUCTURES, {
-            filter: object => object.hits && object.hits < object.hitsMax //&& object.structureType !== STRUCTURE_ROAD
+            filter: object => object.hits && object.hits < object.hitsMax && object.structureType !== STRUCTURE_ROAD
         }));
     });
 
@@ -66,24 +66,42 @@ task.updateQueue = () => {
  * Estimates the time for creep to finish queue_task.
  * @param {Creep} creep 
  * @param {QueueTask} queue_task 
- * @param {number=} max_cost
+ * @param {number=} max_time
  * @return {number}
  */
-task.estimateTime = function(creep, queue_task, max_cost) {
+task.estimateTime = function(creep, queue_task, max_time) {
     let structure = /**@type {Structure} */ (Game.getObjectById(queue_task.id));
-    if (!structure) return 0;
+    if (!structure) return Infinity;
     if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
 
     let to_repair = structure.hitsMax - structure.hits;
-
-    let path_costs = creep.pos.estimatePathCosts(structure.pos, 3, creep, max_cost);
-    
     let energy = Math.min(to_repair/100, creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));
-    //let time_repairing = Math.min(to_repair/100, energy/creep.getActiveBodyparts(WORK));
-    let time_repairing = energy/creep.getActiveBodyparts(WORK);
+    let repair_time = energy/creep.getActiveBodyparts(WORK);
 
-    return path_costs + time_repairing;
+    if (!creep.store[RESOURCE_ENERGY]) {
+        let energy_struct = creep.findOptimalEnergy(max_time - repair_time);
+        if (!energy_struct || !energy_struct.object) return Infinity;
+
+        let harvest_time = 0;
+        if (energy_struct.type == FIND_SOURCES) {
+            if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+            let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
+            harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
+        }
+
+        let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time - repair_time);
+        if (energy_path_time >= Infinity) return Infinity;
+        let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 3, creep, max_time - harvest_time - energy_path_time - repair_time);
+        if (work_path_time >= Infinity) return Infinity; 
+        
+        return work_path_time + energy_path_time + harvest_time + repair_time;
+    }
+
+
+    let path_costs = creep.pos.estimatePathCosts(structure.pos, 3, creep, max_time - repair_time);
+    return path_costs + repair_time;
 }
+
 
 /**
  * @param {Creep} creep
