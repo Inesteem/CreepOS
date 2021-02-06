@@ -6,11 +6,28 @@ import "../RoomPosition";
 import "../Game";
 
 var task = new Task("redistribute", null);
+/**
+ * 
+ * @param {RoomPosition} pos 
+ * @return {StructureContainer}
+ */
+function findBestAvailableContainer(pos){
+    let container  = /** @type {StructureContainer} */ (pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (structure) => {
+                return (structure.structureType === STRUCTURE_CONTAINER) &&
+                    structure.store[RESOURCE_ENERGY] > 
+                    0.5 * structure.store.getCapacity(RESOURCE_ENERGY);
+        }
+    }));
+    return container;
+
+}
 
 task.updateQueue = () => {
     let storages = [];
     let rooms = Game.getOurRooms();
-    
+
+
      rooms.forEach(room => {
          storages = storages.concat(room.find(FIND_MY_STRUCTURES, {
               filter: (structure) => {
@@ -20,9 +37,20 @@ task.updateQueue = () => {
           }));
       });
     
+    // DELETION
+    for (let i = 0; i < Memory.new_tasks.redistribute.length; i++) {
+        let redistribute_task = Memory.new_tasks.redistribute[i];
+        let structure = Game.getObjectById(redistribute_task.id);
+        let container = !findBestAvailableContainer(structure.pos);
+        if (!container || !structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) < 500) {
+            Memory.new_tasks.redistribute.splice(i, 1);
+            i--;
+        }
+    }
     // Update the new task map
     Memory.new_tasks.redistribute = Memory.new_tasks.redistribute || [];
     for (let storage of storages) {
+        if(!findBestAvailableContainer(storage.pos)) continue;
         if (!Memory.new_tasks.redistribute.find
                 (redistribute_task => redistribute_task.id === storage.id)) {
             let queue_task = {id: storage.id || "", name:"redistribute", priority: 0};
@@ -31,15 +59,6 @@ task.updateQueue = () => {
         }
     }
     
-    // DELETION
-    for (let i = 0; i < Memory.new_tasks.redistribute.length; i++) {
-        let redistribute_task = Memory.new_tasks.redistribute[i];
-        let structure = Game.getObjectById(redistribute_task.id);
-        if (!structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) < 500) {
-            Memory.new_tasks.redistribute.splice(i, 1);
-            i--;
-        }
-    }
 }
 
 /**
@@ -56,18 +75,12 @@ function prioritize(queue_task, structure_type) {
  * @return {CreepTask|null}
  */
 task.take = (creep, queue_task) => {
-    let structure = Game.getObjectById(queue_task.id);
+    let structure = /** @type {StructureStorage} */ (Game.getObjectById(queue_task.id));
     
     if (!structure) return null;
     
 
-    let container  = /** @type {Structure} */ (creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => {
-                return (structure.structureType === STRUCTURE_CONTAINER) &&
-                    structure.store[RESOURCE_ENERGY] > 
-                    0.5 * structure.store.getCapacity(RESOURCE_ENERGY);
-        }
-    }));
+    let container  = findBestAvailableContainer(structure.pos); 
     if (!container) return null;
 
     let add_energy = Math.min(container.store[RESOURCE_ENERGY],creep.store.getCapacity(RESOURCE_ENERGY));

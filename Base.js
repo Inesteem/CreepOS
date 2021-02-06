@@ -19,8 +19,9 @@ function handlePossibleRespawn() {
     if (Memory.main_spawn && Memory.main_spawn != Game.spawns['Spawn1'].pos &&
         Object.values(Game.creeps).length === 0) {
         info("Detected respawn!");
-        Memory = {};
-        Memory.new_tasks = {};
+        for (let prop in Memory){
+            Memory[prop] = undefined;
+        }
     }
     Memory.new_tasks = Memory.new_tasks || {};
     Memory.main_spawn = Game.spawns['Spawn1'].pos;

@@ -192,7 +192,18 @@ StructureController.prototype.safeModeAvailable;
 StructureController.prototype.activateSafeMode = function() {};
 
 /**
- * @extends RoomObject
+ * @extends Structure
+ * @constructor
+ */
+var StructureContainer = function () {};
+/**
+ * @type {Store}
+ */
+StructureContainer.prototype.store;
+
+
+/**
+ * @extends Structure
  * @constructor
  */
 var StructureStorage = function () {};

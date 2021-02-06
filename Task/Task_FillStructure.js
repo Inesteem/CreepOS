@@ -93,6 +93,8 @@ task.take = (creep, queue_task) => {
     //Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
+   
+    
     
     return creep_task;
 }
@@ -148,6 +150,7 @@ task.estimateTime = function(creep, queue_task, max_time) {
 
         let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time);
         if (energy_path_time >= Infinity) return Infinity;
+        creep.memory.energy_path_time = energy_path_time;
         let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 1, creep, max_time - harvest_time - energy_path_time);
         if (work_path_time >= Infinity) return Infinity; 
         

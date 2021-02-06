@@ -111,7 +111,6 @@ function schedule() {
         }
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
-    error (task_queue_sorted);
 
     let rooms = Game.getOurRooms((room) => room.hasExcessEnergy(1000));
     let spawns = rooms.flatMap(room => room.findSpawns((spawn) => !spawn.spawning));
@@ -122,11 +121,12 @@ function schedule() {
             && (task_queue_sorted[0].priority >= 1 * PRIORITY_LEVEL_STEP);
         ++i) {
         let queue_task = task_queue_sorted.shift();
-        info("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
         
         let target = Game.getObjectById(queue_task.id);
+        if (!target) { continue; }
         let spawn = target.pos.findClosestTarget(spawns);
         if (!spawn || !spawn.allowSpawn()) continue;
+        info("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
         spawns.splice(spawns.indexOf(spawn), 1);
 
         var num_creeps = Game.numCreeps();
@@ -145,8 +145,6 @@ function schedule() {
         if (creep_name !== "") {
             // TODO improve this section.
             let creep = new Frankencreep(spawn.pos, [WORK, CARRY, MOVE], creep_name);
-            Memory.creeps[creep_name] = {};
-            creep.memory = Memory.creeps[creep_name];
             creep.memory.spawning = true;
             let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
             creep.memory.task = creep_task;

@@ -81,7 +81,12 @@ function takeFromStore(creep) {
         if (!source || source.energy == 0) {
             return false;
         }
-
+        //reserveSlot
+        if (creep.memory.energy_path_time){
+            error("reserve the slot " + creep.memory.task.source_id);
+            source.reserveSlot(Game.time+creep.memory.energy_path_time);
+            creep.memory.energy_path_time = 0;
+        }
         if (!creep.harvestFrom(source) && !source.hasFreeSpot()) {
             return false;
         }
