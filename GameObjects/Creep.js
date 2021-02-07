@@ -1,8 +1,10 @@
-import { PATH_REUSE_TICKS } from "./Constants";
-import { error } from "./Logging";
+import { INFINITY, PATH_REUSE_TICKS } from "../Constants";
+import { error } from "../Logging";
 import "./Game";
 import "./Source";
 import "./Room";
+
+
 
 Creep.prototype.harvestClosest = function (){
     const target = /** @type {Source | null} */ (this.pos.findClosestByPath(FIND_SOURCES_ACTIVE));
@@ -102,7 +104,7 @@ Creep.prototype.moveAwayFrom = function(target, range) {
  * Finds the optimal place to get energy for this creep.
  * @param {number=} max_time 
  * @param {number=} max_rooms 
- * @return {{type: number, object: RoomObject}|null} type is one of FIND_SOURCES, FIND_STRUCTURES, FIND_DROPPED_ENERGY
+ * @return {{type: number, object: RoomObject, path_time: number, harvest_time: (number|undefined)}|null} type is one of FIND_SOURCES, FIND_STRUCTURES, FIND_DROPPED_ENERGY
  */
 Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     let needed_energy = this.store.getFreeCapacity(RESOURCE_ENERGY);
@@ -129,7 +131,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     //     { filter : (tombstone) => tombstone.store[RESOURCE_ENERGY] >= needed_energy }
     );
     let best_target = null;
-    let best_time = max_time || Infinity;
+    let best_time = max_time || INFINITY;
 
     let matrix = this.getCostMatrix();
 
@@ -143,6 +145,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
         let position = result.path.pop() || this.pos;
         best_target = {
             type: FIND_DROPPED_RESOURCES,
+            path_time: result.cost,
             object: position
                 .lookFor(LOOK_RESOURCES)
                 .find(resource => resource.resourceType === RESOURCE_ENERGY)
@@ -165,6 +168,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
             best_target = {
                 type: FIND_STRUCTURES,
                 object: targets[0],
+                path_time: result.cost,
             };
         }
     }
@@ -174,15 +178,16 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
         sources.map(source => { return {pos: source.pos, range: 1}; }),
         Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16})
     );
-    if (!result.incomplete && result.cost + harvest_time < best_time) {
-        best_time = result.cost + harvest_time;
+    if (!result.incomplete && result.cost < best_time) {
+        best_time = result.cost;
         let position = result.path.pop() || this.pos;
         best_target = {
             type: FIND_SOURCES,
-            object: position.getAdjacentSource()
+            object: position.getAdjacentSource(),
+            path_time: result.cost,
+            harvest_time: harvest_time,
         };
     }
-    //error(best_target);
 
     return best_target;
 }

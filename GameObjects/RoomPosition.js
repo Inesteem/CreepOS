@@ -1,5 +1,5 @@
-import { TERRAIN_PLAIN, TERRAIN_SWAMP, TERRAIN_WALL } from "./Constants";
-import { error } from "./Logging";
+import { INFINITY, TERRAIN_PLAIN, TERRAIN_SWAMP, TERRAIN_WALL } from "../Constants";
+import { error } from "../Logging";
 
 RoomPosition.prototype.getAdjacentContainer = function(filter) {
     let structures = this.getAdjacentStructures();
@@ -113,7 +113,7 @@ RoomPosition.prototype.getAdjacentStructures = function(filter) {
  * @param {number=} maxCost 
  * @param {number=} maxRooms
  * @this {RoomPosition}
- * @return {number} Infinity if cost > maxcost, else estimated path costs
+ * @return {number} INFINITY if cost > maxcost, else estimated path costs
  */
 RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, maxRooms) {
     range = 1;
@@ -146,7 +146,7 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
     let cost_matrix = Game.rooms[this.roomName].getCostMatrix();
     let result = PathFinder.search(self, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
     if (result.incomplete) {
-        return Infinity;
+        return INFINITY;
     }
     let cache_path = computeCachePathFromPath(result.path || []);
     let costs = computeCostsFromPath(cache_path, creep);

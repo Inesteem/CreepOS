@@ -1,5 +1,5 @@
-import { ERR_NO_SPAWN } from "./Constants";
-import { error, info } from "./Logging";
+import { ERR_NO_SPAWN } from "../Constants";
+import { error, info } from "../Logging";
 import "./Game";
 import "./Source";
 

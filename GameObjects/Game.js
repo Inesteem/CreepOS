@@ -1,4 +1,4 @@
-import { error } from "./Logging";
+import { error } from "../Logging";
 import "./Room";
 
 export function initGame() {

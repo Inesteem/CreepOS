@@ -1,9 +1,8 @@
-import {  QueueTask, CreepTask, Task, State, takeFromStore } from "./Task";
+import { Task, State } from "./Task";
 import { getUnclaimedFlags } from "../Base";
 import { error } from "../Logging";
 
-var task = new Task("claim_room", null);
-
+const task = Object.create(new Task("claim_room"));
 task.state_array = [
     new State(goToRoom),
     new State(claimRoom),    

@@ -1,18 +1,18 @@
-import "./Creep";
+import "./GameObjects/Creep";
 import { monitor as SpawnMachine_monitor } from "./SpawnMachine";
 import { monitor as defense_monitor } from "./Defense";
-import { operateTowers } from "./Tower";
+import { operateTowers } from "./GameObjects/Tower";
 import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
 import { updateTaskQueue, runTask, increasePriorities, completeTask, schedule } from "./Scheduler";
 import { error, info } from "./Logging";
-import { getSpawns as GameGetSpawns, initGame } from "./Game";
+import { getSpawns as GameGetSpawns, initGame } from "./GameObjects/Game";
 import { monitor as buildMonitor } from "./BuildMachine";
-import "./Room";
+import "./GameObjects/Room";
 
 
 module.exports.loop = function () {
-    
+
     for (let task_type in Memory.new_tasks) {
         let task_queue = Memory.new_tasks[task_type];
         for (let task of task_queue) {

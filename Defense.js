@@ -1,11 +1,11 @@
 import { getRoomsToClaim} from "./Base";
 import { Role } from "./Constants";
 import { spawnArcherInRoom } from "./SpawnMachine";
-import { getBiggestSpawn, findEnemyCreeps } from "./Game";
+import { getBiggestSpawn } from "./GameObjects/Game";
 import { error, info } from "./Logging";
-import "./Game";
-import "./Room";
-import "./RoomPosition";
+import "./GameObjects/Game";
+import "./GameObjects/Room";
+import "./GameObjects/RoomPosition";
 
 // Detects whether safe mode needs to be activated in any of our rooms and activates it.
 // If a room has enemies but no safe mode, spawns defenders.

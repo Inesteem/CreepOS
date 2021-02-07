@@ -1,14 +1,15 @@
-import { QueueTask, CreepTask, Task, State } from "./Task";
+import { Task, State } from "./Task";
 import { error } from "../Logging";
-import { findEnemyCreeps as findEnemyCreeps } from "../Game";
 import { getRoomsToClaim } from "../Base";
-import "../Room";
-import "../Game";
-import "../RoomPosition";
-import { Role } from "../Constants";
+import "../GameObjects/Room";
+import "../GameObjects/Game";
+import "../GameObjects/RoomPosition";
 
-var task = new Task("kite", null);
-
+const task = Object.create(new Task("attack_source_keeper"));
+task.state_array = [
+    new State(goToRoomWithSourceKeeper),
+    new State(attackTarget),
+];
 
 /**
  * @param {Creep} creep
@@ -78,11 +79,6 @@ function getCreepBody() {
             ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,
             ATTACK,ATTACK];
 }
-
-task.state_array = [
-    new State(goToRoomWithSourceKeeper),
-    new State(attackTarget),
-];
 
 
 export { task, getCreepBody};

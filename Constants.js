@@ -80,3 +80,5 @@ export const ERR_NO_SPAWN = -200;
 export const TERRAIN_SWAMP = "swamp";
 export const TERRAIN_PLAIN = "plain";
 export const TERRAIN_WALL = "wall";
+
+export const INFINITY = 0xffffffff;

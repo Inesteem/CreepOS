@@ -1,11 +1,16 @@
-import {  QueueTask, CreepTask, findQueueTask, Task, State, takeFromStore, fillStructure, upgradeController } from "./Task";
-import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY, REDISTRIBUTE_DEFAULT_PRIORITY } from "../Constants";
+import { QueueTask, CreepTask, findQueueTask, Task, State, takeFromStore, fillStructure, } from "./Task";
+import { INFINITY, REDISTRIBUTE_DEFAULT_PRIORITY } from "../Constants";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
-import "../RoomPosition";
-import "../Game";
+import "../GameObjects/RoomPosition";
+import "../GameObjects/Game";
 
-var task = new Task("redistribute", null);
+const task = Object.create(new Task("redistribute"));
+task.state_array = [
+    new State(takeFromStore),
+    new State(fillStructure)
+];
+
 /**
  * 
  * @param {RoomPosition} pos 
@@ -23,39 +28,40 @@ function findBestAvailableContainer(pos){
 
 }
 
-task.updateQueue = () => {
+/**
+ * @this {{queue: Array<QueueTask>, name: string}}
+ */
+task.updateQueue = function() {
+    let self = (this);
     let storages = [];
     let rooms = Game.getOurRooms();
 
-
-     rooms.forEach(room => {
-         storages = storages.concat(room.find(FIND_MY_STRUCTURES, {
-              filter: (structure) => {
-                      return (structure.structureType == STRUCTURE_STORAGE) &&
-                          structure.store.getFreeCapacity(RESOURCE_ENERGY) >= 500;
-                  }
-          }));
-      });
+    rooms.forEach(room => {
+        storages = storages.concat(room.find(FIND_MY_STRUCTURES, {
+            filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_STORAGE) &&
+                        structure.store.getFreeCapacity(RESOURCE_ENERGY) >= 500;
+                }
+        }));
+    });
     
     // DELETION
-    for (let i = 0; i < Memory.new_tasks.redistribute.length; i++) {
-        let redistribute_task = Memory.new_tasks.redistribute[i];
-        let structure = Game.getObjectById(redistribute_task.id);
-        let container = !findBestAvailableContainer(structure.pos);
+    for (let i = 0; i < self.queue.length; i++) {
+        let task = self.queue[i];
+        let structure = Game.getObjectById(task.id);
+        let container = findBestAvailableContainer(structure.pos);
         if (!container || !structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) < 500) {
-            Memory.new_tasks.redistribute.splice(i, 1);
+            self.queue.splice(i, 1);
             i--;
         }
     }
-    // Update the new task map
-    Memory.new_tasks.redistribute = Memory.new_tasks.redistribute || [];
     for (let storage of storages) {
         if(!findBestAvailableContainer(storage.pos)) continue;
-        if (!Memory.new_tasks.redistribute.find
-                (redistribute_task => redistribute_task.id === storage.id)) {
-            let queue_task = {id: storage.id || "", name:"redistribute", priority: 0};
+        if (!self.queue.find
+                (task => task.id === storage.id)) {
+            let queue_task = {id: storage.id || "", name: self.name, priority: 0};
             prioritize(queue_task, storage.structureType);
-            Memory.new_tasks.redistribute.push(queue_task);
+            self.queue.push(queue_task);
         }
     }
     
@@ -141,9 +147,9 @@ task.finish = (creep, creep_task) => {
  */
 task.estimateTime = function(creep, queue_task, max_time) {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) < 100) 
-        return Infinity;
+        return INFINITY;
     let storage = Game.getObjectById(queue_task.id);
-    if (!storage) return Infinity;
+    if (!storage) return INFINITY;
 
     let container  = /** @type {Structure} */ (creep.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (structure) => {
@@ -152,12 +158,12 @@ task.estimateTime = function(creep, queue_task, max_time) {
                     0.5 * structure.store.getCapacity(RESOURCE_ENERGY);
         }
     }));
-    if (!container) return Infinity;
+    if (!container) return INFINITY;
 
     let energy_path_time = creep.pos.estimatePathCosts(container.pos, 1, creep, max_time);
-    if (energy_path_time >= Infinity) return Infinity;
+    if (energy_path_time >= INFINITY) return INFINITY;
     let work_path_time = container.pos.estimatePathCosts(storage.pos, 1, creep, max_time - energy_path_time);
-    if (work_path_time >= Infinity) return Infinity; 
+    if (work_path_time >= INFINITY) return INFINITY; 
     
     return work_path_time + energy_path_time;
 }
@@ -208,11 +214,6 @@ task.creepAfter = function(creep, creep_task) {
     frankencreep.store[RESOURCE_ENERGY] = energy_start - use;
     return frankencreep;
 }
-
-task.state_array = [
-    new State(takeFromStore),
-    new State(fillStructure)
-];
 
 export { task };
 

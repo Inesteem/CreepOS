@@ -1,7 +1,7 @@
 import { getTowers } from "./Base";
 import { AUTOMATIC_ROAD_BUILD_TICKS, AUTOMATIC_ROAD_BUILD_NUM } from "./Constants";
 import { info, error } from "./Logging";
-import "./Game";
+import "./GameObjects/Game";
 
 function monitor() {
     monitorBuildRoadTasks();

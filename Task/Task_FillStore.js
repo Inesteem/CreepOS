@@ -1,10 +1,16 @@
 import {  QueueTask, CreepTask, findQueueTask, Task, State} from "./Task";
-import { FILL_STORE_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "../Constants";
-import "../RoomPosition";
-import "../Source";
-import "../Game";
+import { INFINITY, FILL_STORE_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "../Constants";
+import "../GameObjects/RoomPosition";
+import "../GameObjects/Source";
+import "../GameObjects/Game";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
+
+const task = Object.create(new Task("fill_store"));
+task.state_array = [
+    new State(harvest),
+    new State(fillStore),
+]
 
 /**
  * 
@@ -69,14 +75,10 @@ function fillStore(creep) {
     return true;
 }
 
-var task = new Task("fill_store", null);
-
-task.state_array = [
-    new State(harvest),
-    new State(fillStore),
-]
-
-task.updateQueue = () => {
+/**
+ * @this {{name:string}}
+ */
+task.updateQueue = function() {
     let sources = [];
     let rooms = Game.getOurRooms();
     
@@ -87,29 +89,29 @@ task.updateQueue = () => {
     });
     
     // Update the new task map
-    Memory.new_tasks.fill_store = Memory.new_tasks.fill_store || [];
+    Memory.new_tasks[this.name] = Memory.new_tasks[this.name] || [];
     for (let source of sources) {
         if (source.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}}).length == 0){
             continue;
         }
-        if (!Memory.new_tasks.fill_store.find
+        if (!Memory.new_tasks[this.name].find
                 (fill_task => fill_task.id === source.id)) {
-            let queue_task = {id: source.id || "", name:"fill_store", priority: 0, num_creeps : 0};
+            let queue_task = {id: source.id || "", name: this.name, priority: 0, num_creeps : 0};
             prioritize(queue_task);
-            Memory.new_tasks.fill_store.push(queue_task);
+            Memory.new_tasks[this.name].push(queue_task);
         }
     }
     
     // DELETION
-    for (let i = 0; i < Memory.new_tasks.fill_store.length; i++) {
-        let fill_task = Memory.new_tasks.fill_store[i];
+    for (let i = 0; i < Memory.new_tasks[this.name].length; i++) {
+        let fill_task = Memory.new_tasks[this.name][i];
         let source = Game.getObjectById(fill_task.id);
         if (!source) {
-            Memory.new_tasks.fill_store.splice(i, 1);
+            Memory.new_tasks[this.name].splice(i, 1);
             i--;
         } 
         if (source.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}}).length == 0){
-            Memory.new_tasks.fill_store.splice(i, 1);
+            Memory.new_tasks[this.name].splice(i, 1);
             i--;
         }
         //else if (Game.time%3000 == 0) {
@@ -184,7 +186,7 @@ task.estimateTime = function(creep, queue_task, max_cost) {
     let source = Game.getObjectById(queue_task.id);
     if (!source) return 0;
 
-    if (!creep.getActiveBodyparts(WORK)) return Infinity;
+    if (!creep.getActiveBodyparts(WORK)) return INFINITY;
 
     let energy = Math.min(source.energy, creep.store.getCapacity(RESOURCE_ENERGY));
     let mine_time = energy/(2 * creep.getActiveBodyparts(WORK));

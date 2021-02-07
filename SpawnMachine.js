@@ -1,9 +1,9 @@
 import { Role, MAX_WORKER_NUM, MAX_MINER_NUM, MAX_SCOUT_NUM } from "./Constants";
 import { info, error } from "./Logging";
 import { getUnclaimedFlags, getRoomsToClaim } from "./Base";
-import "./Room";
-import "./Game";
-import { getBiggestSpawn} from "./Game";
+import "./GameObjects/Room";
+import "./GameObjects/Game";
+import { getBiggestSpawn} from "./GameObjects/Game";
 import { getCreepBody as getSlayerBody } from  "./Task/Task_Attack_SourceKeeper";
 
 

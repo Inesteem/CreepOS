@@ -1,13 +1,19 @@
-import {  QueueTask, CreepTask, getEnergyForTask, findQueueTask, Task, State, takeFromStore, fillStructure, upgradeController } from "./Task";
-import { FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "../Constants";
+import {  QueueTask, CreepTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
+import { INFINITY, FILL_SPAWN_PRIORITY, FILL_EXTENSION_PRIORITY, FILL_TOWER_PRIORITY, FILL_DEFAULT_PRIORITY } from "../Constants";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
-import { storedEnergy } from "../Game";
-import "../RoomPosition";
+import "../GameObjects/RoomPosition";
 
-var task = new Task("fill_structure", null);
+const task = Object.create(new Task("fill_structure"));
+task.state_array = [
+    new State(takeFromStore),
+    new State(fillStructure)
+];
 
-task.updateQueue = () => {
+/**
+ * @this {{name: string}} 
+ */
+task.updateQueue = function() {
     let structures = [];
     let rooms = Game.getOurRooms();
     
@@ -25,22 +31,22 @@ task.updateQueue = () => {
     });
     
     // Update the new task map
-    Memory.new_tasks.fill_structure = Memory.new_tasks.fill_structure || [];
+    Memory.new_tasks[this.name] = Memory.new_tasks[this.name] || [];
     for (let structure of structures) {
-        if (!Memory.new_tasks.fill_structure.find
+        if (!Memory.new_tasks[this.name].find
                 (fill_task => fill_task.id == structure.id)) {
-            let queue_task = {id: structure.id || "", name:"fill_structure", priority: 0};
+            let queue_task = {id: structure.id || "", name: this.name, priority: 0};
             prioritize(queue_task, structure.structureType);
-            Memory.new_tasks.fill_structure.push(queue_task);
+            Memory.new_tasks[this.name].push(queue_task);
         }
     }
     
     // DELETION
-    for (let i = 0; i < Memory.new_tasks.fill_structure.length; i++) {
-        let fill_task = Memory.new_tasks.fill_structure[i];
+    for (let i = 0; i < Memory.new_tasks[this.name].length; i++) {
+        let fill_task = Memory.new_tasks[this.name][i];
         let structure = Game.getObjectById(fill_task.id);
         if (!structure || structure.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-            Memory.new_tasks.fill_structure.splice(i, 1);
+            Memory.new_tasks[this.name].splice(i, 1);
             i--;
         }
     }
@@ -90,7 +96,6 @@ task.take = (creep, queue_task) => {
     
     creep_task.creep_exp_fill = add_energy;
     
-    //Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
    
@@ -135,24 +140,24 @@ task.finish = (creep, creep_task) => {
  */
 task.estimateTime = function(creep, queue_task, max_time) {
     let structure = Game.getObjectById(queue_task.id);
-    if (!structure) return Infinity;
+    if (!structure) return INFINITY;
 
     if (!creep.store[RESOURCE_ENERGY]) {
         let energy_struct = creep.findOptimalEnergy(max_time);
-        if (!energy_struct || !energy_struct.object) return Infinity;
+        if (!energy_struct || !energy_struct.object) return INFINITY;
 
         let harvest_time = 0;
         if (energy_struct.type == FIND_SOURCES) {
-            if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+            if (creep.getActiveBodyparts(WORK) == 0) return INFINITY;
             let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
             harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
         }
 
         let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time);
-        if (energy_path_time >= Infinity) return Infinity;
+        if (energy_path_time >= INFINITY) return INFINITY;
         creep.memory.energy_path_time = energy_path_time;
         let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 1, creep, max_time - harvest_time - energy_path_time);
-        if (work_path_time >= Infinity) return Infinity; 
+        if (work_path_time >= INFINITY) return INFINITY; 
         
         return work_path_time + energy_path_time + harvest_time;
     }
@@ -208,11 +213,6 @@ task.creepAfter = function(creep, creep_task) {
     frankencreep.store[RESOURCE_ENERGY] = energy_start - use;
     return frankencreep;
 }
-
-task.state_array = [
-    new State(takeFromStore),
-    new State(fillStructure)
-];
 
 export { task };
 

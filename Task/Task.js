@@ -1,7 +1,6 @@
-import { getFreeStore, getUnclaimedFlags, getStoresWithEnergy } from '../Base';
-import { error, info } from "../Logging";
-import "../RoomPosition";
-import "../Creep";
+import { error, info, warning } from "../Logging";
+import "../GameObjects/RoomPosition";
+import "../GameObjects/Creep";
 
 /** @typedef {{id: string, priority: number, name: string}} */
 export var QueueTask;
@@ -21,14 +20,33 @@ function State(func){
 /**
  * @constructor
  * @param {string} name 
- * @param {?State} initial_state 
  */
-function Task(name, initial_state){
+function Task(name){
     this.name = name;
-    
-    if (initial_state)
-        this.initial_state = initial_state;
 }
+
+Object.defineProperty(Task.prototype, 'queue', {
+    get:  function() {
+        let self = this;
+        if(!Memory.new_tasks) {
+            Memory.new_tasks = {};
+        }
+        if(!Memory.new_tasks[self.name]) {
+            Memory.new_tasks[self.name] = [];
+        }
+        return Memory.new_tasks[self.name];
+    },
+    set: function(value) {
+        let self = this;
+        if(!Memory.new_tasks) {
+            Memory.new_tasks = {};
+        }
+        if(!Memory.new_tasks[self.name]) {
+            Memory.new_tasks[self.name] = [];
+        }
+        Memory.new_tasks[self.name] = value;
+    }
+});
 
 /**
  * 
@@ -54,6 +72,29 @@ Task.prototype.run = function(creep) {
     return true;
 }
 
+Task.prototype.updateQueue = function() {
+    warning("updateQueue not implemented for ", this.name);
+}
+
+Task.prototype.take = function() {
+    error("take not implemented for ", this.name);
+}
+
+Task.prototype.finish = function() {
+    error("finish not implemented for ", this.name);
+}
+
+Task.prototype.estimateTime = function() {
+    error("estimateTime not implemented for ", this.name);
+}
+
+Task.prototype.spawn = function() {
+    error("spawn not implemented for ", this.name);
+}
+
+Task.prototype.creepAfter = function() {
+    error("creepAfter not implemented for ", this.name);
+}
 /**
  * 
  * @param {Creep} creep 
@@ -109,24 +150,6 @@ function takeFromStore(creep) {
  * 
  * @param {Creep} creep 
  */
-function upgradeController(creep){
-    let controller = Game.getObjectById(creep.memory.task.id);
-
-    if (!controller) return false;
-
-    creep.upgrade(controller);
-    
-    if (creep.store[RESOURCE_ENERGY] == 0){
-        return false;
-    }
-    
-    return true;
-}
-
-/**
- * 
- * @param {Creep} creep 
- */
 function fillStructure(creep) {
     const structure = Game.getObjectById(creep.memory.task.id);
     
@@ -156,7 +179,8 @@ function getEnergyForTask(creep, queue_task, max_time) {
     
     if (!target) return result;
 
-    let energy = creep.findOptimalEnergy(max_time);
+    let energy = /** @type {{type: number, object: RoomObject, path_time: number, harvest_time: (number|undefined)}|null} */ 
+        (creep.findOptimalEnergy(max_time));
 
     if (!energy) return result;
 
@@ -183,8 +207,6 @@ export {
     Task,
     State,
     takeFromStore,
-    upgradeController,
     fillStructure,
-    getEnergyForTask,
     findQueueTask,
 };

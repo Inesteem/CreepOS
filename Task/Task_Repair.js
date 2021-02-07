@@ -1,21 +1,14 @@
 import { QueueTask, CreepTask, State, takeFromStore, Task, findQueueTask } from "./Task";
 import { info, error} from "../Logging";
-import "../Game";
+import "../GameObjects/Game";
 import { Frankencreep } from "../FrankenCreep";
-import { REPAIR_DEFAULT_PRIORITY, REPAIR_PRIORITY, PRIORITY_LEVEL_STEP} from "../Constants";
+import { INFINITY, REPAIR_DEFAULT_PRIORITY, REPAIR_PRIORITY, PRIORITY_LEVEL_STEP} from "../Constants";
 
-/**
- * @constructor
- * @extends {Task} 
- */
-function RepairTask(){
-    this.state_array = [
-        new State(takeFromStore),
-        new State(repairStructure),
-    ];
-}
-RepairTask.prototype = new Task("repair", null);
-var task = new RepairTask();
+const task = Object.create(new Task("repair"));
+task.state_array = [
+    new State(takeFromStore),
+    new State(repairStructure),
+];
 
 function repairStructure(creep) {
     let structure = Game.getObjectById(creep.memory.task.id);
@@ -33,7 +26,10 @@ function repairStructure(creep) {
     return true;
 }
 
-task.updateQueue = () => {
+/**
+ * @this {{name: string}} 
+ */
+task.updateQueue = function() {
     let structures = [];
     let rooms = Game.getOurRooms();
     
@@ -43,23 +39,23 @@ task.updateQueue = () => {
         }));
     });
 
-     Memory.new_tasks.repair = Memory.new_tasks.repair || [];
+     Memory.new_tasks[this.name] = Memory.new_tasks[this.name] || [];
     for (let structure of structures) {
-        if (!Memory.new_tasks.repair.find(repair_task => repair_task.id == structure.id)) {
-            let queue_task = {id: structure.id, priority: 500, name:"repair"}
+        if (!Memory.new_tasks[this.name].find(repair_task => repair_task.id == structure.id)) {
+            let queue_task = {id: structure.id, priority: 500, name: this.name}
             prioritize(queue_task);
-            Memory.new_tasks.repair.push(queue_task);
+            Memory.new_tasks[this.name].push(queue_task);
         }
     }
-    for (let i = 0; i < Memory.new_tasks.repair.length; i++) {
-        let repair_task = Memory.new_tasks.repair[i];
+    for (let i = 0; i < Memory.new_tasks[this.name].length; i++) {
+        let repair_task = Memory.new_tasks[this.name][i];
         let structure = Game.getObjectById(repair_task.id);
         if (!structure || structure.hits == structure.hitsMax) {
-            Memory.new_tasks.repair.splice(i, 1);
+            Memory.new_tasks[this.name].splice(i, 1);
             i--;
         }
     }
-    info("Repair tasks: ", Memory.new_tasks.repair);
+    info("Repair tasks: ", Memory.new_tasks[this.name]);
 }
 
 /**
@@ -71,8 +67,8 @@ task.updateQueue = () => {
  */
 task.estimateTime = function(creep, queue_task, max_time) {
     let structure = /**@type {Structure} */ (Game.getObjectById(queue_task.id));
-    if (!structure) return Infinity;
-    if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+    if (!structure) return INFINITY;
+    if (creep.getActiveBodyparts(WORK) == 0) return INFINITY;
 
     let to_repair = structure.hitsMax - structure.hits;
     let energy = Math.min(to_repair/100, creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));
@@ -80,19 +76,19 @@ task.estimateTime = function(creep, queue_task, max_time) {
 
     if (!creep.store[RESOURCE_ENERGY]) {
         let energy_struct = creep.findOptimalEnergy(max_time - repair_time);
-        if (!energy_struct || !energy_struct.object) return Infinity;
+        if (!energy_struct || !energy_struct.object) return INFINITY;
 
         let harvest_time = 0;
         if (energy_struct.type == FIND_SOURCES) {
-            if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+            if (creep.getActiveBodyparts(WORK) == 0) return INFINITY;
             let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
             harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
         }
 
         let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time - repair_time);
-        if (energy_path_time >= Infinity) return Infinity;
+        if (energy_path_time >= INFINITY) return INFINITY;
         let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 3, creep, max_time - harvest_time - energy_path_time - repair_time);
-        if (work_path_time >= Infinity) return Infinity; 
+        if (work_path_time >= INFINITY) return INFINITY; 
         
         return work_path_time + energy_path_time + harvest_time + repair_time;
     }
@@ -122,7 +118,6 @@ task.take = (creep, queue_task) => {
     let creep_task = {};
     creep_task.creep_exp_hits = add_hits;
     
-    //Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
     
@@ -204,7 +199,7 @@ task.spawn = function(queue_task, spawn) {
             let frankencreep = new Frankencreep(container.pos, body, "Franky");
             let carry = body.filter(x => x == CARRY).length * 50;
             let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
-            if (time == null || time == Infinity) {
+            if (time == null || time == INFINITY) {
                 body.pop();
                 continue;
             }

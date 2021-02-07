@@ -1,12 +1,37 @@
-import { QueueTask, CreepTask, Task, State, takeFromStore, upgradeController, findQueueTask } from "./Task";
-import "../Game";
+import { QueueTask, CreepTask, Task, State, takeFromStore, findQueueTask } from "./Task";
+import "../GameObjects/Game";
 import {error} from "../Logging";
-import { UPGRADE_HIGH_PRIORITY, UPGRADE_LOW_PRIORITY } from "../Constants";
+import { INFINITY, UPGRADE_HIGH_PRIORITY, UPGRADE_LOW_PRIORITY } from "../Constants";
 import { Frankencreep } from "../FrankenCreep";
 
-var task = new Task("upgrade", null);
+const task = Object.create(new Task("upgrade"));
+task.state_array = [
+    new State(takeFromStore),
+    new State(upgradeController),
+];
 
-task.updateQueue = () => {
+/**
+ * 
+ * @param {Creep} creep 
+ */
+function upgradeController(creep){
+    let controller = Game.getObjectById(creep.memory.task.id);
+
+    if (!controller) return false;
+
+    creep.upgrade(controller);
+    
+    if (creep.store[RESOURCE_ENERGY] == 0){
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * @this {{name: string}} 
+ */
+task.updateQueue = function() {
     let controller = [];
     let rooms = Game.getOurRooms();
     
@@ -14,21 +39,21 @@ task.updateQueue = () => {
         controller.push(room.controller);
     });
     
-    Memory.new_tasks.upgrade = Memory.new_tasks.upgrade || [];
+    Memory.new_tasks[this.name] = Memory.new_tasks[this.name] || [];
     for (let structure of controller) {
-        if (!Memory.new_tasks.upgrade.find(controller_task => controller_task.id == structure.id)) {
-            let queue_task = {id: structure.id, priority: UPGRADE_HIGH_PRIORITY, name:"upgrade"};
+        if (!Memory.new_tasks[this.name].find(controller_task => controller_task.id == structure.id)) {
+            let queue_task = {id: structure.id, priority: UPGRADE_HIGH_PRIORITY, name: this.name};
             prioritize(queue_task);
-            Memory.new_tasks.upgrade.push(queue_task);
+            Memory.new_tasks[this.name].push(queue_task);
         }
     }
     
     // TODO when to delete?
-    for (let i = 0; i < Memory.new_tasks.upgrade.length; i++) {
-        let upgrade_task = Memory.new_tasks.upgrade[i];
+    for (let i = 0; i < Memory.new_tasks[this.name].length; i++) {
+        let upgrade_task = Memory.new_tasks[this.name][i];
         controller = Game.getObjectById(upgrade_task.id);
         if (!controller || !controller.my) {
-            Memory.new_tasks.upgrade.splice(i, 1);
+            Memory.new_tasks[this.name].splice(i, 1);
             i--;
         }
     }
@@ -57,7 +82,6 @@ task.finish = (creep, creep_task) => {
 task.take = function(creep, queue_task) {
     let creep_task = {};
     
-    //Object.assign(creep_task, getEnergyForTask(creep, queue_task).task);
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
 
@@ -74,10 +98,9 @@ task.take = function(creep, queue_task) {
  * @return {number}
  */
 task.estimateTime = function(creep, queue_task, max_time) {
-    error ("calculating estimateTime for upgrade");
     let structure = /**@type {StructureController}*/ (Game.getObjectById(queue_task.id));
-    if (!structure) return Infinity;
-    if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+    if (!structure) return INFINITY;
+    if (creep.getActiveBodyparts(WORK) == 0) return INFINITY;
 
 
     let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
@@ -85,27 +108,25 @@ task.estimateTime = function(creep, queue_task, max_time) {
 
     if (!creep.store[RESOURCE_ENERGY]) {
         let energy_struct = creep.findOptimalEnergy(max_time - upgrade_time);
-        if (!energy_struct || !energy_struct.object) return Infinity;
+        if (!energy_struct || !energy_struct.object) return INFINITY;
 
         let harvest_time = 0;
         if (energy_struct.type == FIND_SOURCES) {
-            if (creep.getActiveBodyparts(WORK) == 0) return Infinity;
+            if (creep.getActiveBodyparts(WORK) == 0) return INFINITY;
             let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
             harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
         }
 
         let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time - upgrade_time);
-        if (energy_path_time >= Infinity) return Infinity;
+        if (energy_path_time >= INFINITY) return INFINITY;
         let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 3, creep, max_time - harvest_time - energy_path_time - upgrade_time);
-        if (work_path_time >= Infinity) return Infinity; 
-        error (" time is ", work_path_time + energy_path_time + harvest_time + upgrade_time);
+        if (work_path_time >= INFINITY) return INFINITY; 
         
         return work_path_time + energy_path_time + harvest_time + upgrade_time;
     }
     
     let path_costs = creep.pos.estimatePathCosts(structure.pos, 3, creep, max_time - upgrade_time);
-    if (path_costs >= Infinity) return Infinity;
-    error (" time is ", path_costs + upgrade_time);
+    if (path_costs >= INFINITY) return INFINITY;
     return path_costs + upgrade_time;
 }
 
@@ -134,7 +155,7 @@ task.spawn = function(queue_task, spawn) {
             let carry = body.filter(x => x == CARRY).length * 50;
             let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
             //error(body, time, " ", carry);
-            if (time == null || time == Infinity) {
+            if (time == null || time == INFINITY) {
                 body.pop();
                 continue;
             }
@@ -164,18 +185,11 @@ task.creepAfter = function(creep, creep_task) {
     let target = Game.getObjectById(creep_task.id);
     let freePositions = target.pos.getAdjacentGenerallyWalkables();
     if (freePositions.length == 0) {
-        error (target, " is unreachable!");
+        error(target, " is unreachable!");
         return null;
     }
     let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
     return frankencreep;
 }
-
-
-task.state_array = [
-    new State(takeFromStore),
-    new State(upgradeController),
-];
-
 
 export {task};

@@ -1,13 +1,17 @@
 import { QueueTask, CreepTask, Task, State } from "./Task";
 import { error } from "../Logging";
-import { findEnemyCreeps as findEnemyCreeps } from "../Game";
+import { findEnemyCreeps as findEnemyCreeps } from "../GameObjects/Game";
 import { getRoomsToClaim } from "../Base";
-import "../Room";
-import "../Game";
-import "../RoomPosition";
+import "../GameObjects/Room";
+import "../GameObjects/Game";
+import "../GameObjects/RoomPosition";
 import { Role } from "../Constants";
 
-var task = new Task("kite", null);
+const task = Object.create(new Task("kite"));
+task.state_array = [
+    new State(getTarget),
+    new State(kiteTask),
+];
 
 /**
  * @param {Creep} creep
@@ -117,11 +121,5 @@ task.isSuitable = (creep, queue_task) => {
     return suitability;
 
 }
-
-task.state_array = [
-    new State(getTarget),
-    new State(kiteTask),
-];
-
 
 export { task};
