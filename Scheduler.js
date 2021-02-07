@@ -22,10 +22,10 @@ task_mapping[task_build.name] = task_build;
 task_mapping[task_fill_store.name] = task_fill_store;
 task_mapping[task_repair.name] = task_repair;
 task_mapping[task_claim_room.name] = task_claim_room;
-task_mapping[task_fill_store.name] = task_fill_store;
+task_mapping[task_fill_structure.name] = task_fill_structure;
 task_mapping[task_kite.name] = task_kite;
 task_mapping[task_attack_source_keeper.name] = task_attack_source_keeper;
-task_mapping[task_redistribute.name] = task_redistribute; 
+task_mapping[task_redistribute.name] = task_redistribute;
 
 function updateTaskQueue() {
     for (let task_name in task_mapping) {
