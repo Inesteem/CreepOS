@@ -24,6 +24,7 @@ function handlePossibleRespawn() {
         }
     }
     Memory.new_tasks = Memory.new_tasks || {};
+    Memory.ready_queue = Memory.ready_queue || [];
     Memory.main_spawn = Game.spawns['Spawn1'].pos;
 }
 

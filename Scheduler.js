@@ -76,7 +76,7 @@ function schedule() {
         }
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
-
+    
     for (let i = 0; i < 5 && Memory.ready_queue.length > 0; ++i){
         let name = Memory.ready_queue.shift();
         let creep = Game.creeps[name];

@@ -7,7 +7,7 @@
     "closure": {
         "module_resolution": "NODE",
         "compilation_level": "SIMPLE",
-        "js_module_root": "/home/miri/screeps/CreepOS", // "C:\\Users\\bt121073\\Documents\\CreepOS",
+        "js_module_root":  "C:\\Users\\bt121073\\Documents\\CreepOS",//"/home/miri/screeps/CreepOS", 
         "warning_level": "VERBOSE",
         "externs": "screeps.ext.js"
     }

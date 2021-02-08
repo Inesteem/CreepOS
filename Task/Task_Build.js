@@ -140,7 +140,6 @@ task.estimateTime = function(creep, queue_task, max_time) {
     let structure = /**@type {ConstructionSite}  */ (Game.getObjectById(queue_task.id));
     if (!structure) return INFINITY;
     if (creep.getActiveBodyparts(WORK) == 0) return INFINITY;
-    
     let to_build = structure.progressTotal - structure.progress;
     let energy = Math.min(to_build, creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));
     let build_time = energy/(5 * creep.getActiveBodyparts(WORK));
@@ -151,7 +150,6 @@ task.estimateTime = function(creep, queue_task, max_time) {
 
         let harvest_time = 0;
         if (energy_struct.type == FIND_SOURCES) {
-            if (creep.getActiveBodyparts(WORK) == 0) return INFINITY;
             let capacity = creep.store.getFreeCapacity(RESOURCE_ENERGY);
             harvest_time = capacity / (2 * creep.getActiveBodyparts(WORK));
         }
@@ -160,7 +158,6 @@ task.estimateTime = function(creep, queue_task, max_time) {
         if (energy_path_time >= INFINITY) return INFINITY;
         let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 3, creep, max_time - harvest_time - energy_path_time - build_time);
         if (work_path_time >= INFINITY) return INFINITY; 
-        
         return work_path_time + energy_path_time + harvest_time + build_time;
     }
 

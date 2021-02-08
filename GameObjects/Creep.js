@@ -176,7 +176,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     result = PathFinder.search(
         this.pos,
         sources.map(source => { return {pos: source.pos, range: 1}; }),
-        Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16})
+//        Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16})
     );
     if (!result.incomplete && result.cost < best_time) {
         best_time = result.cost;

@@ -98,7 +98,9 @@ Room.prototype.hasExcessEnergy = function(req_energy) {
     }
     let sources = this.find(FIND_SOURCES_ACTIVE);
     for (let source of sources || []) {
-        if (!source.hasMiner()) return true;
+        let freeSlot = source.hasFreeSlot(Game.time+10, Game.time+30, 0);
+        error(source.id + " has free slot: " + freeSlot);
+        if (!source.hasMiner() && freeSlot) return true;
     }
     return false;
 }
@@ -160,22 +162,22 @@ return {
 
     roomCallback: function(roomName) {
         let costs = new PathFinder.CostMatrix;
-        let room = Game.rooms[roomName];
-        if (!room) return costs;
-
-        room.find(FIND_STRUCTURES).forEach(function(struct) {
-            if (struct.structureType === STRUCTURE_ROAD) {
-                // Favor roads over plain tiles
-                let cost = Math.max(1, fatigue_base - fatigue_decrease);
-                costs.set(struct.pos.x, struct.pos.y, cost);
-            } else if (struct.structureType !== STRUCTURE_CONTAINER &&
-                   (struct.structureType !== STRUCTURE_RAMPART ||
-                    !struct.my)) {
-                // Can't walk through non-walkable buildings
-                costs.set(struct.pos.x, struct.pos.y, 0xff);
-            }
-        });
-
+//        let room = Game.rooms[roomName];
+//        if (!room) return costs;
+//
+//        room.find(FIND_STRUCTURES).forEach(function(struct) {
+//            if (struct.structureType === STRUCTURE_ROAD) {
+//                // Favor roads over plain tiles
+//                let cost = Math.max(1, fatigue_base - fatigue_decrease);
+//                costs.set(struct.pos.x, struct.pos.y, cost);
+//            } else if (struct.structureType !== STRUCTURE_CONTAINER &&
+//                   (struct.structureType !== STRUCTURE_RAMPART ||
+//                    !struct.my)) {
+//                // Can't walk through non-walkable buildings
+//                costs.set(struct.pos.x, struct.pos.y, 0xff);
+//            }
+//        });
+//
         return costs;
     }
 };   

@@ -155,7 +155,7 @@ task.estimateTime = function(creep, queue_task, max_time) {
 
         let energy_path_time = creep.pos.estimatePathCosts(energy_struct.object.pos, 1, creep, max_time - harvest_time);
         if (energy_path_time >= INFINITY) return INFINITY;
-        creep.memory.energy_path_time = energy_path_time;
+        
         let work_path_time = energy_struct.object.pos.estimatePathCosts(structure.pos, 1, creep, max_time - harvest_time - energy_path_time);
         if (work_path_time >= INFINITY) return INFINITY; 
         

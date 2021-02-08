@@ -16,7 +16,7 @@ const LOG_LEVEL = {
     }
 };
 
-const GLOBAL_LOG_LEVEL = LOG_LEVEL.WARNING;
+const GLOBAL_LOG_LEVEL = LOG_LEVEL.ERROR;
 
 function log(log_level) {
     return function () {

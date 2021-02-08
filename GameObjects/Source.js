@@ -35,7 +35,7 @@ Object.defineProperty(Source.prototype, 'reservedSlots', {
             if (self.memory.reservedSlots == undefined) {
                 self.memory.reservedSlots = [];
             } else {
-                self.memory.reservedSlots = self.memory.reservedSlots.filter((slot) => Game.time < slot);
+                self.memory.reservedSlots = self.memory.reservedSlots.filter((slot) => Game.time < slot.finish);
             }
             self._reservedSlots = self.memory.reservedSlots;
         }
@@ -50,9 +50,30 @@ Object.defineProperty(Source.prototype, 'reservedSlots', {
     //configurable: true
 });
 
-Source.prototype.reserveSlot = function(arrival_time){
-    this.reservedSlots.push(arrival_time);
-    this.reservedSlots.sort();
+
+Source.prototype.hasFreeSlot = function(arrival_time, finish_time, energy){
+    let spots = this.pos.getAdjacentGenerallyWalkables().length; 
+    let takenSpots = spots - this.pos.getAdjacentWalkables().length;
+    
+    //time that a creep may wait at a source for a free spot
+    let ok_wait_time = 5;
+    
+    for (let slot of this.reservedSlots){
+        //since the list is sorted with respect to the arrival time,
+        //we can finish counting if the arrival time of the current slot
+        //is way after the finish_time 
+        if(slot.arrival > (finish_time - ok_wait_time)) break;
+        //count only slots that interfere with the creeps arrival time
+        if(slot.finish > (arrival_time + ok_wait_time)) 
+            ++takenSpots;
+    }
+
+   return spots>takenSpots;
+}
+
+Source.prototype.reserveSlot = function(arrival_time, finish_time, energy){
+    this.reservedSlots.push({arrival : arrival_time, finish : finish_time, energy : energy});
+    this.reservedSlots.sort((a,b) => a.arrival - b.arrival);
 }
 
 Source.prototype.hasFreeSpot = function(){

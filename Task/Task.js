@@ -105,6 +105,12 @@ function takeFromStore(creep) {
     }
     if (!creep.memory.task.store_id && !creep.memory.task.source_id) { // && !creep.memory.task.resource_id) {
         Object.assign(creep.memory.task, getEnergyForTask(creep, creep.memory.task).task);
+        //reserveSlot
+        if (creep.memory.task.source_id){
+            let source = Game.getObjectById(creep.memory.task.source_id)
+            error("reserve the slot " + creep.memory.task.source_id);
+            source.reserveSlot(Game.time + creep.memory.task.path_time, Game.time + creep.memory.task.harvest_time + creep.memory.task.path_time, creep.store.getFreeCapacity(RESOURCE_ENERGY));
+        }
     }
     if (creep.memory.task.store_id) {
         let storage = Game.getObjectById(creep.memory.task.store_id);
@@ -122,12 +128,7 @@ function takeFromStore(creep) {
         if (!source || source.energy == 0) {
             return false;
         }
-        //reserveSlot
-        if (creep.memory.energy_path_time){
-            error("reserve the slot " + creep.memory.task.source_id);
-            source.reserveSlot(Game.time+creep.memory.energy_path_time);
-            creep.memory.energy_path_time = 0;
-        }
+        
         if (!creep.harvestFrom(source) && !source.hasFreeSpot()) {
             return false;
         }
@@ -187,7 +188,8 @@ function getEnergyForTask(creep, queue_task, max_time) {
     if (energy.type == FIND_STRUCTURES) {
         return {task: {store_id: energy.object.id}, object: energy.object};
     } else if (energy.type == FIND_SOURCES) {
-        return {task: {source_id: energy.object.id}, object: energy.object};  
+        error("fetched: " + energy.object.id);
+        return {task: {source_id: energy.object.id, path_time: energy.path_time, harvest_time: energy.harvest_time}, object: energy.object};  
     } else {
         return {task: {drop_id: energy.object.id}, object: energy.object};
     }
