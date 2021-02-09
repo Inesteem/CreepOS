@@ -169,6 +169,7 @@ return {
         let room = Game.rooms[roomName];
         if (!room) return costs;
 
+<<<<<<< Updated upstream
         room.find(FIND_STRUCTURES).forEach(function(struct) {
             if (struct.structureType === STRUCTURE_ROAD) {
                 // Favor roads over plain tiles
@@ -181,6 +182,20 @@ return {
                 costs.set(struct.pos.x, struct.pos.y, 0xff);
             }
         });
+=======
+       room.find(FIND_STRUCTURES).forEach(function(struct) {
+           if (struct.structureType === STRUCTURE_ROAD) {
+               // Favor roads over plain tiles
+               let cost = Math.max(1, fatigue_base - fatigue_decrease);
+               costs.set(struct.pos.x, struct.pos.y, cost);
+           } else if (struct.structureType !== STRUCTURE_CONTAINER &&
+                  (struct.structureType !== STRUCTURE_RAMPART ||
+                   !struct.my)) {
+               // Can't walk through non-walkable buildings
+               costs.set(struct.pos.x, struct.pos.y, 0xff);
+           }
+       });
+>>>>>>> Stashed changes
 
         return costs;
     }
