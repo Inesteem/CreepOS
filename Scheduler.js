@@ -97,7 +97,8 @@ function schedule() {
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
 
-    let rooms = Game.getOurRooms((room) => room.hasExcessEnergy(1000));
+    let rooms = Game.getOurRooms((room) => room.hasExcessEnergy(500));
+    error(rooms);
     let spawns = rooms.flatMap(room => room.findSpawns((spawn) => !spawn.spawning));
     let num_spawns = spawns.length;
     for (let i = 0; 

@@ -53,10 +53,10 @@ Object.defineProperty(Source.prototype, 'reservedSlots', {
 
 Source.prototype.hasFreeSlot = function(arrival_time, finish_time, energy){
     let spots = this.pos.getAdjacentGenerallyWalkables().length; 
-    let takenSpots = spots - this.pos.getAdjacentWalkables().length;
+    let takenSpots = 0;//spots - this.pos.getAdjacentWalkables().length;
     
     //time that a creep may wait at a source for a free spot
-    let ok_wait_time = 5;
+    let ok_wait_time = 0;
     
     for (let slot of this.reservedSlots){
         //since the list is sorted with respect to the arrival time,
@@ -67,7 +67,7 @@ Source.prototype.hasFreeSlot = function(arrival_time, finish_time, energy){
         if(slot.finish > (arrival_time + ok_wait_time)) 
             ++takenSpots;
     }
-
+    error(takenSpots , " / ", spots);
    return spots>takenSpots;
 }
 
@@ -81,7 +81,7 @@ Source.prototype.hasFreeSpot = function(){
 }
 
 Source.prototype.hasMiner = function(){
-    return Memory.reservedSources && Memory.reservedSources[this.id] > 0;
+    return Memory.reservedSources && Memory.reservedSources[this.id] && Memory.reservedSources[this.id] > 0;
 }
 
 Source.prototype.reserveSource = function() {

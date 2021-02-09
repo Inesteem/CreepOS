@@ -190,6 +190,10 @@ StructureController.prototype.safeModeAvailable;
  * Activate safe mode if available.
  * @return {number} */
 StructureController.prototype.activateSafeMode = function() {};
+/**
+ *  Controller level.
+ * @type {number} */
+StructureController.prototype.level;
 
 /**
  * @extends Structure
