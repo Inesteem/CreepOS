@@ -22,6 +22,11 @@ export function initGame() {
         if (!rooms.length) {
             error("No rooms found. Did you forget to set the flag?");
         }
+<<<<<<< HEAD
+=======
+        if (rooms && filter) 
+            rooms = rooms.filter((room) => filter(room));
+>>>>>>> 521f934... stuff
         return rooms || [];
     }
 

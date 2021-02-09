@@ -101,16 +101,27 @@ Task.prototype.creepAfter = function() {
  */
 function takeFromStore(creep) {
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+<<<<<<< HEAD
             let sources = Game.find(
                 FIND_SOURCES_ACTIVE,
             {filter : (source) => creep.pos.inRangeTo(source.pos, 1) }
         );           
         error("leave ", sources);
+=======
+        let sources = Game.find(
+                FIND_SOURCES_ACTIVE,
+                {filter : (source) => creep.pos.inRangeTo(source.pos, 1) }
+        );
+>>>>>>> 521f934... stuff
         if(sources.length){
             creep.moveAwayFrom(sources[0], 2);
             return true;
         }
+<<<<<<< HEAD
         else return false;
+=======
+        return false;
+>>>>>>> 521f934... stuff
     }
     if (!creep.memory.task.store_id && !creep.memory.task.source_id) { // && !creep.memory.task.resource_id) {
         Object.assign(creep.memory.task, getEnergyForTask(creep, creep.memory.task).task);
