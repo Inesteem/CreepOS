@@ -2,14 +2,14 @@ import { info, warning, error } from "./Logging";
 import { INFINITY, PRIORITY_LEVEL_STEP, Role } from "./Constants";
 
 import { QueueTask, CreepTask  } from "./Task/Task";
-import { task, task as task_build} from "./Task/Task_Build";
-import { task as task_repair} from "./Task/Task_Repair";
-import { task as task_fill_structure} from "./Task/Task_FillStructure";
-import { task as task_claim_room} from "./Task/Task_ClaimRoom";
-import { task as task_upgrade} from "./Task/Task_Upgrade";
-import { task as task_fill_store} from "./Task/Task_FillStore";
-import { task as task_kite} from "./Task/Task_Kite";
-import { task as task_attack_source_keeper} from "./Task/Task_Attack_SourceKeeper";
+import { task, task as task_build} from "./Task/Build";
+import { task as task_repair} from "./Task/Repair";
+import { task as task_fill_structure} from "./Task/FillStructure";
+import { task as task_claim_room} from "./Task/ClaimRoom";
+import { task as task_upgrade} from "./Task/Upgrade";
+import { task as task_fill_store} from "./Task/FillStore";
+import { task as task_kite} from "./Task/Kite";
+import { task as task_attack_source_keeper} from "./Task/Attack_SourceKeeper";
 import { task as task_redistribute} from "./Task/Redistribute";
 
 import "./GameObjects/Room";
@@ -46,7 +46,7 @@ function updateTaskQueue() {
 function runTask(creep, depth) {
     //if (creep) completeTask(creep);
     if (creep.memory.task && creep.memory.task.name) {
-        creep.say(Math.floor(creep.memory.task.estimated_time) + " " + creep.memory.ticks);
+        //creep.say(Math.floor(creep.memory.task.estimated_time) + " " + creep.memory.ticks);
         ++creep.memory.ticks;
         let still_running = task_mapping[creep.memory.task.name].run(creep);
         if (!still_running) {
@@ -77,12 +77,50 @@ function schedule() {
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
     
-    for (let i = 0; i < 5 && Memory.ready_queue.length > 0; ++i){
-        let name = Memory.ready_queue.shift();
+    for (let i = 0; i < Memory.ready_queue.length; ++i){
+        let name = Memory.ready_queue[0];
         let creep = Game.creeps[name];
         if (creep) {
-            assignTask(creep, task_queue_sorted);
+            if (creep.memory.role === Role.SCOUT) {
+                creep.memory.task = {name: task_claim_room.name};
+            } else if (creep.memory.role === Role.ARCHER) {
+                creep.memory.task = {name: task_kite.name};
+            } else if (creep.memory.role === Role.SLAYER) {
+                creep.memory.task = {name: task_attack_source_keeper.name};
+            } else {
+                continue;
+            }
+            // assignTask(creep, task_queue_sorted);
+            Memory.ready_queue.splice(i, 1);
+            --i;
             runTask(creep, 0);
+        }
+    }
+
+    if (Memory.ready_queue.length) {
+        for(let task of task_queue_sorted) {
+            if (!Memory.ready_queue.length) break;
+            let best_creep_idx = -1;
+            let best_fit = 0;
+            for (let i = 0; i < Memory.ready_queue.length; ++i) {
+                let name = Memory.ready_queue[i];
+                let creep = Game.creeps[name];
+                if (creep) {
+                    let fit = getTaskFit(creep, task, best_fit);
+                    if (fit > best_fit) {
+                        best_creep_idx = i;
+                        best_fit = fit;
+                    }
+                } else {
+                    Memory.ready_queue.splice(i, 1);
+                    --i;   
+                }
+            }
+            if (best_creep_idx != -1) {
+                let name = Memory.ready_queue.splice(best_creep_idx, 1)[0];
+                let creep = Game.creeps[name];
+                creep.memory.task = task_mapping[task.name].take(creep, task);
+            }
         }
     }
 
@@ -133,42 +171,42 @@ function schedule() {
     }
 }
 
-/**
- * 
- * @param {Creep} creep 
- */
-function assignTask(creep, task_queue_sorted) {
-    // //creep.say("assignTask");
-    // if (creep.memory.role === Role.MINER) {
-    //     creep.memory.task = {name: 'fill_store'};
-    if (creep.memory.role === Role.SCOUT) {
-        creep.memory.task = {name: task_claim_room.name};
-    } else if (creep.memory.role === Role.ARCHER) {
-        creep.memory.task = {name: task_kite.name};
-    } else if (creep.memory.role === Role.SLAYER) {
-        creep.memory.task = {name: task_attack_source_keeper.name};
-    } else {
-        if (creep.memory.task_queue && creep.memory.task_queue.length) {
-            creep.memory.task = creep.memory.task_queue.shift();
-        } else {
-            creep.say("reschedule");
-            creep.memory.task_queue = creep.memory.task_queue || [];
-            let next_task = getNextTask(creep, task_queue_sorted);
-            creep.memory.task = next_task;
-            let remaining_time = 0;
-            if (next_task) remaining_time = Math.min(next_task.estimated_time, 100);
-            let franky = creep;
-            while (next_task) {
-                franky = task_mapping[next_task.name].creepAfter(franky, next_task);
-                if (!franky) break;
-                next_task = getNextTask(franky, task_queue_sorted, remaining_time / creep.memory.task_queue.length);
-                if (next_task) {
-                    creep.memory.task_queue.push(next_task);
-                }
-            }
-        }
-    }
-}
+// /**
+//  * 
+//  * @param {Creep} creep 
+//  */
+// function assignTask(creep, task_queue_sorted) {
+//     // //creep.say("assignTask");
+//     // if (creep.memory.role === Role.MINER) {
+//     //     creep.memory.task = {name: 'fill_store'};
+//     if (creep.memory.role === Role.SCOUT) {
+//         creep.memory.task = {name: task_claim_room.name};
+//     } else if (creep.memory.role === Role.ARCHER) {
+//         creep.memory.task = {name: task_kite.name};
+//     } else if (creep.memory.role === Role.SLAYER) {
+//         creep.memory.task = {name: task_attack_source_keeper.name};
+//     } else {
+//         if (creep.memory.task_queue && creep.memory.task_queue.length) {
+//             creep.memory.task = creep.memory.task_queue.shift();
+//         } else {
+//             creep.say("reschedule");
+//             creep.memory.task_queue = creep.memory.task_queue || [];
+//             let next_task = getNextTask(creep, task_queue_sorted);
+//             creep.memory.task = next_task;
+//             let remaining_time = 0;
+//             if (next_task) remaining_time = Math.min(next_task.estimated_time, 100);
+//             let franky = creep;
+//             while (next_task) {
+//                 franky = task_mapping[next_task.name].creepAfter(franky, next_task);
+//                 if (!franky) break;
+//                 next_task = getNextTask(franky, task_queue_sorted, remaining_time / creep.memory.task_queue.length);
+//                 if (next_task) {
+//                     creep.memory.task_queue.push(next_task);
+//                 }
+//             }
+//         }
+//     }
+// }
 
 /**
  * 
@@ -193,6 +231,25 @@ function increasePriorities() {
             }
         }
     }
+}
+
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number} best_fit
+ * @return {number} 
+ */
+function getTaskFit(creep, queue_task, best_fit) {
+    let floor_priority = Math.floor(queue_task.priority/PRIORITY_LEVEL_STEP) * PRIORITY_LEVEL_STEP;
+    let max_time = best_fit ? floor_priority / best_fit : undefined;
+
+    if (max_time && max_time < 2) return 0;
+    // error( "getTaskFit with creep ", creep);
+    let path_time = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_time) + 1;
+    if (path_time >= INFINITY) return 0;
+    
+    return floor_priority / path_time;
 }
 
 /**

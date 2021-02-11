@@ -69,7 +69,9 @@ Room.prototype.storedEnergy = function() {
     for (let container of containers) {
         energy += container.store[RESOURCE_ENERGY];
     }
-    //energy += !this.storage || this.storage.store[RESOURCE_ENERGY];
+    if (this.storage) {
+        energy += this.storage.store[RESOURCE_ENERGY];
+    }
     return energy;
 }
 
@@ -93,18 +95,17 @@ Room.prototype.getFreeCapacity = function(resource_type) {
  * @return {boolean} True if the room has more energy available in stores or sources than is used.
  */
 Room.prototype.hasExcessEnergy = function(req_energy) {
-        error(this.storedEnergy(), " / " ,req_energy);
     if (this.storedEnergy() > req_energy) {
         return true;
     }
     let sources = this.find(FIND_SOURCES_ACTIVE);
     for (let source of sources || []) {
-       let freeSlot = source.hasFreeSlot(Game.time, Game.time+20, 0);
-        error(source.id + " has free slot: " + freeSlot);
-        error(source.id + " has free spot: " + source.hasFreeSpot());
-        error(source.id + " has miner: " + source.hasMiner());
-        error(source.id + " has relevant miner: " + !(!source.hasMiner()|| (this.controller && this.controller.level < 3)));
-        if ((!source.hasMiner() || (this.controller && this.controller.level < 3)) && freeSlot && source.hasFreeSpot()) return true;
+       let freeSlot = source.hasFreeSlot(Game.time, Game.time+80, /*energy=*/req_energy);
+        // error(source.id + " has free slot: " + freeSlot);
+        // error(source.id + " has free spot: " + source.hasFreeSpot());
+        // error(source.id + " has miner: " + source.hasMiner());
+        // error(source.id + " has relevant miner: " + !(!source.hasMiner()|| (this.controller && this.controller.level < 3)));
+        if ((!source.hasMiner() || (this.controller && this.controller.level < 3)) && freeSlot) return true;
     }
     return false;
 }
@@ -169,20 +170,6 @@ return {
         let room = Game.rooms[roomName];
         if (!room) return costs;
 
-<<<<<<< Updated upstream
-        room.find(FIND_STRUCTURES).forEach(function(struct) {
-            if (struct.structureType === STRUCTURE_ROAD) {
-                // Favor roads over plain tiles
-                let cost = Math.max(1, fatigue_base - fatigue_decrease);
-                costs.set(struct.pos.x, struct.pos.y, cost);
-            } else if (struct.structureType !== STRUCTURE_CONTAINER &&
-                   (struct.structureType !== STRUCTURE_RAMPART ||
-                    !struct.my)) {
-                // Can't walk through non-walkable buildings
-                costs.set(struct.pos.x, struct.pos.y, 0xff);
-            }
-        });
-=======
        room.find(FIND_STRUCTURES).forEach(function(struct) {
            if (struct.structureType === STRUCTURE_ROAD) {
                // Favor roads over plain tiles
@@ -195,7 +182,6 @@ return {
                costs.set(struct.pos.x, struct.pos.y, 0xff);
            }
        });
->>>>>>> Stashed changes
 
         return costs;
     }

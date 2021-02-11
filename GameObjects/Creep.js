@@ -112,17 +112,21 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
 
     let sources = Game.find(
         FIND_SOURCES_ACTIVE,
-        {filter : source => source.hasFreeSpot() || this.pos.inRangeTo(source.pos, 1) }
+        {filter : source => harvest_time < INFINITY && (source.hasFreeSpot() || this.pos.inRangeTo(source.pos, 1)) }
     );
+    error("creep", this.name);
+    error("sources", sources);
     let resources = Game.find(
         FIND_DROPPED_RESOURCES,
         {filter: (resource) => resource.amount >= needed_energy}
     );
     let containers = Game.find(
         FIND_STRUCTURES,
-                {filter: (structure) => 
-                    (structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE)
-                    && structure.store[RESOURCE_ENERGY] >= needed_energy}
+                {filter: (structure) => {
+                    return (structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE)
+                    && (structure.store[RESOURCE_ENERGY] >= needed_energy)
+                }
+    }
     // ).concat( Game.find (
     //     FIND_RUINS,
     //     { filter : (ruin) => ruin.store[RESOURCE_ENERGY] >= needed_energy }
@@ -131,62 +135,72 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     //     { filter : (tombstone) => tombstone.store[RESOURCE_ENERGY] >= needed_energy }
     );
     let best_target = null;
-    let best_time = max_time || INFINITY;
+    let best_time = max_time || undefined;
 
     let matrix = this.getCostMatrix();
 
-    let result = PathFinder.search(
-        this.pos,
-        resources.map( (resource) => { return {pos: resource.pos, range: 0}; }),
-        Object.assign(matrix, {maxCost: best_time, maxRooms: max_rooms || 16})
-    )
-    if (!result.incomplete && result.cost < best_time) {
-        best_time = result.cost;
-        let position = result.path.pop() || this.pos;
-        best_target = {
-            type: FIND_DROPPED_RESOURCES,
-            path_time: result.cost,
-            object: position
-                .lookFor(LOOK_RESOURCES)
-                .find(resource => resource.resourceType === RESOURCE_ENERGY)
-        };
-    }
-
-    result = PathFinder.search(
-        this.pos,
-        containers.map(container => { return {pos: container.pos, range: 1}; }), 
-        Object.assign(matrix, {maxCost: best_time, maxRooms: max_rooms || 16})
-    );
-    //error(result);
-    if (!result.incomplete && result.cost < best_time) {
-        best_time = result.cost;
-        let position = result.path.pop() || this.pos;
-        let targets = position.getAdjacentStructures((obj) => obj.structure.structureType === STRUCTURE_STORAGE || obj.structure.structureType === STRUCTURE_CONTAINER); 
-        targets = targets.map((obj) => obj.structure);
-        if (targets.length) {
-            targets.sort((a,b) => b.store[RESOURCE_ENERGY] - a.store[RESOURCE_ENERGY]);
+    if (resources.length) {
+        let result = PathFinder.search(
+            this.pos,
+            resources.map( (resource) => { return {pos: resource.pos, range: 0}; }),
+            Object.assign(matrix, {maxCost: best_time || 2000, maxRooms: max_rooms || 16})
+        )
+        if (!result.incomplete && (!best_time || result.cost < best_time)) {
+            best_time = result.cost;
+            let position = result.path.pop() || this.pos;
             best_target = {
-                type: FIND_STRUCTURES,
-                object: targets[0],
+                type: FIND_DROPPED_RESOURCES,
                 path_time: result.cost,
+                object: position
+                    .lookFor(LOOK_RESOURCES)
+                    .find(resource => resource.resourceType === RESOURCE_ENERGY)
             };
         }
     }
+    
+    error("containers", containers);
+    if (containers.length) {
+        let result = PathFinder.search(
+            this.pos,
+            containers.map(container => { return {pos: container.pos, range: 1}; }), 
+            Object.assign(matrix, {maxCost: best_time || 2000, maxRooms: max_rooms || 16})
+        );
+        error ("pos", this.pos);
+        error(" trying to find container: ",result);
+        if (!result.incomplete && (!best_time || result.cost < best_time)) {
+            best_time = result.cost;
+            let position = result.path.pop() || this.pos;
+            let targets = position.getAdjacentStructures((obj) => obj.structure.structureType === STRUCTURE_STORAGE || obj.structure.structureType === STRUCTURE_CONTAINER); 
+            targets = targets.map((obj) => obj.structure);
+            if (targets.length) {
+                targets.sort((a,b) => b.store[RESOURCE_ENERGY] - a.store[RESOURCE_ENERGY]);
+                best_target = {
+                    type: FIND_STRUCTURES,
+                    object: targets[0],
+                    path_time: result.cost,
+                };
+            }
+            error ("best target: ", best_target);
+        }
+    }
   
-    result = PathFinder.search(
-        this.pos,
-        sources.map(source => { return {pos: source.pos, range: 1}; }),
-//        Object.assign(matrix, {maxCost: best_time - harvest_time, maxRooms: max_rooms || 16})
-    );
-    if (!result.incomplete && result.cost < best_time) {
-        best_time = result.cost;
-        let position = result.path.pop() || this.pos;
-        best_target = {
-            type: FIND_SOURCES,
-            object: position.getAdjacentSource(),
-            path_time: result.cost,
-            harvest_time: harvest_time,
-        };
+    if (sources.length) {
+        let result = PathFinder.search(
+            this.pos,
+            sources.map(source => { return {pos: source.pos, range: 1}; }),
+            Object.assign(matrix, {maxCost: best_time ? best_time - harvest_time : 2000, maxRooms: max_rooms || 16})
+        );
+        error("sources find result", result);
+        if (!result.incomplete && (!best_time || result.cost + harvest_time < best_time)) {
+            best_time = result.cost;
+            let position = result.path.pop() || this.pos;
+            best_target = {
+                type: FIND_SOURCES,
+                object: position.getAdjacentSource(),
+                path_time: result.cost,
+                harvest_time: harvest_time,
+            };
+        }
     }
 
     return best_target;

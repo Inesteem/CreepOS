@@ -68,6 +68,7 @@ module.exports.loop = function () {
             if (Memory.creeps[name].task) {
                 completeTask({memory : Memory.creeps[name]});
             }
+            Memory.creeps[name].task_queue = Memory.creeps[name].task_queue || [];
             while(Memory.creeps[name].task_queue && Memory.creeps[name].task_queue.length) {
                 Memory.creeps[name].task = Memory.creeps[name].task_queue.shift();
                 completeTask({memory : Memory.creeps[name]});

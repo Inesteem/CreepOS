@@ -4,7 +4,7 @@ import { getUnclaimedFlags, getRoomsToClaim } from "./Base";
 import "./GameObjects/Room";
 import "./GameObjects/Game";
 import { getBiggestSpawn} from "./GameObjects/Game";
-import { getCreepBody as getSlayerBody } from  "./Task/Task_Attack_SourceKeeper";
+import { getCreepBody as getSlayerBody } from  "./Task/Attack_SourceKeeper";
 
 
 function getMaxMinerNum(room) {

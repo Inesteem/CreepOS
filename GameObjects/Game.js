@@ -18,15 +18,12 @@ export function initGame() {
     * @return {!Array<Room>} Rooms with a flag whose controller is ours.
     */
     Game.getOurRooms = function(filter) {
-        let rooms = Object.values(Game.flags).filter((flag) => flag.room).map((flag) => flag.room).filter((room) => room.controller && room.controller.my && (!filter || filter(room)));
+        let rooms = Object.values(Game.flags).filter((flag) => flag.room).map((flag) => flag.room).filter((room) => room.controller && room.controller.my);
         if (!rooms.length) {
             error("No rooms found. Did you forget to set the flag?");
         }
-<<<<<<< HEAD
-=======
         if (rooms && filter) 
             rooms = rooms.filter((room) => filter(room));
->>>>>>> 521f934... stuff
         return rooms || [];
     }
 
