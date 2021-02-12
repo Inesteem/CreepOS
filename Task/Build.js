@@ -1,6 +1,6 @@
 import {  QueueTask, CreepTask, findQueueTask, State, takeFromStore, Task } from "./Task";
 import { info, error } from "../Logging";
-import { INFINITY, BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, BUILD_SPAWN_PRIORITY, PRIORITY_LEVEL_STEP } from "../Constants";
+import { INFINITY, BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, BUILD_SPAWN_PRIORITY, PRIORITY_LEVEL_STEP, Role } from "../Constants";
 import { Frankencreep } from "../FrankenCreep";
 import "../GameObjects/Game";
 
@@ -11,7 +11,7 @@ task.state_array = [
 ];
 
 function buildStructure(creep){
-    let structure = Game.getObjectById(creep.memory.task.id);
+    let structure = Game.getObjectById(creep.task.id);
     
     if(!structure){
         return false;
@@ -211,7 +211,7 @@ task.spawn = function(queue_task, spawn) {
         body.push(best_part);
     }
     body.pop();
-    if (body.length > 3 && spawn.spawnCreep(body, newName, {}) == OK) {
+    if (body.length > 3 && spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) == OK) {
         return newName;
     }
     return "";
@@ -238,7 +238,7 @@ task.creepAfter = function(creep, creep_task) {
         error (target, " is unreachable!");
         return null;
     }
-    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), creep.name);
     let energy_start = creep.store[RESOURCE_ENERGY] || creep.store.getFreeCapacity(RESOURCE_ENERGY);
     let use = Math.min(target.progressTotal - target.progress, 
                        creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));

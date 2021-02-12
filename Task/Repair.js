@@ -2,7 +2,7 @@ import { QueueTask, CreepTask, State, takeFromStore, Task, findQueueTask } from 
 import { info, error} from "../Logging";
 import "../GameObjects/Game";
 import { Frankencreep } from "../FrankenCreep";
-import { INFINITY, REPAIR_DEFAULT_PRIORITY, REPAIR_PRIORITY, PRIORITY_LEVEL_STEP} from "../Constants";
+import { INFINITY, REPAIR_DEFAULT_PRIORITY, REPAIR_PRIORITY, PRIORITY_LEVEL_STEP, Role} from "../Constants";
 
 const task = Object.create(new Task("repair"));
 task.state_array = [
@@ -11,7 +11,7 @@ task.state_array = [
 ];
 
 function repairStructure(creep) {
-    let structure = Game.getObjectById(creep.memory.task.id);
+    let structure = Game.getObjectById(creep.task.id);
     
     if(!structure){
         return false;
@@ -214,7 +214,7 @@ task.spawn = function(queue_task, spawn) {
             body.push(best_part);
     }
     body.pop();
-    if (body.length > 3 && (spawn.spawnCreep(body, newName, {}) == OK)) {
+    if (body.length > 3 && (spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) === OK)) {
         return newName;
     }
     return "";
@@ -232,7 +232,7 @@ task.creepAfter = function(creep, creep_task) {
         error (target, " is unreachable!");
         return null;
     }
-    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), creep.name);
     let energy_start = creep.store[RESOURCE_ENERGY] || creep.store.getFreeCapacity(RESOURCE_ENERGY);
     let to_repair = target.hitsMax - target.hits;
     let use = Math.min(to_repair/100, creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY));

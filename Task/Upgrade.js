@@ -1,7 +1,7 @@
 import { QueueTask, CreepTask, Task, State, takeFromStore, findQueueTask } from "./Task";
 import "../GameObjects/Game";
 import {error} from "../Logging";
-import { INFINITY, UPGRADE_HIGH_PRIORITY, UPGRADE_LOW_PRIORITY } from "../Constants";
+import { INFINITY, UPGRADE_HIGH_PRIORITY, UPGRADE_LOW_PRIORITY, Role } from "../Constants";
 import { Frankencreep } from "../FrankenCreep";
 
 const task = Object.create(new Task("upgrade"));
@@ -15,7 +15,7 @@ task.state_array = [
  * @param {Creep} creep 
  */
 function upgradeController(creep){
-    let controller = Game.getObjectById(creep.memory.task.id);
+    let controller = Game.getObjectById(creep.task.id);
 
     if (!controller) return false;
 
@@ -170,7 +170,7 @@ task.spawn = function(queue_task, spawn) {
         body.push(best_part);
     }
     body.pop();
-    if (body.length > 3 &&  spawn.spawnCreep(body, newName, {}) == OK) {
+    if (body.length > 3 &&  spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) == OK) {
         return newName;
     }
     return "";
@@ -188,7 +188,7 @@ task.creepAfter = function(creep, creep_task) {
         error(target, " is unreachable!");
         return null;
     }
-    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), creep.name);
     return frankencreep;
 }
 

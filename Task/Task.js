@@ -18,7 +18,7 @@ function State(func){
 }
  
 /**
- * @constructor
+ * @constructor 
  * @param {string} name 
  */
 function Task(name){
@@ -54,19 +54,19 @@ Object.defineProperty(Task.prototype, 'queue', {
  * @return {boolean} False if the creep's task is finished.
  */
 Task.prototype.run = function(creep) {
-    if (!creep.memory.task.current_state) {
-        creep.memory.task.current_state = 0;
+    if (!creep.task.current_state) {
+        creep.task.current_state = 0;
     }
-    if (creep.memory.task.current_state >= this.state_array.length ||
+    if (creep.task.current_state >= this.state_array.length ||
             creep.memory.ticks > giveup_time) {
         return false;
     }
-    let result = this.state_array[creep.memory.task.current_state].func(creep);
+    let result = this.state_array[creep.task.current_state].func(creep);
     if (!result) {
-        creep.memory.task.current_state++;
+        creep.task.current_state++;
         this.run(creep);
     }
-    if (creep.memory.task.current_state >= this.state_array.length) {
+    if (creep.task.current_state >= this.state_array.length) {
         return false;
     }
     return true;
@@ -111,17 +111,17 @@ function takeFromStore(creep) {
         }
         return false;
     }
-    if (!creep.memory.task.store_id && !creep.memory.task.source_id) { // && !creep.memory.task.resource_id) {
-        Object.assign(creep.memory.task, getEnergyForTask(creep, creep.memory.task).task);
+    if (!creep.task.store_id && !creep.task.source_id) { // && !creep.task.resource_id) {
+        Object.assign(creep.task, getEnergyForTask(creep, creep.task).task);
         //reserveSlot
-        if (creep.memory.task.source_id){
-            let source = Game.getObjectById(creep.memory.task.source_id)
-            error("reserve the slot " + creep.memory.task.source_id);
-            source.reserveSlot(Game.time + creep.memory.task.path_time, Game.time + creep.memory.task.harvest_time + creep.memory.task.path_time, creep.store.getFreeCapacity(RESOURCE_ENERGY));
+        if (creep.task.source_id){
+            let source = Game.getObjectById(creep.task.source_id)
+            error("reserve the slot " + creep.task.source_id);
+            source.reserveSlot(Game.time + creep.task.path_time, Game.time + creep.task.harvest_time + creep.task.path_time, creep.store.getFreeCapacity(RESOURCE_ENERGY));
         }
     }
-    if (creep.memory.task.store_id) {
-        let storage = Game.getObjectById(creep.memory.task.store_id);
+    if (creep.task.store_id) {
+        let storage = Game.getObjectById(creep.task.store_id);
 
         if (!storage || storage.store[RESOURCE_ENERGY] == 0) {
             return false;
@@ -130,8 +130,8 @@ function takeFromStore(creep) {
         creep.takeFrom(storage);
 
         return true;
-    } else if (creep.memory.task.source_id) {
-        let source = Game.getObjectById(creep.memory.task.source_id)
+    } else if (creep.task.source_id) {
+        let source = Game.getObjectById(creep.task.source_id)
         
         if (!source || source.energy == 0) {
             return false;
@@ -143,8 +143,8 @@ function takeFromStore(creep) {
         }
 
         return true;
-    } else if (creep.memory.task.resource_id) {
-        let resource = Game.getObjectById(creep.memory.task.resource_id);
+    } else if (creep.task.resource_id) {
+        let resource = Game.getObjectById(creep.task.resource_id);
 
         if (!resource) {
             return false;
@@ -161,7 +161,7 @@ function takeFromStore(creep) {
  * @param {Creep} creep 
  */
 function fillStructure(creep) {
-    const structure = Game.getObjectById(creep.memory.task.id);
+    const structure = Game.getObjectById(creep.task.id);
     
     if(!structure || creep.store[RESOURCE_ENERGY] == 0 || 
             structure.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {

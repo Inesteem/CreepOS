@@ -120,7 +120,7 @@ StructureSpawn.prototype.spawnMiner = function () {
     
     body.pop();
 
-    if (this.allowSpawn() && this.spawnCreep(body, newName, { memory: { role: Role.MINER } }) === OK) {
+    if (this.allowSpawn() && this.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) === OK) {
         return newName;
     }
     return "";

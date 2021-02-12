@@ -54,7 +54,7 @@ function getTarget(creep) {
     
     if(!target) return false;
 
-    creep.memory.task.id = target.id;
+    creep.task.id = target.id;
     return false;
 
 }
@@ -64,7 +64,7 @@ function getTarget(creep) {
  * @return {boolean}
  */
 function kiteTask(creep) {
-    let target = creep.memory.task.id && Game.getObjectById(creep.memory.task.id);
+    let target = creep.task.id && Game.getObjectById(creep.task.id);
 
     if (!target) {
         
@@ -99,7 +99,7 @@ task.take = function (creep, queue_task) {
     if (queue_task.priority >= 1000) {
         queue_task.priority -= 500;
     }
-    let target = creep.memory.task.id && Game.getObjectById(creep.memory.task.id);
+    let target = creep.task.id && Game.getObjectById(creep.task.id);
     let creep_task = {};
     if (target) creep_task.id = target.id;
     creep_task.id = queue_task.id;

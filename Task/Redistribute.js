@@ -1,5 +1,5 @@
-import { QueueTask, CreepTask, findQueueTask, Task, State, takeFromStore, fillStructure, } from "./Task";
-import { INFINITY, REDISTRIBUTE_DEFAULT_PRIORITY } from "../Constants";
+import { QueueTask, CreepTask, findQueueTask, Task, State, takeFromStore, fillStructure } from "./Task";
+import { INFINITY, REDISTRIBUTE_DEFAULT_PRIORITY, Role } from "../Constants";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
 import "../GameObjects/RoomPosition";
@@ -190,7 +190,7 @@ task.spawn = function(queue_task, spawn) {
     }
     body.pop();
 
-    if (body.length > 3 && spawn.spawnCreep(body, newName, {}) == OK){
+    if (body.length > 3 && spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) === OK){
         return newName;
     }
     return "";
@@ -208,7 +208,7 @@ task.creepAfter = function(creep, creep_task) {
         error (target, " is unreachable!");
         return null;
     }
-    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), creep.name);
     let energy_start = creep.store[RESOURCE_ENERGY] || creep.store.getFreeCapacity(RESOURCE_ENERGY);
     let use = Math.min(energy_start, target.store.getFreeCapacity(RESOURCE_ENERGY));
     frankencreep.store[RESOURCE_ENERGY] = energy_start - use;

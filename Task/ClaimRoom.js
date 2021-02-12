@@ -9,15 +9,15 @@ task.state_array = [
 ]
 
 function goToRoom(creep) {
-    if (!creep.memory.task.id) {
+    if (!creep.task.id) {
         const flags = getUnclaimedFlags();
         if (flags.length > 0) {
-            creep.memory.task.id = flags[0].name;
+            creep.task.id = flags[0].name;
         } else {
             return false;
         }
     }
-    let flag = Game.flags[creep.memory.task.id];
+    let flag = Game.flags[creep.task.id];
     if (!flag) return false;
     if (flag.room === creep.room) {
         return false;
@@ -31,7 +31,7 @@ function goToRoom(creep) {
  * @param {Creep} creep 
  */
 function claimRoom(creep) {
-    let flag = /** @type Flag */ (Game.flags[creep.memory.task.id]);
+    let flag = /** @type Flag */ (Game.flags[creep.task.id]);
     if (!flag) return false;
     
     if (flag.room !== creep.room) return false;

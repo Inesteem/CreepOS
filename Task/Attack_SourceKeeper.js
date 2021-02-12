@@ -16,7 +16,7 @@ task.state_array = [
  * @return {boolean}
  */
 function goToRoomWithSourceKeeper(creep) {
-    if (!creep.memory.task.id){
+    if (!creep.task.id){
         const roomsToClaim = getRoomsToClaim();
         for (let room of roomsToClaim) {
             
@@ -26,15 +26,15 @@ function goToRoomWithSourceKeeper(creep) {
 
             if (source_keeper_lairs.length > 0){
                 let target = source_keeper_lairs[0];
-                creep.memory.task.id = target.id;
+                creep.task.id = target.id;
                 break;
             }
         }
     }
-    if (!creep.memory.task.id)
+    if (!creep.task.id)
         return false;
     
-    let target = /**@type {Structure} */ (Game.getObjectById(creep.memory.task.id));
+    let target = /**@type {Structure} */ (Game.getObjectById(creep.task.id));
     if (!target) return false;
     
     if(target.room.name === creep.room.name) return false;
@@ -48,17 +48,17 @@ function goToRoomWithSourceKeeper(creep) {
  */
 function attackTarget(creep) {
     
-    if (!creep.memory.task.target_id){
+    if (!creep.task.target_id){
         let source_keeper = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS, {
             filter : creep => creep.owner.username === "Source Keeper"
         });
 
         if (!source_keeper) return false;
         
-        creep.memory.task.target_id = source_keeper.id;
+        creep.task.target_id = source_keeper.id;
     }
 
-    let target = Game.getObjectById(creep.memory.task.target_id);
+    let target = Game.getObjectById(creep.task.target_id);
     if (!target) return false;
 
     creep.fight(target);

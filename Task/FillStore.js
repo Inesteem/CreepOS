@@ -17,13 +17,13 @@ task.state_array = [
  * @param {Creep} creep 
  */
 function harvest(creep) {
-    creep.memory.task.store_id = undefined;
+    creep.task.store_id = undefined;
 
-    if (!creep.memory.task.id){
+    if (!creep.task.id){
         creep.say("no task id");
         return false;
     }
-    let source = Game.getObjectById(creep.memory.task.id);
+    let source = Game.getObjectById(creep.task.id);
 
 //    if (source.energy == 0) return true;
 
@@ -52,21 +52,21 @@ function harvest(creep) {
  */
 function fillStore(creep) {
     let target = null;
-    if (!creep.memory.task.store_id) {
+    if (!creep.task.store_id) {
         target = creep.pos.findClosestStructure((s) => {
             return (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_CONTAINER ) &&
                 s.store.getFreeCapacity(RESOURCE_ENERGY) >= creep.store[RESOURCE_ENERGY];
         });
         
         if (target) {
-            creep.memory.task.store_id = target.id;
+            creep.task.store_id = target.id;
         }
     } else {
-        target = Game.getObjectById(creep.memory.task.store_id);
+        target = Game.getObjectById(creep.task.store_id);
     }
 
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
-        creep.memory.task.store_id = undefined;
+        creep.task.store_id = undefined;
         return false;
     }
     creep.storeAt(target);
@@ -211,7 +211,7 @@ task.creepAfter = function(creep, creep_task) {
     //     error (target, " is unreachable!");
     //     return null;
     // }
-    // let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), "Franky");
+    // let frankencreep = new Frankencreep(freePositions[0], creep.body.map((part) => part.type), creep.name);
     // return frankencreep;
 }
 

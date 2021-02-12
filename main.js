@@ -43,6 +43,8 @@ module.exports.loop = function () {
     }
     
     defense_monitor();
+
+    schedule();
     
     for (let creep of Object.values(Game.creeps)) {
         creep.memory.spawning = undefined;
@@ -56,8 +58,6 @@ module.exports.loop = function () {
         }
         runTask(creep,1);
     }
-
-    schedule();
 
     SpawnMachine_monitor();
 

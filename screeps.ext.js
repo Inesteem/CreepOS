@@ -697,3 +697,7 @@ var CONTROLLER_STRUCTURES;
 
 /** @const Array<string> */
 var OBSTACLE_OBJECT_TYPES;
+
+var _ = {
+    merge: function(a, b) {}
+}

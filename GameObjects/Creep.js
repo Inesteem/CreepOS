@@ -1,10 +1,62 @@
-import { INFINITY, PATH_REUSE_TICKS } from "../Constants";
+import { INFINITY, PARALLEL_CONTAINER_BUILD_NUM, PATH_REUSE_TICKS } from "../Constants";
 import { error } from "../Logging";
+import { Frankencreep } from "../FrankenCreep";
 import "./Game";
 import "./Source";
 import "./Room";
 
+Object.defineProperty(Creep.prototype, 'tasks', {
+    get: function() {
+        let self = this;
+        if(!self.memory.tasks) {
+            self.memory.tasks = [];
+        }
+        return self.memory.tasks;
+    },
+    set: function(value) {
+        let self = this;
+        self.memory.tasks = value;
+    }
+});
 
+Object.defineProperty(Creep.prototype, 'task', {
+    get: function() {
+        let self = this;
+        if(!self.tasks.length) {
+           return null; 
+        }
+        return self.tasks[0];
+    }
+});
+
+Creep.prototype.future_self = {};
+
+Object.defineProperty(Creep.prototype, 'future_self', {
+    get: function() {
+        error("get future self");
+        let self = this;
+        if (self.tasks.length == 0) return null;
+        let time = Game.time;
+        if (self.tasks.length)
+            time += (self.tasks[0].estimated_time - self.memory.ticks);
+        for (let i = 1; i < self.tasks.length; ++i) {
+            time += self.tasks[i].estimated_time;
+        }
+        let franky = new Frankencreep(
+            new RoomPosition(self.pos.x, self.pos.y, self.pos.roomName),
+            self.body.map((part) => part.type),
+            self.name
+        );
+        franky.time = time;
+        let creep_after = self.tasks[self.tasks.length - 1].creep_after;
+        //_.merge(franky, self.tasks[self.tasks.length - 1].creep_after);
+        franky.pos.x = creep_after.pos.x;
+        franky.pos.y = creep_after.pos.y;
+        franky.pos.roomName = creep_after.pos.roomName;
+        franky.store.energy = creep_after.store.energy;
+        return franky;
+    }
+});
 
 Creep.prototype.harvestClosest = function (){
     const target = /** @type {Source | null} */ (this.pos.findClosestByPath(FIND_SOURCES_ACTIVE));
@@ -139,24 +191,24 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
 
     let matrix = this.getCostMatrix();
 
-    if (resources.length) {
-        let result = PathFinder.search(
-            this.pos,
-            resources.map( (resource) => { return {pos: resource.pos, range: 0}; }),
-            Object.assign(matrix, {maxCost: best_time || 2000, maxRooms: max_rooms || 16})
-        )
-        if (!result.incomplete && (!best_time || result.cost < best_time)) {
-            best_time = result.cost;
-            let position = result.path.pop() || this.pos;
-            best_target = {
-                type: FIND_DROPPED_RESOURCES,
-                path_time: result.cost,
-                object: position
-                    .lookFor(LOOK_RESOURCES)
-                    .find(resource => resource.resourceType === RESOURCE_ENERGY)
-            };
-        }
-    }
+    // if (resources.length) {
+    //     let result = PathFinder.search(
+    //         this.pos,
+    //         resources.map( (resource) => { return {pos: resource.pos, range: 0}; }),
+    //         Object.assign(matrix, {maxCost: best_time || 2000, maxRooms: max_rooms || 16})
+    //     )
+    //     if (!result.incomplete && (!best_time || result.cost < best_time)) {
+    //         best_time = result.cost;
+    //         let position = result.path.pop() || this.pos;
+    //         best_target = {
+    //             type: FIND_DROPPED_RESOURCES,
+    //             path_time: result.cost,
+    //             object: position
+    //                 .lookFor(LOOK_RESOURCES)
+    //                 .find(resource => resource.resourceType === RESOURCE_ENERGY)
+    //         };
+    //     }
+    // }
     
     error("containers", containers);
     if (containers.length) {

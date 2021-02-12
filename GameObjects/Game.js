@@ -54,6 +54,14 @@ export function initGame() {
         if (!stores.length) return 0;
         return stores[0][type]; 
     }
+
+    /**
+     * 
+     * @param {(function(Creep):boolean)=} filter 
+     */
+    Game.findCreeps = function(filter) {
+        return Object.values(Game.creeps).filter((creep) => !filter || filter(creep));
+    }
 }
 
 
