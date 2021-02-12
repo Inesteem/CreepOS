@@ -107,7 +107,7 @@ function takeFromStore(creep) {
         );
         if(sources.length){
             creep.moveAwayFrom(sources[0], 2);
-            return true;
+            return false;
         }
         return false;
     }

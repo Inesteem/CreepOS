@@ -33,7 +33,6 @@ Creep.prototype.future_self = {};
 
 Object.defineProperty(Creep.prototype, 'future_self', {
     get: function() {
-        error("get future self");
         let self = this;
         if (self.tasks.length == 0) return null;
         let time = Game.time;

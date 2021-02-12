@@ -54,21 +54,28 @@ Object.defineProperty(Source.prototype, 'reservedSlots', {
 Source.prototype.hasFreeSlot = function(arrival_time, finish_time, energy){
     let spots = this.pos.getAdjacentGenerallyWalkables().length; 
     let takenSpots = 0;//spots - this.pos.getAdjacentWalkables().length;
-    
+    let rate = 0; 
     //time that a creep may wait at a source for a free spot
-    let ok_wait_time = 0;
-    
     for (let slot of this.reservedSlots){
         //since the list is sorted with respect to the arrival time,
         //we can finish counting if the arrival time of the current slot
         //is way after the finish_time 
-        if(slot.arrival > (finish_time - ok_wait_time)) break;
+        if(slot.arrival > finish_time) break;
         //count only slots that interfere with the creeps arrival time
-        if(slot.finish > (arrival_time + ok_wait_time)) 
+        if(slot.finish > arrival_time){
+            let start_time = Math.max(arrival_time, slot.arrival);
+            let end_time = Math.min(slot.finish, finish_time);
+            let slot_time = slot.finish-slot.arrival;
+            let time = finish_time-arrival_time;
+            rate += (slot.energy / slot_time) * ((end_time-start_time)/time);
             ++takenSpots;
+        }
     }
-    error(takenSpots , " / ", spots);
-   return spots>takenSpots;
+
+    const max_rate = 10;
+
+    error("slots: ", takenSpots , " / ", spots, "rate:   ", rate, " / ", max_rate);
+   return (spots>takenSpots) && (rate < max_rate);
 }
 
 Source.prototype.reserveSlot = function(arrival_time, finish_time, energy){

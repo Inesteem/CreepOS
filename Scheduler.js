@@ -92,7 +92,7 @@ function schedule() {
         let best_rating = {fit: 0, time: INFINITY};
         for (let creep of workers) {
             let future_creep = creep.future_self || creep;
-            error("future_self", future_creep);
+          //  error("future_self", future_creep);
             if (future_creep && future_creep.time && future_creep.time >= Game.time + 200) continue;
             let creep_rating = getTaskFit(future_creep, task, best_rating.fit);
             if (creep_rating.fit > best_rating.fit) {
