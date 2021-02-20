@@ -12,6 +12,7 @@ function Frankencreep(pos, body_parts, name) {
     this.pos = pos;
     this.name = name;
     this.room = Game.rooms[pos.roomName];
+    Memory.creeps = Memory.creeps || {};
     Memory.creeps[name] = Memory.creeps[name] || {};
     this.memory = Memory.creeps[name];
     this.body = body_parts.map(part => { return {type: part, boost: "", hits: 1000}; });
