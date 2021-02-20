@@ -116,6 +116,7 @@ RoomPosition.prototype.getAdjacentStructures = function(filter) {
  * @return {number} INFINITY if cost > maxcost, else estimated path costs
  */
 RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, maxRooms) {
+    if (maxCost <= 0) return INFINITY;
     range = 1;
     let self = this;
     // Save how often path costs was called for room areas.
@@ -143,7 +144,7 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
     let callsA=Memory.estimatePathCosts[pos.roomName][posX][posY]++;
     let callsB=Memory.estimatePathCosts[self.roomName][selfX][selfY]++;
    
-    let cost_matrix = Game.rooms[this.roomName].getCostMatrix();
+    let cost_matrix = Game.getCostMatrix();
     let result = PathFinder.search(self, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
     if (result.incomplete) {
         return INFINITY;
@@ -255,7 +256,7 @@ RoomPosition.prototype.findClosestActiveSource = function(maxCost, maxRooms) {
         sources = sources.concat(room.find(FIND_SOURCES_ACTIVE));
     }
 
-    return /**@type Source */ (this.findClosestTarget(sources, 1, maxCost || 2000, maxRooms || 16));
+    return /**@type Source */ (this.findClosestTarget(sources, 1, Game.getCostMatrix(), maxCost || 2000, maxRooms || 16).target);
 }
 
 /**
@@ -272,31 +273,35 @@ RoomPosition.prototype.findClosestStructure = function(filter, maxCost, maxRooms
     for (let room of rooms) {
         structures = structures.concat(room.find(FIND_STRUCTURES, {filter: filter}));
     }
-
-    return this.findClosestTarget(structures, 1, maxCost || 2000, maxRooms || 16);
+    let result = this.findClosestTarget(structures, 1, Game.getCostMatrix());
+    if(result) return result.target;
+    return null;
 }
 
 /**
  * 
- * @param {Array<{pos: RoomPosition}>} targets
- * @param {number=} range 
- * @param {number=} maxCost 
- * @param {number=} maxRooms
- * @return {Object} The closest target or null if none is in range. 
+ * @param {Array<RoomObject>} targets
+ * @param {number} range 
+ * @param {!Object} cost_matrix
+ * @param {number=} max_time 
+ * @param {number=} max_rooms
+ * @return {?{result: {cost: number}, target: RoomObject}} The closest target or null if none is reachable. 
  */
-RoomPosition.prototype.findClosestTarget = function(targets, range, maxCost, maxRooms) {
-    if (!targets || !targets.length) return null;
-
-    let bestTarget = null;
-    let bestCost = maxCost || 2000;
-    for (let target of targets) {
-        let result = PathFinder.search(this, {pos: target.pos, range: range}, {maxCost: bestCost, maxRooms: maxRooms || 10});
-        if (result.incomplete) continue;
-        if (result.cost < bestCost) { // This should always be the case.
-            bestCost = result.cost;
-            bestTarget = target;
+RoomPosition.prototype.findClosestTarget = function(targets, range, cost_matrix, max_time, max_rooms) {
+    let result = PathFinder.search(
+        this,
+        targets.map(target => { return {pos: target.pos, range: range}; }), 
+        Object.assign(cost_matrix, {maxCost: max_time || 2000, maxRooms: max_rooms || 16})
+    );
+    if (!result.incomplete) {
+        let position = result.path.pop() || this;
+        targets = targets.filter((target) => 
+            Math.abs(target.pos.x - position.x) <= range
+            && Math.abs(target.pos.y - position.y) <= range
+            && target.pos.roomName === position.roomName);
+        if (targets.length) {
+            return {result: result, target: targets[0]};
         }
     }
-
-    return bestTarget;
+    return null;
 }

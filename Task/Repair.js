@@ -120,7 +120,7 @@ task.take = (creep, queue_task) => {
     
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
-    
+
     return creep_task;
 }
 

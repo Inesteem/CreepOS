@@ -86,7 +86,7 @@ task.take = function(creep, queue_task) {
     creep_task.name = queue_task.name;
 
     queue_task.priority = UPGRADE_LOW_PRIORITY;
-    
+
     return creep_task;
 }
 

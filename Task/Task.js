@@ -197,7 +197,6 @@ function getEnergyForTask(creep, queue_task, max_time) {
     if (energy.type == FIND_STRUCTURES) {
         return {task: {store_id: energy.object.id}, object: energy.object};
     } else if (energy.type == FIND_SOURCES) {
-        error("fetched: " + energy.object.id);
         return {task: {source_id: energy.object.id, path_time: energy.path_time, harvest_time: energy.harvest_time}, object: energy.object};  
     } else {
         return {task: {drop_id: energy.object.id}, object: energy.object};
@@ -209,9 +208,10 @@ function getEnergyForTask(creep, queue_task, max_time) {
  * 
  * @param {string} task_name 
  * @param {string} id 
- * @return {QueueTask}
+ * @return {QueueTask | null}
  */
 function findQueueTask(task_name, id) {
+    if (!Memory.new_tasks[task_name]) return null;
     return Memory.new_tasks[task_name].find(queue_task => queue_task.id === id);
 }
 export {

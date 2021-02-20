@@ -57,6 +57,13 @@ module.exports.loop = function () {
             }
         }
         runTask(creep,1);
+        
+        if (creep.ticksToLive <= 1) {
+            while(creep.tasks) {
+                completeTask(creep);
+                creep.tasks.shift();
+            }
+        }
     }
 
     SpawnMachine_monitor();
@@ -64,16 +71,10 @@ module.exports.loop = function () {
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name] && !Memory.creeps[name].spawning) {
-            //TODO
-            if (Memory.creeps[name].task) {
-                completeTask({memory : Memory.creeps[name]});
-            }
-            Memory.creeps[name].task_queue = Memory.creeps[name].task_queue || [];
-            while(Memory.creeps[name].task_queue && Memory.creeps[name].task_queue.length) {
-                Memory.creeps[name].task = Memory.creeps[name].task_queue.shift();
-                completeTask({memory : Memory.creeps[name]});
-            }
             //completeTask(/**@type Creep */ ({id : "id", memory : Memory.creeps[name]}));
+            if (Memory.creeps.task_queue) {
+                error ("dead creep has tasks: ", Memory.creeps.task_queue.length);
+            }
             delete Memory.creeps[name];
        //     task_machine.createCollectDroppedEnergyTasks();
         } 

@@ -101,7 +101,6 @@ task.take = (creep, queue_task) => {
     let creep_task = {};
     
     creep_task.creep_exp_fill = add_energy;
-    
      
 
     creep_task.store_id = container.id;

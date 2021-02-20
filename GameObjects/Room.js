@@ -105,7 +105,7 @@ Room.prototype.hasExcessEnergy = function(req_energy) {
         // error(source.id + " has free spot: " + source.hasFreeSpot());
         // error(source.id + " has miner: " + source.hasMiner());
         // error(source.id + " has relevant miner: " + !(!source.hasMiner()|| (this.controller && this.controller.level < 3)));
-        if ((!source.hasMiner() || (this.controller && this.controller.level < 3)) && freeSlot) return true;
+        if (freeSlot) return true;
     }
     return false;
 }
@@ -148,6 +148,10 @@ Room.prototype.spawnCreep = function(body, name, opt) {
     return ERR_NO_SPAWN;
 }
 
+Room.prototype.findContainer = function() {
+    return this.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}});
+}
+
 Room.prototype.allowSpawn = function() {
     var num_creeps = Game.numCreeps();
     var max_cost = this.energyCapacityAvailable;
@@ -155,35 +159,4 @@ Room.prototype.allowSpawn = function() {
     let energy_req = num_creeps * num_creeps * num_creeps + 300;
     info("spawn requires energy: ", Math.min(max_cost, energy_req), " we have ", energy, " at ", this);
     return energy >= Math.min(max_cost, energy_req); 
-}
-
-Room.prototype.getCostMatrix = function(fatigue_base, fatigue_decrease) {
-    if (!fatigue_decrease) fatigue_decrease = 0;
-    if (!fatigue_base) fatigue_base = 1;
-return {
-
-    plainCost: Math.max(1, 2 * fatigue_base - fatigue_decrease),
-    swampCost: Math.max(1, 10 * fatigue_base - fatigue_decrease),
-
-    roomCallback: function(roomName) {
-        let costs = new PathFinder.CostMatrix;
-        let room = Game.rooms[roomName];
-        if (!room) return costs;
-
-       room.find(FIND_STRUCTURES).forEach(function(struct) {
-           if (struct.structureType === STRUCTURE_ROAD) {
-               // Favor roads over plain tiles
-               let cost = Math.max(1, fatigue_base - fatigue_decrease);
-               costs.set(struct.pos.x, struct.pos.y, cost);
-           } else if (struct.structureType !== STRUCTURE_CONTAINER &&
-                  (struct.structureType !== STRUCTURE_RAMPART ||
-                   !struct.my)) {
-               // Can't walk through non-walkable buildings
-               costs.set(struct.pos.x, struct.pos.y, 0xff);
-           }
-       });
-
-        return costs;
-    }
-};   
 }

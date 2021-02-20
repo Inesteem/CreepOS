@@ -65,6 +65,8 @@ function schedule() {
                 creep.tasks.push({name: task_kite.name});
             } else if (creep.memory.role === Role.SLAYER) {
                 creep.tasks.push({name: task_attack_source_keeper.name});
+            } else if (creep.memory.role === Role.MINER) {
+                creep.tasks.push({name: task_fill_store.name});
             }
         } 
         if (creep.memory.role === Role.WORKER) {
@@ -84,16 +86,15 @@ function schedule() {
     // TODO
     let x = 0;
     for(let task of task_queue_sorted) {
-        error (task);
         ++x;
-        if (x >= 100) break; 
+        if (x >= 20) break; 
 
         let best_creep_name = "";
         let best_rating = {fit: 0, time: INFINITY};
         for (let creep of workers) {
             let future_creep = creep.future_self || creep;
           //  error("future_self", future_creep);
-            if (future_creep && future_creep.time && future_creep.time >= Game.time + 200) continue;
+            if (future_creep && future_creep.time && future_creep.time >= Game.time + 50) continue;
             let creep_rating = getTaskFit(future_creep, task, best_rating.fit);
             if (creep_rating.fit > best_rating.fit) {
                 best_creep_name = creep.name;
@@ -142,7 +143,7 @@ function schedule() {
         
         let target = Game.getObjectById(queue_task.id);
         if (!target) { continue; }
-        let spawn = target.pos.findClosestTarget(spawns);
+        let spawn = target.pos.findClosestTarget(spawns, 1, Game.getCostMatrix()).target;
         if (!spawn || !spawn.allowSpawn()) continue;
         info("spawning for: " , queue_task.name, " - ", queue_task.priority , "   ", queue_task.id, " ", Game.getObjectById(queue_task.id).pos);
         spawns.splice(spawns.indexOf(spawn), 1);
@@ -154,21 +155,13 @@ function schedule() {
             spawn.spawnKevin();
             continue;
         }
-        let creep_name;
-        creep_name = task_mapping[queue_task.name].spawn(queue_task, spawn);
-        if (creep_name !== "") {
-            // TODO improve this section.
-            let creep = new Frankencreep(spawn.pos, [WORK, CARRY, MOVE], creep_name);
-            creep.memory.spawning = true;
-            let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
-            creep.tasks.push(creep_task);
-        }
+        task_mapping[queue_task.name].spawn(queue_task, spawn);
     }
 }
 
 /**
  * 
- * @param {{memory : Object}} creep 
+ * @param {Creep} creep 
  */
 function completeTask(creep) {
     if (!creep.task) return;
@@ -197,7 +190,7 @@ function increasePriorities() {
  * @return {{fit: number, time: number}} 
  */
 function getTaskFit(creep, queue_task, best_fit) {
-    let floor_priority = Math.floor(queue_task.priority/PRIORITY_LEVEL_STEP) * PRIORITY_LEVEL_STEP;
+    let floor_priority = Math.floor(queue_task.priority/PRIORITY_LEVEL_STEP) * PRIORITY_LEVEL_STEP + 1;
     let max_time = best_fit ? floor_priority / best_fit : undefined;
 
     if (max_time && max_time < 2) return {fit: 0, time: INFINITY};

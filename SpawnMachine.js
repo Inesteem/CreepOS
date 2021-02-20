@@ -13,7 +13,7 @@ function getMaxMinerNum(room) {
     let max_miner_num = 0;
 
     for (let source of sources){
-        max_miner_num += Math.min(1,source.pos.getAdjacentWalkables().length);
+        max_miner_num += Math.min(1,source.pos.getAdjacentGenerallyWalkables().length);
     }
     return max_miner_num;
 
@@ -23,7 +23,7 @@ function monitor() {
     var scout_num = Game.numCreeps((creep) => creep.memory.role == Role.SCOUT);
     var to_claim = getUnclaimedFlags().length > 0;
     for (let room of Game.getOurRooms()) {
-        //var mom_worker_num = Game.numCreeps((creep) => creep.memory.role == Role.WORKER && creep.room === room);
+        var mom_worker_num = Game.numCreeps((creep) => creep.memory.role == Role.WORKER && creep.room === room);
         var mom_miner_num = Game.numCreeps((creep) => creep.memory.role == Role.MINER && creep.room === room);
         var max_miner_num = getMaxMinerNum(room);
         let spawns = room.findSpawns();
@@ -32,10 +32,10 @@ function monitor() {
             //    info("Attempting to spawn worker: " + mom_worker_num + " vs " + MAX_WORKER_NUM);
                 //if(spawn.spawnKevin() === OK) continue;
             //}
-            // if (getNoOwnerStructures(room, STRUCTURE_CONTAINER).length > 0 && mom_miner_num < max_miner_num) {
-            //     info("Attempting to spawn miner: " + mom_miner_num + " vs " + max_miner_num);
-            //     if(spawn.spawnMiner() === OK) continue;
-            // }
+            if (room.findContainer().length > 0 && mom_miner_num < max_miner_num) {
+                error("Attempting to spawn miner: " + mom_miner_num + " vs " + max_miner_num);
+                if(spawn.spawnMiner() !== "") continue;
+            }
             if (to_claim && scout_num < MAX_SCOUT_NUM) {
                 if (spawn.spawnScout() === OK) scout_num += 1;
             }
@@ -120,7 +120,8 @@ StructureSpawn.prototype.spawnMiner = function () {
     
     body.pop();
 
-    if (this.allowSpawn() && this.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) === OK) {
+    if ((body.length == 8 || this.allowSpawn()) && this.spawnCreep(body, newName, {memory: {role: Role.MINER}}) === OK) {
+        error("spawn miner success");
         return newName;
     }
     return "";

@@ -27,7 +27,9 @@ function getTarget(creep) {
     
     //hostile creeps in own rooms
     if (!target) {
-        target = creep.pos.findClosestTarget(enemies,3,1000,5);
+        let result = creep.pos.findClosestTarget(enemies,3,creep.getCostMatrix(),1000,5);
+        if (result)
+            target = result.target;
     }
     
     //TODO: hostile structures in own rooms

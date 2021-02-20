@@ -33,8 +33,9 @@ task.updateQueue = function() {
     // Update the new task map
     Memory.new_tasks[this.name] = Memory.new_tasks[this.name] || [];
     for (let structure of structures) {
-        if (!Memory.new_tasks[this.name].find
-                (fill_task => fill_task.id == structure.id)) {
+        let task = Memory.new_tasks[this.name].find
+        (fill_task => fill_task.id == structure.id);
+        if (!task) {
             let queue_task = {id: structure.id || "", name: this.name, priority: 0};
             prioritize(queue_task, structure.structureType);
             Memory.new_tasks[this.name].push(queue_task);
@@ -99,8 +100,6 @@ task.take = (creep, queue_task) => {
     creep_task.id = queue_task.id;
     creep_task.name = queue_task.name;
    
-    
-    
     return creep_task;
 }
 

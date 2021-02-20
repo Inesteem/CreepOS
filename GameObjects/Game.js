@@ -62,6 +62,42 @@ export function initGame() {
     Game.findCreeps = function(filter) {
         return Object.values(Game.creeps).filter((creep) => !filter || filter(creep));
     }
+
+    /**
+     * 
+     * @param {number=} fatigue_base 
+     * @param {number=} fatigue_decrease 
+     */
+    Game.getCostMatrix = function(fatigue_base, fatigue_decrease) {
+        if (fatigue_decrease === undefined) fatigue_decrease = 0;
+        if (fatigue_base === undefined) fatigue_base = 1;
+    return {
+    
+        plainCost: Math.max(1, 2 * fatigue_base - fatigue_decrease),
+        swampCost: Math.max(1, 10 * fatigue_base - fatigue_decrease),
+    
+        roomCallback: function(roomName) {
+            let costs = new PathFinder.CostMatrix;
+            let room = Game.rooms[roomName];
+            if (!room) return costs;
+    
+           room.find(FIND_STRUCTURES).forEach(function(struct) {
+               if (struct.structureType === STRUCTURE_ROAD) {
+                   // Favor roads over plain tiles
+                   let cost = Math.max(1, fatigue_base - fatigue_decrease);
+                   costs.set(struct.pos.x, struct.pos.y, cost);
+               } else if (struct.structureType !== STRUCTURE_CONTAINER &&
+                      (struct.structureType !== STRUCTURE_RAMPART ||
+                       !struct.my)) {
+                   // Can't walk through non-walkable buildings
+                   costs.set(struct.pos.x, struct.pos.y, 0xff);
+               }
+           });
+    
+            return costs;
+        }
+    };   
+    }
 }
 
 

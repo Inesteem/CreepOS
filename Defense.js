@@ -51,7 +51,7 @@ function kite(creep){
     let target = creep.pos.findClosestByRange(enemies);
     
     if (!target) {
-        target = creep.pos.findClosestTarget(enemies,1000,5);
+        target = creep.pos.findClosestTarget(enemies,1000,5).target;
     }
     if(!target) {
         const roomsToClaim = getRoomsToClaim();

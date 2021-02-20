@@ -421,6 +421,8 @@ Creep.prototype.store;
 /** @type {string} */
 Creep.prototype.id;
 Creep.prototype.memory;
+/** @type {number} */
+Creep.prototype.ticksToLive;
 
 /**
  * @constructor

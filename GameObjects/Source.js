@@ -1,4 +1,4 @@
-import { error } from "../Logging"
+import { error, info } from "../Logging"
 
 
 
@@ -74,7 +74,7 @@ Source.prototype.hasFreeSlot = function(arrival_time, finish_time, energy){
 
     const max_rate = 10;
 
-    error("slots: ", takenSpots , " / ", spots, "rate:   ", rate, " / ", max_rate);
+   info("slots: ", takenSpots , " / ", spots, "rate:   ", rate, " / ", max_rate);
    return (spots>takenSpots) && (rate < max_rate);
 }
 
