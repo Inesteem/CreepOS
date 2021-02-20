@@ -130,50 +130,32 @@ task.estimateTime = function(creep, queue_task, max_time) {
     return path_costs + upgrade_time;
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number} min_value
+ * @this {Task} 
+ */
+task.eval_func = function(creep, queue_task, min_value) {
+    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+
+    let max_time = min_value ? energy/min_value : undefined;
+
+    let time = this.estimateTime(creep, queue_task, max_time);
+    if (time == INFINITY) return 0;
+    return energy/time;
+}
+/**
+ * 
+ * @param {QueueTask} queue_task 
+ * @param {StructureSpawn} spawn
+ * @return {number} 
+ * @this {Task}
+ */
 task.spawn = function(queue_task, spawn) {
-    if (!spawn.allowSpawn()) return "";
-
-    let parts = [MOVE, CARRY, WORK];
-    let body = [MOVE, CARRY, WORK];
-
-    let newName = "Ash" + Game.time;
-    let pos = Game.getObjectById(queue_task.id).pos; //TODO: check if null
-    let container = pos.findClosestStructure ((structure => {
-        return structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE; 
-    }));
-  //  error("container ", container.pos);
-  //  error("controller ", pos);
-    if (!container) {
-        return spawn.spawnKevin();
-    }
-    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
-        let best_part = MOVE;
-        let best_eff = 0;
-        for (let part of parts){
-            body.push(part);
-            let frankencreep = new Frankencreep(container.pos, body, "Franki");
-            let carry = body.filter(x => x == CARRY).length * 50;
-            let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
-            //error(body, time, " ", carry);
-            if (time == null || time == INFINITY) {
-                body.pop();
-                continue;
-            }
-            let eff = carry/time;
-            //error(body, eff);
-            if(best_eff < eff){
-                best_eff = eff;
-                best_part = part;
-            }
-            body.pop();
-        }
-        body.push(best_part);
-    }
-    body.pop();
-    if (body.length > 3 &&  spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) == OK) {
-        return newName;
-    }
-    return "";
+    let self = this;
+    return spawn.spawnWithEvalFunc((creep) => self.eval_func(creep, queue_task, 0), "Ash" + Game.time, {role: Role.WORKER});
 }
 
 /**

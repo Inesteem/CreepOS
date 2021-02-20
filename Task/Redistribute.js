@@ -166,33 +166,34 @@ task.estimateTime = function(creep, queue_task, max_time) {
     
     return work_path_time + energy_path_time;
 }
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number} min_value
+ * @this {Task} 
+ */
+task.eval_func = function(creep, queue_task, min_value) {
+    let structure = Game.getObjectById(queue_task.id);
+    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+    let req_energy = structure.store.getFreeCapacity(RESOURCE_ENERGY);
+    let add_energy = Math.min(req_energy, energy);
 
+    let max_time = min_value ? add_energy/min_value : undefined;
+
+    let time = this.estimateTime(creep, queue_task, max_time);
+    return add_energy/time;
+}
+/**
+ * 
+ * @param {QueueTask} queue_task 
+ * @param {StructureSpawn} spawn
+ * @return {number} 
+ * @this {Task}
+ */
 task.spawn = function(queue_task, spawn) {
-    let stored_energy = spawn.room.storedEnergy();
-
-    let parts = [];
-    let body = [];
-    if (stored_energy > 500) {
-        body = [MOVE, CARRY, CARRY];
-        parts = [MOVE, CARRY];
-    } else {
-        body = [MOVE, CARRY, CARRY, WORK];
-        parts = [MOVE, MOVE, CARRY, WORK];
-    }
-
-    let newName = "Yak" + Game.time;
-    let idx = 0;
-
-    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
-        body.push(parts[idx]);
-        idx = (idx + 1) % parts.length;
-    }
-    body.pop();
-
-    if (body.length > 3 && spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) === OK){
-        return newName;
-    }
-    return "";
+    let self = this;
+    return spawn.spawnWithEvalFunc((creep) => self.eval_func(creep, queue_task, 0), "Yak" + Game.time, {role: Role.WORKER});
 }
 
 /**

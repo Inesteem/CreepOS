@@ -151,10 +151,10 @@ function schedule() {
         var num_creeps = Game.numCreeps();
         var num_rooms = Game.getOurRooms().length;
         var num_creeps_per_room = Math.floor(num_creeps / num_rooms);
-        if (num_creeps_per_room < 2) {
-            spawn.spawnKevin();
-            continue;
-        }
+        // if (num_creeps_per_room < 2) {
+        //     spawn.spawnKevin();
+        //     continue;
+        // }
         task_mapping[queue_task.name].spawn(queue_task, spawn);
     }
 }

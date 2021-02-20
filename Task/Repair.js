@@ -173,51 +173,34 @@ task.finish = (creep, creep_task) => {
     }
 }
 
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number} min_value
+ * @this {Task} 
+ */
+task.eval_func = function(creep, queue_task, min_value) {
+    let structure = Game.getObjectById(queue_task.id);
+    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+    let req_energy = (structure.hitsMax - structure.hits)/100;
+    let add_energy = Math.min(req_energy, energy);
+
+    let max_time = min_value ? add_energy/min_value : undefined;
+
+    let time = this.estimateTime(creep, queue_task, max_time);
+    return add_energy/time;
+}
+/**
+ * 
+ * @param {QueueTask} queue_task 
+ * @param {StructureSpawn} spawn
+ * @return {number} 
+ * @this {Task}
+ */
 task.spawn = function(queue_task, spawn) {
-    if (!spawn.allowSpawn()) return;
-
-    let parts = [MOVE, CARRY, WORK];
-    let body = [MOVE, CARRY, WORK];
-
-    let newName = "Mario" + Game.time;
-    let structure = Game.getObjectById(queue_task.id); //TODO: check if null
-    let pos = structure.pos;
-    let container = pos.findClosestStructure ((structure => {
-        return structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE; 
-    }));
-    if (!container) {
-        return spawn.spawnKevin();
-    }
-
-    let to_repair = (structure.hitsMax - structure.hits)/100;
-
-    let best_eff = 0;
-    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
-        let best_part = "none";
-        for (let part of parts){
-            body.push(part);
-            let frankencreep = new Frankencreep(container.pos, body, "Franky");
-            let carry = body.filter(x => x == CARRY).length * 50;
-            let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
-            if (time == null || time == INFINITY) {
-                body.pop();
-                continue;
-            }
-            let eff = Math.min(to_repair,carry)/time;
-            if(best_eff < eff){
-                best_eff = eff;
-                best_part = part;
-            }
-            body.pop();
-        }
-        if (best_part !== "none")
-            body.push(best_part);
-    }
-    body.pop();
-    if (body.length > 3 && (spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) === OK)) {
-        return newName;
-    }
-    return "";
+    let self = this;
+    return spawn.spawnWithEvalFunc((creep) => self.eval_func(creep, queue_task, 0), "Mario" + Game.time, {role: Role.WORKER});
 }
 
 /**

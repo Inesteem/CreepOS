@@ -1,6 +1,7 @@
 import { error, info, warning } from "../Logging";
 import "../GameObjects/RoomPosition";
 import "../GameObjects/Creep";
+import { INFINITY } from "../Constants";
 
 /** @typedef {{id: string, priority: number, name: string}} */
 export var QueueTask;
@@ -84,8 +85,16 @@ Task.prototype.finish = function() {
     error("finish not implemented for ", this.name);
 }
 
-Task.prototype.estimateTime = function() {
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number=} max_time 
+ * @return {number}
+ */
+Task.prototype.estimateTime = function(creep, queue_task, max_time) {
     error("estimateTime not implemented for ", this.name);
+    return INFINITY;
 }
 
 Task.prototype.spawn = function() {
@@ -115,8 +124,7 @@ function takeFromStore(creep) {
         Object.assign(creep.task, getEnergyForTask(creep, creep.task).task);
         //reserveSlot
         if (creep.task.source_id){
-            let source = Game.getObjectById(creep.task.source_id)
-            error("reserve the slot " + creep.task.source_id);
+            let source = Game.getObjectById(creep.task.source_id);
             source.reserveSlot(Game.time + creep.task.path_time, Game.time + creep.task.harvest_time + creep.task.path_time, creep.store.getFreeCapacity(RESOURCE_ENERGY));
         }
     }

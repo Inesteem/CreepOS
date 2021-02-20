@@ -82,3 +82,13 @@ export const TERRAIN_PLAIN = "plain";
 export const TERRAIN_WALL = "wall";
 
 export const INFINITY = 0xffffffff;
+
+export const MEELE_NAMES = ["Aragorn", "Gimli", "Ulf", "Beowulf", "Siegfried", "Sigurd", "Kara"];
+export const HEALER_NAMES = ["Gandalf", "Katara", "Zed", "Lisa"];
+export const RANGED_NAMES = ["Legolas"];
+
+export const GENERIC_NAMES = ["Kevin", "Chantale", "Michelle", "Antoinette", "Mandy", "Maurice", "Justin", "Vanessa"];
+
+export const MINER_NAMES = ["Lukas", "Simon"];
+
+export const REPAIRER_NAMES = ["Luigi", "Mario"];

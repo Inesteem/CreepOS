@@ -3,6 +3,7 @@ import { info, error } from "../Logging";
 import { INFINITY, BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, BUILD_SPAWN_PRIORITY, PRIORITY_LEVEL_STEP, Role } from "../Constants";
 import { Frankencreep } from "../FrankenCreep";
 import "../GameObjects/Game";
+import "../GameObjects/Spawn";
 
 const task = Object.create(new Task("build"));
 task.state_array = [
@@ -164,56 +165,35 @@ task.estimateTime = function(creep, queue_task, max_time) {
     let path_costs = creep.pos.estimatePathCosts(structure.pos, 3, creep, max_time - build_time);
     return path_costs + build_time;
 }
+
+/**
+ * 
+ * @param {Creep} creep 
+ * @param {QueueTask} queue_task 
+ * @param {number} min_value
+ * @this {Task} 
+ */
+task.eval_func = function(creep, queue_task, min_value) {
+    let structure = Game.getObjectById(queue_task.id);
+    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+    let build = structure.progressTotal - structure.progress;
+    let build_energy = Math.min(build, energy);
+
+    let max_time = min_value ? build_energy/min_value : undefined;
+
+    let time = this.estimateTime(creep, queue_task, max_time);
+    return build_energy/time;
+}
 /**
  * 
  * @param {QueueTask} queue_task 
  * @param {StructureSpawn} spawn
- * @return {string} 
+ * @return {number} 
+ * @this {Task}
  */
 task.spawn = function(queue_task, spawn) {
-    if (!spawn.allowSpawn()) return "";
-
-    let parts = [MOVE, CARRY, WORK];
-    let body = [MOVE, CARRY, WORK];
-
-    let newName = "McGregor" + Game.time;
-    let structure = Game.getObjectById(queue_task.id); //TODO: check if null
-    let pos = structure.pos; //TODO: check if null
-    let container = pos.findClosestStructure ((structure => {
-        return structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_STORAGE; 
-    }));
-    if (!container) {
-        return spawn.spawnKevin();
-    }
-    
-    let to_build = structure.progressTotal - structure.progress;
-    
-    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
-        let best_part = MOVE;
-        let best_eff = 0;
-        for (let part of parts){
-            body.push(part);
-            let frankencreep = new Frankencreep(container.pos, body, "Franky");
-            let carry = body.filter(x => x == CARRY).length * 50;
-            let time = task.estimateTime(frankencreep, queue_task, carry/best_eff);
-            if (time == null || time == INFINITY) {
-                body.pop();
-                continue;
-            }
-            let eff = Math.min(to_build,carry)/time;
-            if(best_eff < eff){
-                best_eff = eff;
-                best_part = part;
-            }
-            body.pop();
-        }
-        body.push(best_part);
-    }
-    body.pop();
-    if (body.length > 3 && spawn.spawnCreep(body, newName, {memory: {role: Role.WORKER}}) == OK) {
-        return newName;
-    }
-    return "";
+    let self = this;
+    return spawn.spawnWithEvalFunc((creep) => self.eval_func(creep, queue_task, 0), "McGregor" + Game.time, {role: Role.WORKER});
 }
 
 

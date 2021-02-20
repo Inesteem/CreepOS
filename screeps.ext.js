@@ -132,7 +132,7 @@ Room.prototype.lookForAt = function(var_args) {};
  * @constructor
  */
 var RoomObject = function() {};
-/** @type {RoomPosition} */
+/** @type {!RoomPosition} */
 RoomObject.prototype.pos;
 /** @type {Room} */
 RoomObject.prototype.room;
@@ -608,6 +608,8 @@ var ERR_INVALID_TARGET;
 var ERR_FULL;
 /** @const {number} */
 var ERR_RCL_NOT_ENOUGH;
+/** @const {number} */
+var ERR_BUSY;
 /** @const {number} */
 var OK;
 
