@@ -260,6 +260,10 @@ function createBuildRoadTasks(room) {
     for (let i = 0; i < Math.min(AUTOMATIC_ROAD_BUILD_NUM, positions.length); i++) {
         let pos = new RoomPosition(positions[i].x, positions[i].y, room.name);
         pos.createConstructionSite(STRUCTURE_ROAD);
+
+        // Invalidate path cache
+        Memory.path_costs = {};
+
         info("Spawning road construction site at ", pos);
     }
 }

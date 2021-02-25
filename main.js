@@ -9,10 +9,10 @@ import { error, info } from "./Logging";
 import { getSpawns as GameGetSpawns, initGame } from "./GameObjects/Game";
 import { monitor as buildMonitor } from "./BuildMachine";
 import "./GameObjects/Room";
+import { Frankencreep } from "./FrankenCreep";
 
 
 module.exports.loop = function () {
-
     for (let task_type in Memory.new_tasks) {
         let task_queue = Memory.new_tasks[task_type];
         for (let task of task_queue) {
@@ -58,11 +58,11 @@ module.exports.loop = function () {
         }
         runTask(creep,1);
         
-        if (creep.ticksToLive <= 1) {
-            while(creep.tasks) {
+        if (creep.ticksToLive <= 5) {
+            while(creep.tasks.length > 0) {
                 completeTask(creep);
-                creep.tasks.shift();
             }
+            creep.suicide();
         }
     }
 
@@ -71,10 +71,6 @@ module.exports.loop = function () {
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name] && !Memory.creeps[name].spawning) {
-            //completeTask(/**@type Creep */ ({id : "id", memory : Memory.creeps[name]}));
-            if (Memory.creeps.task_queue) {
-                error ("dead creep has tasks: ", Memory.creeps.task_queue.length);
-            }
             delete Memory.creeps[name];
        //     task_machine.createCollectDroppedEnergyTasks();
         } 

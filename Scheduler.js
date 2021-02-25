@@ -2,7 +2,7 @@ import { info, warning, error } from "./Logging";
 import { INFINITY, PARALLEL_CONTAINER_BUILD_NUM, PRIORITY_LEVEL_STEP, Role } from "./Constants";
 
 import { QueueTask, CreepTask  } from "./Task/Task";
-import { task, task as task_build} from "./Task/Build";
+import { task as task_build} from "./Task/Build";
 import { task as task_repair} from "./Task/Repair";
 import { task as task_fill_structure} from "./Task/FillStructure";
 import { task as task_claim_room} from "./Task/ClaimRoom";
@@ -45,7 +45,7 @@ function updateTaskQueue() {
  */
 function runTask(creep, depth) {
     if (creep.task) {
-        creep.say(Math.floor(creep.task.estimated_time) + " " + creep.memory.ticks);
+        //creep.say(Math.floor(creep.task.estimated_time) + " " + creep.memory.ticks);
         ++creep.memory.ticks;
         let still_running = task_mapping[creep.task.name].run(creep);
         if (!still_running) {
@@ -83,40 +83,39 @@ function schedule() {
     }
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
 
-    // TODO
-    let x = 0;
-    for(let task of task_queue_sorted) {
-        ++x;
-        if (x >= 20) break; 
-
-        let best_creep_name = "";
-        let best_rating = {fit: 0, time: INFINITY};
+    let best_task = undefined;
+    let best_creep = undefined;
+    let best_rating = 0;
+    for(let queue_task of task_queue_sorted) {
         for (let creep of workers) {
             let future_creep = creep.future_self || creep;
-          //  error("future_self", future_creep);
+
             if (future_creep && future_creep.time && future_creep.time >= Game.time + 50) continue;
-            let creep_rating = getTaskFit(future_creep, task, best_rating.fit);
-            if (creep_rating.fit > best_rating.fit) {
-                best_creep_name = creep.name;
-                best_rating = creep_rating;
+
+            if (creep.tasks.length > 0 && queue_task.priority < 1 * PRIORITY_LEVEL_STEP) continue;
+
+            let creep_value = task_mapping[queue_task.name].eval_func(creep, queue_task, best_rating / (queue_task.priority || 1));
+            if (creep_value * queue_task.priority > best_rating) {
+                best_creep = creep;
+                best_rating = creep_value * (queue_task.priority || 1);
+                best_task = queue_task;
             }
         }
-        if (best_creep_name != "") {
-            let creep = Game.creeps[best_creep_name];
-
-            let creep_task = task_mapping[task.name].take(creep, task);
-            if (!creep_task) continue;
-
-            let creep_after = task_mapping[task.name].creepAfter(creep, creep_task);
+    }
+    if (best_creep != undefined) {
+        let creep_task = task_mapping[best_task.name].take(best_creep, best_task);
+        if (creep_task) {
+            let creep_after = task_mapping[best_task.name].creepAfter(best_creep, creep_task);
             creep_task.creep_after = {
                 pos: {
                     x : creep_after.pos.x,
                     y : creep_after.pos.y,
                     roomName: creep_after.pos.roomName},
                 store: creep_after.store};
-            creep_task.estimated_time = best_rating.time;
-
-            creep.tasks.push(creep_task);
+            let future_creep = best_creep.future_self || best_creep;
+            creep_task.estimated_time = task_mapping[best_task.name].estimateTime(future_creep, best_task);
+    
+            best_creep.tasks.push(creep_task);
         }
     }
 
@@ -180,29 +179,6 @@ function increasePriorities() {
             }
         }
     }
-}
-
-/**
- * 
- * @param {Creep} creep 
- * @param {QueueTask} queue_task 
- * @param {number} best_fit
- * @return {{fit: number, time: number}} 
- */
-function getTaskFit(creep, queue_task, best_fit) {
-    let floor_priority = Math.floor(queue_task.priority/PRIORITY_LEVEL_STEP) * PRIORITY_LEVEL_STEP + 1;
-    let max_time = best_fit ? floor_priority / best_fit : undefined;
-
-    if (max_time && max_time < 2) return {fit: 0, time: INFINITY};
-    let total_time = 0;
-    if (creep.time) {
-        total_time = creep.time;
-    }
-    let task_time = task_mapping[queue_task.name].estimateTime(creep, queue_task, max_time) + 1;
-    total_time += task_time;
-    if (task_time >= INFINITY) return {fit: 0, time: INFINITY};
-    
-    return {fit: floor_priority / total_time, time: task_time};
 }
 
 export { 

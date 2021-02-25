@@ -142,7 +142,7 @@ task.estimateTime = function(creep, queue_task, max_time) {
     if (!structure) return INFINITY;
 
     if (!creep.store[RESOURCE_ENERGY]) {
-        let energy_struct = creep.findOptimalEnergy(max_time);
+        let energy_struct = creep.findOptimalEnergy(structure.pos, max_time);
         if (!energy_struct || !energy_struct.object) return INFINITY;
 
         let harvest_time = 0;
@@ -174,13 +174,15 @@ task.estimateTime = function(creep, queue_task, max_time) {
  */
 task.eval_func = function(creep, queue_task, min_value) {
     let structure = Game.getObjectById(queue_task.id);
-    let energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
-    let req_energy = structure.store.getFreeCapacity(RESOURCE_ENERGY);
-    let add_energy = Math.min(req_energy, energy);
+    let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
+    error("add_energy: ", add_energy);
+    // let req_energy = structure.store.getFreeCapacity(RESOURCE_ENERGY);
+    // let add_energy = Math.min(req_energy, energy);
 
     let max_time = min_value ? add_energy/min_value : undefined;
 
-    let time = this.estimateTime(creep, queue_task, max_time);
+    let time = this.estimateTime(creep, queue_task, max_time) + 1;
+    if (time >= INFINITY) return 0;
     return add_energy/time;
 }
 /**

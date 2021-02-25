@@ -105,7 +105,7 @@ Room.prototype.hasExcessEnergy = function(req_energy) {
         // error(source.id + " has free spot: " + source.hasFreeSpot());
         // error(source.id + " has miner: " + source.hasMiner());
         // error(source.id + " has relevant miner: " + !(!source.hasMiner()|| (this.controller && this.controller.level < 3)));
-        if (freeSlot) return true;
+        if (freeSlot && !source.hasMiner()) return true;
     }
     return false;
 }

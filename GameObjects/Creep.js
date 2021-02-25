@@ -163,7 +163,7 @@ Creep.prototype.moveAwayFrom = function(target, range) {
  * @param {number=} max_rooms 
  * @return {{type: number, object: RoomObject, path_time: number, harvest_time: (number|undefined)}|null} type is one of FIND_SOURCES, FIND_STRUCTURES, FIND_DROPPED_ENERGY
  */
-Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
+Creep.prototype.findOptimalEnergy = function(pos, max_time, max_rooms) {
     let needed_energy = this.store.getFreeCapacity(RESOURCE_ENERGY);
     let harvest_time = needed_energy / (2 * this.getActiveBodyparts(WORK));
 
@@ -191,28 +191,9 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
 
     let best_target = null;
     let best_time = max_time || undefined;
-
-    // if (resources.length) {
-    //     let result = PathFinder.search(
-    //         this.pos,
-    //         resources.map( (resource) => { return {pos: resource.pos, range: 0}; }),
-    //         Object.assign(matrix, {maxCost: best_time || 2000, maxRooms: max_rooms || 16})
-    //     )
-    //     if (!result.incomplete && (!best_time || result.cost < best_time)) {
-    //         best_time = result.cost;
-    //         let position = result.path.pop() || this.pos;
-    //         best_target = {
-    //             type: FIND_DROPPED_RESOURCES,
-    //             path_time: result.cost,
-    //             object: position
-    //                 .lookFor(LOOK_RESOURCES)
-    //                 .find(resource => resource.resourceType === RESOURCE_ENERGY)
-    //         };
-    //     }
-    // }
     
     if (containers.length) {
-        let result = this.pos.findClosestTarget(containers, 1, this.getCostMatrix(), best_time);
+        let result = pos.findClosestTarget(containers, 1, this.getCostMatrix(), best_time);
         if (result) {
             best_time = result.result.cost;
             best_target = {
@@ -224,7 +205,7 @@ Creep.prototype.findOptimalEnergy = function(max_time, max_rooms) {
     }
   
     if (sources.length && (best_time === undefined || best_time - harvest_time > 0)) {
-        let result = this.pos.findClosestTarget(sources, 1, this.getCostMatrix(), best_time - harvest_time);
+        let result = pos.findClosestTarget(sources, 1, this.getCostMatrix(), best_time - harvest_time);
         if (result) {
             best_target = {
                 type: FIND_SOURCES,

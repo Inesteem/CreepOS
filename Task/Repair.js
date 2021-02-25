@@ -75,7 +75,7 @@ task.estimateTime = function(creep, queue_task, max_time) {
     let repair_time = energy/creep.getActiveBodyparts(WORK);
 
     if (!creep.store[RESOURCE_ENERGY]) {
-        let energy_struct = creep.findOptimalEnergy(max_time - repair_time);
+        let energy_struct = creep.findOptimalEnergy(structure.pos, max_time - repair_time);
         if (!energy_struct || !energy_struct.object) return INFINITY;
 
         let harvest_time = 0;
@@ -188,7 +188,8 @@ task.eval_func = function(creep, queue_task, min_value) {
 
     let max_time = min_value ? add_energy/min_value : undefined;
 
-    let time = this.estimateTime(creep, queue_task, max_time);
+    let time = this.estimateTime(creep, queue_task, max_time) + 1;
+    if (time >= INFINITY) return 0;
     return add_energy/time;
 }
 /**

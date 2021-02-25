@@ -17,6 +17,12 @@ task.state_array = [
  * @param {Creep} creep 
  */
 function harvest(creep) {
+
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0){
+        creep.say("full");
+        return fillStore(creep);
+    }
+
     creep.task.store_id = undefined;
 
     if (!creep.task.id){
@@ -42,14 +48,9 @@ function harvest(creep) {
     if (!creep.harvestFrom(source)) {
         if (!source.hasFreeSpot()) {
             creep.say("no spot");
-            return false;
         }
     }
     
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0){
-        creep.say("full");
-        return false;
-    }
     return true;
 };
 
@@ -74,11 +75,11 @@ function fillStore(creep) {
 
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
         creep.task.store_id = undefined;
-        return false;
+        return true;
     }
     creep.storeAt(target);
     if (creep.store[RESOURCE_ENERGY] == 0)
-        return false;
+        return true;
     return true;
 }
 

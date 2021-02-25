@@ -1,6 +1,6 @@
 import {  QueueTask, CreepTask, findQueueTask, State, takeFromStore, Task } from "./Task";
 import { info, error } from "../Logging";
-import { INFINITY, BUILD_ROAD_PRIORITY, BUILD_TOWER_PRIORITY, BUILD_EXTENSION_PRIORITY, BUILD_DEFAULT_PRIORITY, BUILD_SPAWN_PRIORITY, PRIORITY_LEVEL_STEP, Role } from "../Constants";
+import { INFINITY, BUILD_PRIORITY, BUILD_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP, Role } from "../Constants";
 import { Frankencreep } from "../FrankenCreep";
 import "../GameObjects/Game";
 import "../GameObjects/Spawn";
@@ -62,28 +62,17 @@ task.updateQueue = function() {
     }
 }
 
+
+
 /**
  * @param {QueueTask} queue_task 
  */
 function prioritize(queue_task) {
     let structure = Game.getObjectById(queue_task.id);
-    
-    switch (structure.structureType) {
-        case (STRUCTURE_ROAD):
-            queue_task.priority = BUILD_ROAD_PRIORITY;
-            break;
-        case (STRUCTURE_TOWER):
-            queue_task.priority = BUILD_TOWER_PRIORITY;
-            break;
-        case (STRUCTURE_EXTENSION):
-            queue_task.priority = BUILD_EXTENSION_PRIORITY;
-            break;
-        case (STRUCTURE_SPAWN):
-            queue_task.priority = BUILD_SPAWN_PRIORITY;
-            break;
-        default:
-            queue_task.priority = BUILD_DEFAULT_PRIORITY;
-    };
+    queue_task.priority = BUILD_PRIORITY[structure.structureType];
+    if (!queue_task.priority) {
+        queue_task.priority = BUILD_DEFAULT_PRIORITY;
+    }
 }
 
 /**
@@ -145,7 +134,7 @@ task.estimateTime = function(creep, queue_task, max_time) {
     let build_time = energy/(5 * creep.getActiveBodyparts(WORK));
 
     if (!creep.store[RESOURCE_ENERGY]) {
-        let energy_struct = creep.findOptimalEnergy(max_time - build_time);
+        let energy_struct = creep.findOptimalEnergy(structure.pos, max_time - build_time);
         if (!energy_struct || !energy_struct.object) return INFINITY;
 
         let harvest_time = 0;
@@ -181,7 +170,8 @@ task.eval_func = function(creep, queue_task, min_value) {
 
     let max_time = min_value ? build_energy/min_value : undefined;
 
-    let time = this.estimateTime(creep, queue_task, max_time);
+    let time = this.estimateTime(creep, queue_task, max_time) + 1;
+    if (time >= INFINITY) return 0;
     return build_energy/time;
 }
 /**

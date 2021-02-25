@@ -18,8 +18,8 @@ function Frankencreep(pos, body_parts, name) {
     this.body = body_parts.map(part => { return {type: part, boost: "", hits: 1000}; });
     this.getActiveBodyparts = (part) => body_parts.filter(x => x==part).length;
     this.store = /** @type Store */ ({energy: 0, 
-        getCapacity: (energy) => body_parts.filter(x => x==CARRY).length * 50,
-        getFreeCapacity: (energy) => body_parts.filter(x => x==CARRY).length * 50});
+        getCapacity: (energy) => {return body_parts.filter(x => x == CARRY).length * 50;},
+        getFreeCapacity: (energy) => { return body_parts.filter(x => x == CARRY).length * 50;}});
 
     this.findOptimalEnergy = Creep.prototype.findOptimalEnergy;
     this.getCostMatrix = Creep.prototype.getCostMatrix;

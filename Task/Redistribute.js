@@ -44,7 +44,6 @@ task.updateQueue = function() {
                 }
         }));
     });
-    
     // DELETION
     for (let i = 0; i < self.queue.length; i++) {
         let task = self.queue[i];
@@ -182,6 +181,7 @@ task.eval_func = function(creep, queue_task, min_value) {
     let max_time = min_value ? add_energy/min_value : undefined;
 
     let time = this.estimateTime(creep, queue_task, max_time);
+    if (time >= INFINITY) return 0;
     return add_energy/time;
 }
 /**

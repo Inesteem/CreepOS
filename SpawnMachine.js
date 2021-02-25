@@ -32,7 +32,7 @@ function monitor() {
             //    info("Attempting to spawn worker: " + mom_worker_num + " vs " + MAX_WORKER_NUM);
                 //if(spawn.spawnKevin() === OK) continue;
             //}
-            if (room.findContainer().length > 0 && mom_miner_num < max_miner_num) {
+            if (room.findContainer().length > 0 && mom_miner_num < max_miner_num && mom_worker_num >= 2) {
                 error("Attempting to spawn miner: " + mom_miner_num + " vs " + max_miner_num);
                 if(spawn.spawnMiner() !== "") continue;
             }

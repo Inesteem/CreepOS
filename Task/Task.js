@@ -121,7 +121,11 @@ function takeFromStore(creep) {
         return false;
     }
     if (!creep.task.store_id && !creep.task.source_id) { // && !creep.task.resource_id) {
-        Object.assign(creep.task, getEnergyForTask(creep, creep.task).task);
+        let target = null;
+        if (creep.task.id) {
+            target = Game.getObjectById(creep.task.id);
+        }
+        Object.assign(creep.task, getEnergyForTask(target ? target.pos : creep.pos, creep, creep.task).task);
         //reserveSlot
         if (creep.task.source_id){
             let source = Game.getObjectById(creep.task.source_id);
@@ -188,7 +192,7 @@ function fillStructure(creep) {
  * @param {number=} max_time
  * @return {{task: {source_id: (string | undefined), store_id: (string | undefined)}, object: ?RoomObject}} 
  */
-function getEnergyForTask(creep, queue_task, max_time) {
+function getEnergyForTask(pos, creep, queue_task, max_time) {
     info("getEnergyForTask", queue_task);
     let result = {task: {}, object: null};
     if (creep.store[RESOURCE_ENERGY]) return result;
@@ -198,7 +202,7 @@ function getEnergyForTask(creep, queue_task, max_time) {
     if (!target) return result;
 
     let energy = /** @type {{type: number, object: RoomObject, path_time: number, harvest_time: (number|undefined)}|null} */ 
-        (creep.findOptimalEnergy(max_time));
+        (creep.findOptimalEnergy(pos, max_time));
 
     if (!energy) return result;
 
