@@ -1,5 +1,5 @@
 import {  QueueTask, CreepTask, findQueueTask, Task, State} from "./Task";
-import { INFINITY, FILL_STORE_DEFAULT_PRIORITY, PRIORITY_LEVEL_STEP } from "../Constants";
+import { Role } from "../Constants";
 import "../GameObjects/RoomPosition";
 import "../GameObjects/Source";
 import "../GameObjects/Game";
@@ -12,33 +12,30 @@ task.state_array = [
     new State(fillStore),
 ]
 
+task.role = Role.MINER;
+
 /**
  * 
  * @param {Creep} creep 
  */
 function harvest(creep) {
-
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0){
-        creep.say("full");
-        return fillStore(creep);
-    }
-
-    creep.task.store_id = undefined;
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) return false;
 
     if (!creep.task.id){
-        let sources = Game.find(FIND_SOURCES, {filter: (source) => !source.hasMiner()});
-        if (sources.length) {
-            let source = creep.pos.findClosestTarget(sources, 1, creep.getCostMatrix()).target;
-            creep.task.id = source.id;
-            source.reserveSource();
-        } else {
-            creep.say("found no source");
-            return false;
+        if (!creep.memory.source) {
+            let sources = Game.find(FIND_SOURCES, {filter: (source) => !source.hasMiner()});
+            if (sources.length) {
+                let source = /** @type {Source} */ (creep.pos.findClosestTarget(sources, 1, creep.getCostMatrix()).target);
+                creep.memory.source = source.id;
+                source.memory.miner = creep.name;
+            } else {
+                creep.say("found no source");
+                return false;
+            }
         }
+        creep.task.id = creep.memory.source;
     }
     let source = Game.getObjectById(creep.task.id);
-
-//    if (source.energy == 0) return true;
 
     if (!source){
         creep.say("source empty");
@@ -75,23 +72,46 @@ function fillStore(creep) {
 
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
         creep.task.store_id = undefined;
-        return true;
+        return false;
     }
     creep.storeAt(target);
     if (creep.store[RESOURCE_ENERGY] == 0)
-        return true;
+        return false;
     return true;
 }
 
 /**
- * 
- * @param {Creep} creep 
- * @param {{name: string, id: string}} creep_task 
+ * @this {Task}
  */
-task.finish = (creep, creep_task) => {
-    let source = /**@type {Source} */ (Game.getObjectById(creep_task.id));
-    if (source)
-        source.freeSource();
+task.checkSpawn = function() {
+    let free_sources = Game.find(FIND_SOURCES).filter(source => !source.hasMiner());
+    for (let source of free_sources) {
+        let spawn = source.pos.findClosestByPath(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
+        if (spawn) {
+            this.spawn(spawn);
+        }
+    } 
+}
+
+task.spawn = function(spawn) {
+    var newName = "Lars" + Game.time;
+
+    var parts = [WORK];
+    var body = [WORK, CARRY, MOVE, WORK, WORK];
+    var idx = 0;
+
+    while (spawn.spawnCreep(body, newName, { dryRun: true }) == 0) {
+        body.push(parts[idx]);
+        idx = (idx + 1) % parts.length;
+        if (body.length > 9) break;
+    }
+    
+    body.pop();
+
+    if ((body.length == 9 || spawn.allowSpawn())) {
+        return spawn.spawnCreep(body, newName, {memory: {role: Role.MINER}});
+    }
+    return ERR_NOT_ENOUGH_ENERGY;
 }
 
 export { task };

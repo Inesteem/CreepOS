@@ -27,6 +27,8 @@ task_mapping[task_kite.name] = task_kite;
 task_mapping[task_attack_source_keeper.name] = task_attack_source_keeper;
 task_mapping[task_redistribute.name] = task_redistribute;
 
+const permanent_tasks = [task_fill_store];
+
 function updateTaskQueue() {
     for (let task_name in task_mapping) {
         if (task_mapping.hasOwnProperty(task_name)) {
@@ -58,15 +60,13 @@ function runTask(creep, depth) {
 function schedule() {
     let workers = [];
     for (let creep of Game.findCreeps()) {
-        if (!creep.tasks.length) {
+        if (creep.tasks.length == 0) {
             if (creep.memory.role === Role.SCOUT) {
                 creep.tasks.push({name: task_claim_room.name});
             } else if (creep.memory.role === Role.ARCHER) {
                 creep.tasks.push({name: task_kite.name});
             } else if (creep.memory.role === Role.SLAYER) {
                 creep.tasks.push({name: task_attack_source_keeper.name});
-            } else if (creep.memory.role === Role.MINER) {
-                creep.tasks.push({name: task_fill_store.name});
             }
         } 
         if (creep.memory.role === Role.WORKER) {
@@ -155,6 +155,16 @@ function schedule() {
         //     continue;
         // }
         task_mapping[queue_task.name].spawn(queue_task, spawn);
+    }
+
+    for (let permanent_task of permanent_tasks) {
+        let creeps = Game.findCreeps(creep => creep.memory.role === permanent_task.role);
+        for (let creep of creeps) {
+            if (creep.tasks.length == 0) {
+                creep.tasks.push({name: permanent_task.name});
+            }
+        }
+        permanent_task.checkSpawn();
     }
 }
 

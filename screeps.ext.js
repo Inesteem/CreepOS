@@ -468,6 +468,8 @@ Resource.prototype.resourceType;
 var Source = function () {};
 /** @type {string} */
 Source.prototype.id;
+/** @type {Object} */
+Source.prototype.memory;
 
 /**
  * @constructor

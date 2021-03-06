@@ -1,4 +1,4 @@
-import { INFINITY, PARALLEL_CONTAINER_BUILD_NUM, PATH_REUSE_TICKS } from "../Constants";
+import { INFINITY, PARALLEL_CONTAINER_BUILD_NUM, PATH_REUSE_TICKS, Role } from "../Constants";
 import { error } from "../Logging";
 import { Frankencreep } from "../FrankenCreep";
 import { CreepTask } from "../Task/Task";

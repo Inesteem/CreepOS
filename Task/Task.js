@@ -81,7 +81,7 @@ Task.prototype.take = function() {
     error("take not implemented for ", this.name);
 }
 
-Task.prototype.finish = function() {
+Task.prototype.finish = function(creep, creep_task) {
     error("finish not implemented for ", this.name);
 }
 
@@ -97,7 +97,7 @@ Task.prototype.estimateTime = function(creep, queue_task, max_time) {
     return INFINITY;
 }
 
-Task.prototype.spawn = function() {
+Task.prototype.spawn = function(spawn) {
     error("spawn not implemented for ", this.name);
 }
 
