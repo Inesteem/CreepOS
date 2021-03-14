@@ -86,6 +86,7 @@ function schedule() {
     task_queue_sorted.sort((a, b) => b.priority - a.priority);
     // });
 
+    let matches = [];
     let best_task = undefined;
     let best_creep = undefined;
     let best_rating = 0;
@@ -127,6 +128,11 @@ function schedule() {
                 best_rating = creep_value * (queue_task.priority || 1);
                 best_task = queue_task;
             }
+            matches.push({
+                creep_name: creep.name,
+                rating: creep_value * (queue_task.priority || 1),
+                task: queue_task
+            });
             // }, (x) => x > 20);
             match++;
             if(Game.cpu.getUsed() - cpu > 50) {
@@ -139,28 +145,35 @@ function schedule() {
     }
     // });
     error("Total matches: ", match);
-    // profileCpu("take task", () => {
-    if (best_creep != undefined) {
-        let creep_task = task_mapping[best_task.name].take(best_creep, best_task);
-        if (creep_task) {
-            let creep_after = task_mapping[best_task.name].creepAfter(best_creep, creep_task);
-            creep_task.creep_after = {
-                pos: {
-                    x : creep_after.pos.x,
-                    y : creep_after.pos.y,
-                    roomName: creep_after.pos.roomName},
-                store: creep_after.store};
-            let future_creep = best_creep.future_self || best_creep;
-            creep_task.estimated_time = task_mapping[best_task.name].estimateTime(future_creep, best_task);
-    
-            best_creep.tasks.push(creep_task);
-            error(best_creep.name, creep_task.name);
+    // // profileCpu("take task", () => {
+    // if (best_creep != undefined) {
+    //     assignTask(best_creep, best_task);
+    // } else {
+    //     error("best creep undefined");
+    // }
+
+    matches.sort((a,b) => b.rating - a.rating);
+    error(matches);
+    let assigned = 0;
+    for (let i = 0; i < matches.length; ++i) {
+        let creep = Game.creeps[matches[i].creep_name];
+        if (creep.assigned || matches[i].task.assigned){
+            continue;
         } else {
-            error("no creep task");
+            assignTask(creep, matches[i].task);
+            creep.assigned = true;
+            matches[i].task.assigned = true;
+            ++assigned;    
         }
-    } else {
-        error("best creep undefined");
+        if (assigned == 5) {
+            break;
+        }
     }
+    matches.map((match) => {
+        match.task.assigned = undefined;
+        Game.creeps[match.creep_name].assigned = undefined;
+    });
+
     // });
     if(Game.cpu.getUsed() > Game.cpu.tickLimit / 2) {
         // Don't spawn if we're out of CPU.
@@ -206,6 +219,24 @@ function schedule() {
         // }
         task_mapping[queue_task.name].spawn(queue_task, spawn);
     }
+}
+
+function assignTask(creep, queue_task) {
+    let creep_task = task_mapping[queue_task.name].take(creep, queue_task);
+        if (creep_task) {
+            let future_creep = creep.future_self || creep;
+            let creep_after = task_mapping[queue_task.name].creepAfter(future_creep, creep_task);
+            creep_task.creep_after = {
+                pos: {
+                    x : creep_after.pos.x,
+                    y : creep_after.pos.y,
+                    roomName: creep_after.pos.roomName},
+                store: creep_after.store};
+            creep_task.estimated_time = task_mapping[queue_task.name].estimateTime(future_creep, queue_task);
+    
+            creep.tasks.push(creep_task);
+            error("Assigning ", creep.name, creep_task.name);
+        }
 }
 
 function monitorPermanentTasks() {
