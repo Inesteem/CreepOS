@@ -129,11 +129,11 @@ function schedule() {
             }
             // }, (x) => x > 20);
             match++;
-            if(Game.cpu.getUsed() - cpu > 30) {
+            if(Game.cpu.getUsed() - cpu > 50) {
                 break;
             }
         }
-        if(Game.cpu.getUsed() - cpu > 30) {
+        if(Game.cpu.getUsed() - cpu > 50) {
             break;
         }
     }
