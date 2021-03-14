@@ -83,6 +83,7 @@ export const UPGRADE_HIGH_PRIORITY = 2 * PRIORITY_LEVEL_STEP;
 export const UPGRADE_LOW_PRIORITY = 1 * PRIORITY_LEVEL_STEP;
 
 export const ERR_NO_SPAWN = -200;
+export const NOT_APPLICAPLE = 1000;
 
 export const TERRAIN_SWAMP = "swamp";
 export const TERRAIN_PLAIN = "plain";

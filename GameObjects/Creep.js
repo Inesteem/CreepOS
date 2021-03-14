@@ -171,9 +171,10 @@ Creep.prototype.findOptimalEnergy = function(pos, max_time, max_rooms) {
         FIND_SOURCES_ACTIVE,
         {filter : source => harvest_time < INFINITY && (source.hasFreeSpot() || this.pos.inRangeTo(source.pos, 1)) }
     );
+
     let resources = Game.find(
         FIND_DROPPED_RESOURCES,
-        {filter: (resource) => resource.amount >= needed_energy}
+        {filter: (resource) => {return resource.amount >= needed_energy && resource.resourceType === RESOURCE_ENERGY}}
     );
     let containers = Game.find(
         FIND_STRUCTURES,
@@ -182,9 +183,10 @@ Creep.prototype.findOptimalEnergy = function(pos, max_time, max_rooms) {
                     && (structure.store[RESOURCE_ENERGY] >= needed_energy)
                 }
     }).concat( Game.find (
-    //     FIND_RUINS,
-    //     { filter : (ruin) => ruin.store[RESOURCE_ENERGY] >= needed_energy }
-    // )).concat ( Game.find (
+         FIND_RUINS,
+         { filter : (ruin) => ruin.store[RESOURCE_ENERGY] >= needed_energy }
+     ))
+     .concat ( Game.find (
         FIND_TOMBSTONES,
         { filter : (tombstone) => tombstone.store[RESOURCE_ENERGY] >= needed_energy }
     ));
@@ -203,7 +205,20 @@ Creep.prototype.findOptimalEnergy = function(pos, max_time, max_rooms) {
             }
         }
     }
-  
+    
+    if (resources.length && (best_time === undefined || best_time > 0)) {
+        let result = pos.findClosestTarget(resources, 1, this.getCostMatrix(), best_time);
+        if (result) {
+            best_time = result.result.cost;
+            best_target = {
+                type: FIND_DROPPED_RESOURCES,
+                object: result.target,
+                path_time: result.result.cost,
+            }
+        }
+    }
+
+    // here best_time is not defined properly so it must be the last if condition in this function 
     if (sources.length && (best_time === undefined || best_time - harvest_time > 0)) {
         let result = pos.findClosestTarget(sources, 1, this.getCostMatrix(), best_time - harvest_time);
         if (result) {
@@ -215,6 +230,7 @@ Creep.prototype.findOptimalEnergy = function(pos, max_time, max_rooms) {
             }
         }
     }
+
     return best_target;
 }
 

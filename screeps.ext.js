@@ -59,7 +59,7 @@ var Game = {
     time: 0,
     /** @type {!Object} */
     rooms: {},
-    /** @type {{limit: number, getUsed: function():number}} */
+    /** @type {{limit: number, getUsed: function():number, tickLimit: number}} */
     cpu: {},
     /** @type {{visual: {text: function(string, RoomPosition, Object)}}} */
     map: {},
@@ -435,6 +435,8 @@ ConstructionSite.prototype.progressTotal;
 ConstructionSite.prototype.progress;
 /** @type {string} */
 ConstructionSite.prototype.id;
+/** @type {string} */
+ConstructionSite.prototype.structureType;
 
 /**
  * @constructor
@@ -633,6 +635,8 @@ var STRUCTURE_WALL;
 var STRUCTURE_KEEPER_LAIR;
 /** @const {string} */
 var STRUCTURE_RAMPART;
+/** @const {string} */
+var STRUCTURE_EXTRACTOR;
 
 /** @const {number} */
 var FIND_MY_CREEPS;

@@ -2,7 +2,7 @@ import { INFINITY, TERRAIN_PLAIN, TERRAIN_SWAMP, TERRAIN_WALL } from "../Constan
 import { error } from "../Logging";
 
 RoomPosition.prototype.getAdjacentContainer = function(filter) {
-    let structures = this.getAdjacentStructures();
+    let structures = this.findAdjacent(LOOK_STRUCTURES);
     for (let structure of structures) {
         if (structure.structure.structureType === STRUCTURE_CONTAINER && 
                 filter(structure.structure)) {
@@ -59,6 +59,23 @@ RoomPosition.prototype.getAdjacentGenerallyWalkables = function() {
 }
 
 /**
+ * @param {string} look_const
+ * @param {(function(*):boolean)=} filter Depends on the LOOK_ constant. E.g. for LOOK_STRUCTURES use obj.structure : Structure
+ */
+RoomPosition.prototype.findAdjacent = function(look_const, filter) {
+    filter = filter || ((s) => true);
+    return Game.rooms[this.roomName]
+                .lookForAtArea(look_const,
+                    Math.max(0, this.y - 1), 
+                    Math.max(0, this.x - 1), 
+                    Math.min(49, this.y + 1), 
+                    Math.min(49, this.x + 1), true)
+                .filter(filter);
+}
+
+
+
+/**
  * @return {boolean} Whether a creep can step on this field now.
  */
 RoomPosition.prototype.isWalkable = function() {
@@ -91,22 +108,6 @@ RoomPosition.prototype.isGenerallyWalkable = function() {
 
 /**
  * 
- * @param {(function({structure : Structure}):boolean)=} filter 
- */
-RoomPosition.prototype.getAdjacentStructures = function(filter) {
-    filter = filter || ((s) => true);
-    return Game.rooms[this.roomName]
-                .lookForAtArea(LOOK_STRUCTURES,
-                    Math.max(0, this.y - 1), 
-                    Math.max(0, this.x - 1), 
-                    Math.min(49, this.y + 1), 
-                    Math.min(49, this.x + 1), true)
-                .filter(filter);
-}
-
-
-/**
- * 
  * @param {RoomPosition} pos
  * @param {number} range 
  * @param {Creep} creep
@@ -116,6 +117,7 @@ RoomPosition.prototype.getAdjacentStructures = function(filter) {
  * @return {number} INFINITY if cost > maxcost, else estimated path costs
  */
 RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, maxRooms) {
+    const cpu = Game.cpu.getUsed();
     if (maxCost <= 0) return INFINITY;
     range = 1;
     let self = this;
@@ -137,6 +139,7 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
     if (selfIdx != posIdx || self.roomName != pos.roomName){
         let costs = computeCostsFromCache(self.roomName, selfIdx, pos.roomName, posIdx, creep);
         if (costs != -1){
+            // error("estimate path cpu with cache: ", Game.cpu.getUsed() - cpu);
             return costs;
         }
     }
@@ -145,21 +148,22 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
     let callsB=Memory.estimatePathCosts[self.roomName][selfX][selfY]++;
    
     let cost_matrix = Game.getCostMatrix();
-    let result = PathFinder.search(self, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 2000, maxRooms: maxRooms || 16}));
+    let result = PathFinder.search(self, {pos: pos, range: range}, Object.assign(cost_matrix, {maxCost: maxCost || 6000, maxRooms: maxRooms || 16}));
     if (result.incomplete) {
+        // error("estimate path cpu pruned: ", Game.cpu.getUsed() - cpu);
         return INFINITY;
     }
     let cache_path = computeCachePathFromPath(result.path || []);
     let costs = computeCostsFromPath(cache_path, creep);
 
-    let thresh = 100;
+    let thresh = 10;
     if (callsA > thresh && callsB > thresh && (selfIdx != posIdx || self.roomName != pos.roomName)){       
         setCachedPath(self.roomName, selfIdx, pos.roomName, posIdx, cache_path);
         setCachedPath(pos.roomName, posIdx, self.roomName, selfIdx, cache_path);
         Memory.estimatePathCosts[pos.roomName][posX][posY] = 0;
         Memory.estimatePathCosts[self.roomName][selfX][selfY] = 0;
     }
-    
+    // error("estimate path cpu without cache: ", Game.cpu.getUsed() - cpu);
     return costs;
 }
 
@@ -170,6 +174,11 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
 function computeCachePathFromPath(path) {
     let result = {num_road: 0, num_plain: 0, num_swamp: 0};
     for (let pos of path) {
+        // If we cannot look into the room, e.g. if there's no creep in it, assume plain.
+        if (!Game.rooms[pos.roomName]) {
+            result.num_plain++;
+            continue;
+        }
         let terrains = pos.lookFor(LOOK_TERRAIN);
         let structures = pos.lookFor(LOOK_STRUCTURES).concat(pos.lookFor(LOOK_CONSTRUCTION_SITES));
         let done = false;
@@ -260,22 +269,40 @@ RoomPosition.prototype.findClosestActiveSource = function(maxCost, maxRooms) {
 }
 
 /**
- * Finds the closest structure matching filter
- * @param {function(Structure):boolean} filter 
- * @param {number=} maxCost 
- * @param {number=} maxRooms
+ * Finds the closest object matching the find_const and the filter
+ * @param {number} find_const 
+ * @param {(function(*):boolean)=} filter 
+ * @param {number=} max_time 
+ * @param {number=} max_rooms
  * @return {Object} 
  */
-RoomPosition.prototype.findClosestStructure = function(filter, maxCost, maxRooms) {
-    let rooms = Game.getOurRooms() || [];
-    let structures = [];
+RoomPosition.prototype.findClosestObject = function(find_const, filter, max_time, max_rooms) {
+    let objects = Game.find(find_const, {filter : filter});
 
-    for (let room of rooms) {
-        structures = structures.concat(room.find(FIND_STRUCTURES, {filter: filter}));
-    }
-    let result = this.findClosestTarget(structures, 1, Game.getCostMatrix());
+    let result = this.findClosestTarget(objects, 1, Game.getCostMatrix(), max_time, max_rooms);
     if(result) return result.target;
     return null;
+}
+
+/**
+ * Finds the closest structure matching filter
+ * @param {(function(*):boolean)=} filter 
+ * @param {number=} max_time
+ * @param {number=} max_rooms
+ * @return {Object} 
+ */
+RoomPosition.prototype.findClosestStructure = function(filter, max_time, max_rooms) {
+    return this.findClosestObject(FIND_STRUCTURES, filter, max_time, max_rooms);
+}
+
+/**
+ * 
+ * @param {(function(*):boolean)=} filter 
+ * @param {number=} max_time 
+ * @param {number=} max_rooms 
+ */
+RoomPosition.prototype.findClosestSpawn = function(filter, max_time, max_rooms) {
+    return this.findClosestStructure((s) => s.structureType === STRUCTURE_SPAWN && (!filter || filter(s)), max_time, max_rooms);
 }
 
 /**

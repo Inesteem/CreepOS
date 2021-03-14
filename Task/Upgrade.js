@@ -142,6 +142,8 @@ task.eval_func = function(creep, queue_task, min_value) {
 
     let max_time = min_value ? energy/min_value : undefined;
 
+    if (max_time < 1) return 0;
+
     let time = this.estimateTime(creep, queue_task, max_time) + 1;
     if (time >= INFINITY) return 0;
     return energy/time;

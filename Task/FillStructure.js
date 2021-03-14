@@ -83,7 +83,6 @@ task.take = (creep, queue_task) => {
     let structure = Game.getObjectById(queue_task.id);
     
     if (!structure) return null;
-    
     let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
     if (!queue_task.expected_fillup) {
         queue_task.expected_fillup = add_energy;  
@@ -175,11 +174,11 @@ task.estimateTime = function(creep, queue_task, max_time) {
 task.eval_func = function(creep, queue_task, min_value) {
     let structure = Game.getObjectById(queue_task.id);
     let add_energy = creep.store[RESOURCE_ENERGY] || creep.store.getCapacity(RESOURCE_ENERGY);
-    error("add_energy: ", add_energy);
     // let req_energy = structure.store.getFreeCapacity(RESOURCE_ENERGY);
     // let add_energy = Math.min(req_energy, energy);
 
     let max_time = min_value ? add_energy/min_value : undefined;
+    if (max_time < 1) return 0;
 
     let time = this.estimateTime(creep, queue_task, max_time) + 1;
     if (time >= INFINITY) return 0;

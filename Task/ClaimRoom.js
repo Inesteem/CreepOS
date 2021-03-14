@@ -1,12 +1,16 @@
 import { Task, State } from "./Task";
 import { getUnclaimedFlags } from "../Base";
 import { error } from "../Logging";
+import { Role } from "../Constants";
+import "../GameObjects/Game";
 
 const task = Object.create(new Task("claim_room"));
 task.state_array = [
     new State(goToRoom),
     new State(claimRoom),    
 ]
+
+task.role = Role.SCOUT;
 
 function goToRoom(creep) {
     if (!creep.task.id) {
@@ -44,6 +48,34 @@ function claimRoom(creep) {
         creep.claimRoom();
     }
     return true;
+}
+
+/**
+ * @this {Task}
+ */
+task.checkSpawn = function() {
+    const scout_num = Game.numCreeps((creep) => creep.memory.role == Role.SCOUT);
+    const flags = Game.findUnclaimedFlags();
+    if (scout_num == 0 && flags.length > 0) {
+        const flag = flags[0];
+        const spawn = flag.pos.findClosestSpawn();
+        if (spawn) {
+            spawnScout(spawn)
+        }
+    }
+}
+
+/**
+ * @param {StructureSpawn} spawn 
+ */
+function spawnScout(spawn) {
+    var newName = "Scouty" + Game.time;
+
+    var body = [CLAIM, MOVE, MOVE];
+
+    if (body.length >= 2)
+        return spawn.spawnCreep(body, newName, { memory: { role: Role.SCOUT } });
+    return ERR_NOT_ENOUGH_ENERGY;
 }
 
 export {task};

@@ -82,7 +82,7 @@ Task.prototype.take = function() {
 }
 
 Task.prototype.finish = function(creep, creep_task) {
-    error("finish not implemented for ", this.name);
+    warning("finish not implemented for ", this.name);
 }
 
 /**
@@ -211,7 +211,7 @@ function getEnergyForTask(pos, creep, queue_task, max_time) {
     } else if (energy.type == FIND_SOURCES) {
         return {task: {source_id: energy.object.id, path_time: energy.path_time, harvest_time: energy.harvest_time}, object: energy.object};  
     } else {
-        return {task: {drop_id: energy.object.id}, object: energy.object};
+        return {task: {resource_id: energy.object.id}, object: energy.object};
     }
 }
 

@@ -35,4 +35,17 @@ var error = log(LOG_LEVEL.ERROR);
 var warning = log(LOG_LEVEL.WARNING);
 var info = log(LOG_LEVEL.INFO);
 
-export { error, warning, info };
+/**
+ * 
+ * @param {string} name 
+ * @param {function()} fn 
+ * @param {(function(number):boolean)=} filter 
+ */
+function profileCpu(name, fn, filter) {
+    const start = Game.cpu.getUsed();
+    fn();
+    const used = Game.cpu.getUsed() - start;
+    if (!filter || filter(used)) error (name, " used CPU: ", used);
+} 
+
+export { error, warning, info, profileCpu};

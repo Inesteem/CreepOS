@@ -5,7 +5,7 @@ import { operateTowers } from "./GameObjects/Tower";
 import { handlePossibleRespawn } from "./Base";
 import { Role } from "./Constants";
 import { updateTaskQueue, runTask, increasePriorities, completeTask, schedule } from "./Scheduler";
-import { error, info } from "./Logging";
+import { error, info, profileCpu } from "./Logging";
 import { getSpawns as GameGetSpawns, initGame } from "./GameObjects/Game";
 import { monitor as buildMonitor } from "./BuildMachine";
 import "./GameObjects/Room";
@@ -13,39 +13,34 @@ import { Frankencreep } from "./FrankenCreep";
 
 
 module.exports.loop = function () {
-    for (let task_type in Memory.new_tasks) {
-        let task_queue = Memory.new_tasks[task_type];
-        for (let task of task_queue) {
-            let target = Game.getObjectById(task.id);
-            if (target) {
-                new RoomVisual(target.room.name).text("" + Math.floor(task.priority), target.pos.x, target.pos.y, {align: "right", font: 0.4}); 
-            }
-        }
-    }
-
-
-
     // Need to redefine functions on Game.
-    initGame();
+    profileCpu("initGame", initGame);
   // error(Game.find(FIND_SOURCES)[0].reservedSlots);
 
-    handlePossibleRespawn();
+    profileCpu("handle respawn", handlePossibleRespawn);
 
-    increasePriorities();
+    profileCpu("increase Priorities", increasePriorities);
 
-    buildMonitor();
+    profileCpu("build monitor", buildMonitor);
     
-    operateTowers();
+    profileCpu("operate towers", operateTowers);
     
+    profileCpu("update queue tasks", () => {
     Memory.new_tasks = Memory.new_tasks || {};
     if (Game.time % 1 === 0){
         updateTaskQueue();
     }
+    });
     
+    profileCpu("defense monitor", () => {
     defense_monitor();
+    });
 
+    profileCpu("schedule", () => {
     schedule();
+    });
     
+    profileCpu("run tasts", () => {
     for (let creep of Object.values(Game.creeps)) {
         creep.memory.spawning = undefined;
 
@@ -65,9 +60,13 @@ module.exports.loop = function () {
             creep.suicide();
         }
     }
+    });
 
+    profileCpu("spawn machine", () => {
     SpawnMachine_monitor();
+    });
 
+    profileCpu("free memory", () => {
     //FREE MEMORY
     for(var name in Memory.creeps) {
         if(!Game.creeps[name] && !Memory.creeps[name].spawning) {
@@ -76,6 +75,20 @@ module.exports.loop = function () {
         } 
             
     }
+    });
+
+    profileCpu("visuals", () => {
+    for (let task_type in Memory.new_tasks) {
+        let task_queue = Memory.new_tasks[task_type];
+        for (let task of task_queue) {
+            let target = Game.getObjectById(task.id);
+            if (target && target.room) {
+                new RoomVisual(target.room.name).text("" + Math.floor(task.priority), target.pos.x, target.pos.y, {align: "right", font: 0.4}); 
+            }
+        }
+    }
+});
+
 }
 
 

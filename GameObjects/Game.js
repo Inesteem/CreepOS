@@ -98,6 +98,10 @@ export function initGame() {
         }
     };   
     }
+
+    Game.findUnclaimedFlags = function() {
+        return Object.values(Game.flags).filter((flag) => !flag.room);
+    }
 }
 
 
