@@ -54,6 +54,7 @@ Object.defineProperty(Creep.prototype, 'future_self', {
         );
         franky.time = time;
         let creep_after = self.tasks[self.tasks.length - 1].creep_after;
+        if (!creep_after) return null;
         //_.merge(franky, self.tasks[self.tasks.length - 1].creep_after);
         franky.pos.x = creep_after.pos.x;
         franky.pos.y = creep_after.pos.y;
@@ -86,9 +87,13 @@ Creep.prototype.takeFrom = function(structure) {
         this.moveTo((structure), {visualizePathStyle: {stroke: '#555500'}, reusePath: PATH_REUSE_TICKS});
     }
 }
-
-Creep.prototype.storeAt = function(structure) {
-    if(this.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+/**
+ * 
+ * @param {Structure} structure 
+ * @param {string=} resource_type 
+ */
+Creep.prototype.storeAt = function(structure, resource_type) {
+    if(this.transfer(structure, resource_type || RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
         this.moveTo(structure, {visualizePathStyle: {stroke: '#ff00ff'},reusePath: PATH_REUSE_TICKS});
     }
 }

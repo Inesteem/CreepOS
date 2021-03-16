@@ -41,6 +41,10 @@ export function initGame() {
         return objects;
     }
 
+    Game.findSpawns = function() {
+        return Game.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
+    }
+
     Game.findMaxStoredResource = function(type) {
         let stores = Game.find(
             FIND_STRUCTURES,

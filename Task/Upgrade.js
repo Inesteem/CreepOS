@@ -18,6 +18,9 @@ function upgradeController(creep){
     let controller = Game.getObjectById(creep.task.id);
 
     if (!controller) return false;
+    if (creep.getActiveBodyparts(WORK) == 0) {
+        return false;
+    }
 
     creep.upgrade(controller);
     

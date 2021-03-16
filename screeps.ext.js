@@ -195,6 +195,14 @@ StructureController.prototype.activateSafeMode = function() {};
  * @type {number} */
 StructureController.prototype.level;
 
+
+/**
+ * @extends Structure
+ * @constructor
+ */
+var StructureExtractor = function () {};
+
+
 /**
  * @extends Structure
  * @constructor
@@ -235,9 +243,17 @@ StructureSpawn.prototype.spawnCreep = function(body, name, opts) {}
 StructureSpawn.prototype.spawning;
 
 /**
+ * @extends RoomObject
  * @constructor
  */
-var Mineral = function() {};
+var Mineral = function() {
+
+    /**
+     * @type {string}
+     */
+    this.mineralType;
+
+};
 
 /**
  * @constructor
@@ -637,6 +653,8 @@ var STRUCTURE_KEEPER_LAIR;
 var STRUCTURE_RAMPART;
 /** @const {string} */
 var STRUCTURE_EXTRACTOR;
+/** @const {string} */
+var STRUCTURE_LAB;
 
 /** @const {number} */
 var FIND_MY_CREEPS;
@@ -679,6 +697,8 @@ var LOOK_TERRAIN;
 var LOOK_CREEPS;
 /** @const {string} */
 var LOOK_RESOURCES;
+/** @const {string} */
+var LOOK_MINERALS;
 
 
 /** @const {number} */
@@ -701,6 +721,27 @@ var CARRY;
 
 /** @const {string} */
 var RESOURCE_ENERGY;
+/** @const {string} */
+var RESOURCE_POWER;
+
+/** @const {string} */
+var RESOURCE_HYDROGEN;
+/** @const {string} */
+var RESOURCE_OXYGEN;
+/** @const {string} */
+var RESOURCE_UTRIUM;
+/** @const {string} */
+var RESOURCE_LEMERGIUM;
+/** @const {string} */
+var RESOURCE_KEANIUM;
+/** @const {string} */
+var RESOURCE_ZYNTHIUM;
+/** @const {string} */
+var RESOURCE_CATALYST;
+/** @const {string} */
+var RESOURCE_GHODIUM;
+
+
 
 /** @const {{extension: Array<number>, tower: Array<number>}} */
 var CONTROLLER_STRUCTURES;

@@ -114,7 +114,7 @@ function maybePlaceConstructionSite(creep) {
  * @param {Creep} creep 
  */
 function fillStore(creep) {
-    let target = Game.getObjectById(creep.task.store_id);
+    let target = /**@type {Structure} */ (Game.getObjectById(creep.task.store_id));
 
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) == 0) 
         return false;

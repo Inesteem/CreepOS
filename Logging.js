@@ -45,7 +45,7 @@ function profileCpu(name, fn, filter) {
     const start = Game.cpu.getUsed();
     fn();
     const used = Game.cpu.getUsed() - start;
-    if (!filter || filter(used)) error (name, " used CPU: ", used);
+    if (!filter || filter(used)) error(name, " used CPU: ", used);
 } 
 
 export { error, warning, info, profileCpu};

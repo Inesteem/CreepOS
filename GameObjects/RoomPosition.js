@@ -76,6 +76,18 @@ RoomPosition.prototype.findAdjacent = function(look_const, filter) {
 
 
 /**
+ * @param {string} look_const
+ * @param {(function(*):boolean)=} filter 
+ * @return {Object} 
+ */
+RoomPosition.prototype.lookForObject = function(look_const, filter) {
+    let objs = this.lookFor(look_const);
+    if(filter) objs = objs.filter(obj => filter(obj)); 
+    if (objs.length == 0) return null;
+    return objs[0];
+}
+
+/**
  * @return {boolean} Whether a creep can step on this field now.
  */
 RoomPosition.prototype.isWalkable = function() {
@@ -156,14 +168,14 @@ RoomPosition.prototype.estimatePathCosts = function(pos, range, creep, maxCost, 
     let cache_path = computeCachePathFromPath(result.path || []);
     let costs = computeCostsFromPath(cache_path, creep);
 
-    let thresh = 10;
-    if (callsA > thresh && callsB > thresh && (selfIdx != posIdx || self.roomName != pos.roomName)){       
+    let thresh = 1;
+    if (callsA > thresh && callsB > thresh && (selfIdx != posIdx || self.roomName != pos.roomName)){    
+        error("estimate path cpu without cache: ", Game.cpu.getUsed() - cpu);   
         setCachedPath(self.roomName, selfIdx, pos.roomName, posIdx, cache_path);
         setCachedPath(pos.roomName, posIdx, self.roomName, selfIdx, cache_path);
         Memory.estimatePathCosts[pos.roomName][posX][posY] = 0;
         Memory.estimatePathCosts[self.roomName][selfX][selfY] = 0;
     }
-    // error("estimate path cpu without cache: ", Game.cpu.getUsed() - cpu);
     return costs;
 }
 

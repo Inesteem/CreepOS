@@ -77,7 +77,7 @@ Task.prototype.updateQueue = function() {
     warning("updateQueue not implemented for ", this.name);
 }
 
-Task.prototype.take = function() {
+Task.prototype.take = function (creep, queue_task) {
     error("take not implemented for ", this.name);
 }
 
@@ -95,6 +95,11 @@ Task.prototype.finish = function(creep, creep_task) {
 Task.prototype.estimateTime = function(creep, queue_task, max_time) {
     error("estimateTime not implemented for ", this.name);
     return INFINITY;
+}
+
+Task.prototype.eval_func = function(creep, queue_task, min_value) {
+    error("eval_func not implememnted for ", this.name);
+    return 0;
 }
 
 Task.prototype.spawn = function(spawn) {
@@ -173,7 +178,7 @@ function takeFromStore(creep) {
  * @param {Creep} creep 
  */
 function fillStructure(creep) {
-    const structure = Game.getObjectById(creep.task.id);
+    const structure = /**@type {Structure} */ (Game.getObjectById(creep.task.id));
     
     if(!structure || creep.store[RESOURCE_ENERGY] == 0 || 
             structure.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
