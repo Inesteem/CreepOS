@@ -74,7 +74,7 @@ function schedule() {
                 creep.tasks.push({name: task_attack_source_keeper.name});
             }
         } 
-        if (creep.memory.role === Role.WORKER) {
+        if (creep.memory.role === Role.WORKER && workers.length < 10) {
             workers.push(creep);
         }
     }
