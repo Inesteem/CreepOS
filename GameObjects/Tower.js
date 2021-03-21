@@ -1,13 +1,17 @@
+import { error } from "../Logging";
 import "./Game";
  
 StructureTower.prototype.repairClosest = function() {
-    let structure = this.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: object => object.hits && object.hits < object.hitsMax
-    });
-    
-    if (structure && structure.structureType != STRUCTURE_WALL) {
-        this.repair(structure);
+    let to_repair = findStructureToRepair(this.pos);
+    if (to_repair) {
+        this.repair(to_repair);
     }
+}
+
+function findStructureToRepair(tower_position) {
+    return tower_position.findClosestByRange(FIND_STRUCTURES, {
+        filter: object => object.hits && object.hits < object.hitsMax && object.structureType != STRUCTURE_WALL
+    });
 }
 
 StructureTower.prototype.attackClosest = function() {
@@ -33,16 +37,11 @@ StructureTower.prototype.healClosest = function(filter) {
 }
 
 function operateTowers() {
-    let towers = [];
-    let rooms = Game.getOurRooms();
-    
-    rooms.forEach(room => {
-        towers = towers.concat(room.find(FIND_MY_STRUCTURES, {
+    let towers = Game.find(FIND_MY_STRUCTURES, {
             filter: (tower) => {
-                    return ( tower.structureType == STRUCTURE_TOWER) &&
-                        tower.store[RESOURCE_ENERGY] >= 10;
-                }
-        }));
+                return ( tower.structureType == STRUCTURE_TOWER) &&
+                    tower.store[RESOURCE_ENERGY] >= 10;
+            }
     });
     
     towers.forEach(tower => {
@@ -51,8 +50,8 @@ function operateTowers() {
             if(!tower.healClosest((creep) =>  creep.getActiveBodyparts(RANGED_ATTACK) || 
                                             creep.getActiveBodyparts(ATTACK) || 
                                             creep.getActiveBodyparts(HEAL))){
-                    if (!tower.attackClosest()){ 
-                        if(!tower.healClosest((creep) => true)){
+                if (!tower.attackClosest()){ 
+                    if(!tower.healClosest((creep) => true)){
                         tower.repairClosest();
                     }
                 }
