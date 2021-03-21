@@ -38,9 +38,8 @@ task.updateQueue = function() {
  * @this {{queue: Array<QueueTask>}}
  */
 task.removeObsoleteTasks = function() {
-    error("filtering");
     const structures = getStructuresToRepair();
-    this.queue.filter((queue_task) => structures.find((structure) => structure.id === queue_task.id));
+    this.queue = this.queue.filter((queue_task) => structures.find((structure) => structure.id === queue_task.id));
 }
 
 /**
