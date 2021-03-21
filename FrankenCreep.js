@@ -9,6 +9,7 @@ import { error } from "./Logging";
  * @param {!string} name 
  */
 function Frankencreep(pos, body_parts, name) {
+    let self = this;
     this.pos = pos;
     this.name = name;
     this.room = Game.rooms[pos.roomName];
@@ -19,7 +20,7 @@ function Frankencreep(pos, body_parts, name) {
     this.getActiveBodyparts = (part) => body_parts.filter(x => x==part).length;
     this.store = /** @type Store */ ({energy: 0, 
         getCapacity: (energy) => {return body_parts.filter(x => x == CARRY).length * 50;},
-        getFreeCapacity: (energy) => { return body_parts.filter(x => x == CARRY).length * 50;}});
+        getFreeCapacity: (energy) => { return (body_parts.filter(x => x == CARRY).length * 50) - self.store.energy;}});
 
     this.findOptimalEnergy = Creep.prototype.findOptimalEnergy;
     this.getCostMatrix = Creep.prototype.getCostMatrix;

@@ -30,32 +30,40 @@ function repairStructure(creep) {
  * @this {{name: string}} 
  */
 task.updateQueue = function() {
-    let structures = [];
-    let rooms = Game.getOurRooms();
-    
-    rooms.forEach(room => {
-       structures = structures.concat(room.find(FIND_STRUCTURES, {
-            filter: object => object.hits && object.hits < object.hitsMax && object.structureType !== STRUCTURE_ROAD
-        }));
-    });
+    this.removeObsoleteTasks();
+    this.addNewTasks();
+}
 
-     Memory.new_tasks[this.name] = Memory.new_tasks[this.name] || [];
+/**
+ * @this {{queue: Array<QueueTask>}}
+ */
+task.removeObsoleteTasks = function() {
+    error("filtering");
+    const structures = getStructuresToRepair();
+    this.queue.filter((queue_task) => structures.find((structure) => structure.id === queue_task.id));
+}
+
+/**
+ * @this {{queue: Array<QueueTask>}}
+ */
+task.addNewTasks = function() {
+    const structures = getStructuresToRepair();
+    
     for (let structure of structures) {
-        if (!Memory.new_tasks[this.name].find(repair_task => repair_task.id == structure.id)) {
-            let queue_task = {id: structure.id, priority: 500, name: this.name}
+        if (!this.queue.find((queue_task) => structure.id === queue_task.id)) {
+            const queue_task = {id: structure.id, priority: 500, name: this.name};
             prioritize(queue_task);
-            Memory.new_tasks[this.name].push(queue_task);
+            this.queue.push(queue_task);
         }
     }
-    for (let i = 0; i < Memory.new_tasks[this.name].length; i++) {
-        let repair_task = Memory.new_tasks[this.name][i];
-        let structure = Game.getObjectById(repair_task.id);
-        if (!structure || structure.hits == structure.hitsMax) {
-            Memory.new_tasks[this.name].splice(i, 1);
-            i--;
-        }
-    }
-    info("Repair tasks: ", Memory.new_tasks[this.name]);
+}
+
+function getStructuresToRepair() {
+    return Game.find(FIND_STRUCTURES, {
+        filter: object => object.hits && object.hits < object.hitsMax 
+            && object.structureType !== STRUCTURE_ROAD
+            && object.structureType !== STRUCTURE_WALL
+    });
 }
 
 /**

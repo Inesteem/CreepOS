@@ -10,9 +10,15 @@ import { getSpawns as GameGetSpawns, initGame } from "./GameObjects/Game";
 import { monitor as buildMonitor } from "./BuildMachine";
 import "./GameObjects/Room";
 import { Frankencreep } from "./FrankenCreep";
-
+import { CachedMap } from "./CachedMap";
 
 module.exports.loop = function () {
+
+    // let test_map = new CachedMap("test");
+    // test_map.set("foo", "bar");
+    // error(test_map.get("foo"));
+    // test_map.save();
+
     // Need to redefine functions on Game.
     profileCpu("initGame", initGame);
   // error(Game.find(FIND_SOURCES)[0].reservedSlots);
