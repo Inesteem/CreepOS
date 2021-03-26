@@ -160,7 +160,6 @@ function collectDroppedEnergy(creep){
  * @this {Task}
  */
 task.checkSpawn = function() {
-    error("checkig spawn");
     let free_sources = Game.find(FIND_SOURCES).filter(source => !source.hasMiner());
     for (let source of free_sources) {
         let spawn = source.pos.findClosestByPath(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});

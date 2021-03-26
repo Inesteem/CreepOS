@@ -101,11 +101,7 @@ Room.prototype.hasExcessEnergy = function(req_energy) {
     let sources = this.find(FIND_SOURCES_ACTIVE);
     for (let source of sources || []) {
        let freeSlot = source.hasFreeSlot(Game.time, Game.time+80, /*energy=*/req_energy);
-        // error(source.id + " has free slot: " + freeSlot);
-        // error(source.id + " has free spot: " + source.hasFreeSpot());
-        // error(source.id + " has miner: " + source.hasMiner());
-        // error(source.id + " has relevant miner: " + !(!source.hasMiner()|| (this.controller && this.controller.level < 3)));
-        if (freeSlot && !source.hasMiner()) return true;
+        if (freeSlot && (!this.controller || this.controller.level < 3 || !source.hasMiner())) return true;
     }
     return false;
 }

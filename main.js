@@ -14,10 +14,10 @@ import { CachedMap } from "./CachedMap";
 
 module.exports.loop = function () {
 
-    // let test_map = new CachedMap("test");
-    // test_map.set("foo", "bar");
-    // error(test_map.get("foo"));
-    // test_map.save();
+    let test_map = new CachedMap("test");
+    test_map.set("foo", "bar");
+    error(test_map.get("foo"));
+    test_map.save();
 
     // Need to redefine functions on Game.
     profileCpu("initGame", initGame);

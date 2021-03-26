@@ -49,7 +49,7 @@ function updateTaskQueue() {
  */
 function runTask(creep, depth) {
     if (creep.task) {
-        creep.say(Math.floor(creep.task.estimated_time) + " " + creep.memory.ticks);
+        // creep.say(Math.floor(creep.task.estimated_time) + " " + creep.memory.ticks);
         ++creep.memory.ticks;
         let still_running = task_mapping[creep.task.name].run(creep);
         if (!still_running) {
@@ -63,7 +63,6 @@ function schedule() {
     let workers = [];
     let task_queue_sorted = [];
     // profileCpu("pre work", () => {
-    monitorPermanentTasks();
     for (let creep of Game.findCreeps()) {
         if (creep.tasks.length == 0) {
             if (creep.memory.role === Role.SCOUT) {
@@ -117,8 +116,6 @@ function schedule() {
     });
 
      let cpu = Game.cpu.getUsed();
-    // error(Game.cpu.getUsed());
-    error("workers ", workers.length);
     let todo = workers.length
     while(todo) {
     for(const creep of workers) {
@@ -150,7 +147,6 @@ function schedule() {
     }
     }
     // });
-    error("Matches:", matches.length);
     // // profileCpu("take task", () => {
     // if (best_creep != undefined) {
     //     assignTask(best_creep, best_task);
@@ -224,6 +220,7 @@ function schedule() {
         // }
         task_mapping[queue_task.name].spawn(queue_task, spawn);
     }
+    monitorPermanentTasks();
 }
 
 function assignTask(creep, queue_task) {

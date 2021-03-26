@@ -1,3 +1,4 @@
+import { error } from "./Logging";
 
 export class CachedMap {
     /**
@@ -5,12 +6,19 @@ export class CachedMap {
      * @param {string} name 
      */
     constructor(name) {
-        Memory["CachedMap"] =  Memory["CachedMap"] || {};
-        Memory["CachedMap"][name] = Memory["CachedMap"][name] || "[]";
-
-        this.map = new Map(/** @type {Array<Array<?>>} */(JSON.parse(Memory["CachedMap"][this.name])));
+        this.map = new Map(/** @type {Array<Array<?>>} */(JSON.parse(this.memory)));
         this.name = name;
     }
+
+    get memory() {
+        Memory["CachedMap"] =  Memory["CachedMap"] || {};
+        return Memory["CachedMap"][this.name] || "[]";
+    }
+    set memory(memory_value) {
+        Memory["CachedMap"] =  Memory["CachedMap"] || {};
+        Memory["CachedMap"][this.name] = memory_value;
+    }
+
     set(key, value) {
         this.map.set(key, value);
     }
@@ -22,7 +30,8 @@ export class CachedMap {
      */
     save() {
         let entries = JSON.stringify(Array.from(this.map.entries));
-        Memory["CachedMap"][this.name] = entries;
+        error("save entries: ", entries);
+        this.memory = entries;
     }
 }
 
