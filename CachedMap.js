@@ -6,13 +6,13 @@ export class CachedMap {
      * @param {string} name 
      */
     constructor(name) {
-        this.map = new Map(/** @type {Array<Array<?>>} */(JSON.parse(this.memory)));
+        this.map = new Map(/** @type {Array<Array<?>>} */(this.memory));
         this.name = name;
     }
 
     get memory() {
         Memory["CachedMap"] =  Memory["CachedMap"] || {};
-        return Memory["CachedMap"][this.name] || "[]";
+        return Memory["CachedMap"][this.name] || [];
     }
     set memory(memory_value) {
         Memory["CachedMap"] =  Memory["CachedMap"] || {};
@@ -25,12 +25,17 @@ export class CachedMap {
     get(key) {
         return this.map.get(key);
     }
+    delete(key) {
+        return this.map.delete(key);
+    }
+    has(key) {
+        return this.map.has(key);
+    }
     /**
      * Runtime O(<number entries>)
      */
     save() {
-        let entries = JSON.stringify(Array.from(this.map.entries));
-        error("save entries: ", entries);
+        const entries = Array.from(this.map.entries());
         this.memory = entries;
     }
 }
