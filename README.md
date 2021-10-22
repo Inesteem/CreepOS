@@ -1,3 +1,8 @@
+# Closure Compiler
+  - In make.json replace "js_module_root": "/path/to/CreepOS"
+  - Run closure compiler
+  - Copy main.js to your screeps folder
+
 # Task Management 
   - Modules
     - TaskMachine

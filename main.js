@@ -9,8 +9,6 @@ import { error, info, profileCpu } from "./Logging";
 import { getSpawns as GameGetSpawns, initGame } from "./GameObjects/Game";
 import { monitor as buildMonitor } from "./BuildMachine";
 import "./GameObjects/Room";
-import { Frankencreep } from "./FrankenCreep";
-import { CachedMap } from "./CachedMap";
 
 module.exports.loop = function () {
     // Need to redefine functions on Game.
